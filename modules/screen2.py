@@ -54,8 +54,8 @@ class Screen3D:
 	def update(self):
 		pg.display.update()
 
-	def draw_shape(self, shape, color=(255,255,255)):
-		self.draw_lines(shape.points)
+	def draw_shape(self, shape, colour=(255,255,255)):
+		self.draw_lines(shape.points, colour)
 
 	def draw_axes(self, length):
 		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
