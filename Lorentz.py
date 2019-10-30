@@ -4,6 +4,14 @@ import math
 import numpy as np
 import random
 
+def Lorentz(pos, dT):
+	x, y, z = pos
+	x += dT * (sigma * (pos[1] - pos[0]))
+	y += dT * (pos[0] * (ro - pos[2]) - pos[1])
+	z += dT * (pos[0] * pos[1] - beta * pos[2])
+	
+	return np.array([x, y, z])
+
 
 #game setup
 WIDTH, HEIGHT = SIZE = (600, 600)
@@ -24,14 +32,14 @@ beta = 8/3
 #main loop
 updt = 0
 
-
+skip_frames = 7
 
 poss = []
 
 while run:
 	#tick prep
 	updt += 1
-	dT = clock.tick_busy_loop(FPS)/1000
+	dT = clock.tick_busy_loop(FPS)/1000 / 5
 	s.clear()
 
 	pg.mouse.set_pos = (500, 300)
@@ -57,20 +65,20 @@ while run:
 	s.camera_orientation[1] += (move[0])/300
 	s.camera_orientation[0] = max(-0.5*math.pi, min(s.camera_orientation[0], 0.5*math.pi))
 	#code
-	poss.append(curr_pos)
-	s.draw_axes(10)
-	x, y, z = curr_pos
-
-	x += dT * (sigma * (curr_pos[1] - curr_pos[0]))
-	y += dT * (curr_pos[0] * (ro - curr_pos[2]) - curr_pos[1])
-	z += dT * (curr_pos[0] * curr_pos[1] - beta * curr_pos[2])
 	
-	curr_pos = np.array([x, y, z])
+	s.draw_axes(10)
 
-	if len(poss) > 400:
+	poss.append(curr_pos)
+	for i in range(skip_frames):
+		curr_pos = Lorentz(curr_pos, dT)
+
+
+	if len(poss) > 1000:
 		poss.pop(0)
 
 	try:
+		# for p in poss:
+		# 	s.draw_pixel(p)
 		s.draw_lines(poss, closed=False)
 	except:
 		pass
