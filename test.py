@@ -8,7 +8,6 @@ import pygame as pg
 
 
 
-
 s = screen.Screen3D((1000,600), camera_position=(10,0,100))
 cube = shape.Cube(20, position=(0, 0, 0))
 clock = pg.time.Clock()

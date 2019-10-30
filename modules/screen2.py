@@ -37,10 +37,10 @@ class Screen3D:
 		except:
 			pass
 
-	def draw_lines(self, poss, colour=(255,255,255)):
+	def draw_lines(self, poss, colour=(255,255,255), closed=True):
 		try:
 			poss = [self.project(pos) for pos in poss]
-			pg.draw.aalines(self.disp, colour, True, poss)
+			pg.draw.aalines(self.disp, colour, closed, poss)
 		except:
 			raise
 
