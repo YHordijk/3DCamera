@@ -103,11 +103,19 @@ class Screen3D:
 		except:
 			raise
 
+	def draw_circle(self, center, radius, colour=(255,255,255)):
+		pos = self.project(center)
+		pg.draw.circle(self.disp, colour, pos, radius)
+
+
 	def draw_polygon(self, points, colour=(255,255,255)):
 		try:
 			proj = self.project
+			dist = int((self.camera_position[2] - points[0][1])*2)
 			points = [proj(point) for point in points]
+			colour = (255-dist,255-dist,255-dist)
 			pg.draw.polygon(self.disp, colour, points)
+
 		except:
 			raise
 
@@ -115,12 +123,23 @@ class Screen3D:
 		pg.display.update()
 
 	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill"):
-		# 
-		if mode == "fill":
-			faces = shape.faces(double_sided=double_sided)
-			[self.draw_polygon(face, colour) for face in faces]
-		if mode == "lines":
-			self.draw_lines(shape.points, colour, shape.closed)
+		if shape.type == 'flat':
+			if mode == "fill":
+				faces = shape.faces(double_sided=double_sided)
+				[self.draw_polygon(face, colour) for face in faces]
+			if mode == "lines":
+				self.draw_lines(shape.points, colour, shape.closed)
+
+		elif shape.type == 'molecule':
+			shape.update_atoms()
+
+			atoms = shape.atoms
+			d = lambda x: np.sqrt(sum((self.camera_position - x.position)**2))
+			atoms.sort(key=d, reverse=True)
+			for a in shape.atoms:
+				self.draw_circle(a.position + shape.position, int(a.radius/d(a)), a.colour)
+
+
 
 	def draw_axes(self, length):
 		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))

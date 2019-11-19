@@ -40,10 +40,11 @@ while run:
 
 	#code
 	player.update(dT, keys)
-	dist = (screen.camera_position[2] - player.position[2])*2
+	dist = (screen.camera_position[2] - player.position[2])*6
 
-	screen.draw_shape(player, mode="lines", colour=(255-dist, 255-dist, 255-dist))
 	screen.draw_shape(floor, mode="lines", colour=(255-dist, 255-dist, 255-dist))
+	screen.draw_shape(player, mode="lines", colour=(255-dist, 255-dist, 255-dist))
+	
 	# screen.draw_shape(floor, mode="fill")
 	# print(player.velocity)
 
