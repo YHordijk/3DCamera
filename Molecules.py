@@ -4,12 +4,12 @@ import pygame as pg
 import math, os
 import numpy as np
 
-m = shp.Molecule(position=(5,0,0))
-m.load_xyz(os.getcwd() + r'\Molecules\H2O.xyz')
+m = shp.Molecule(position=(0,0,0))
+m.load_xyz(os.getcwd() + r'\Molecules\aspirin.xyz')
 
 
-m2 = shp.Molecule(position=(-5,0,0))
-m2.load_xyz(os.getcwd() + r'\Molecules\pyridine.xyz')
+# m2 = shp.Molecule(position=(-5,0,0))
+# m2.load_xyz(os.getcwd() + r'\Molecules\pyridine.xyz')
 
 
 #game setup
@@ -32,22 +32,30 @@ while run:
 	keys = pg.key.get_pressed()
 	screen.clear()
 
-	d = np.sqrt(sum((screen.camera_position - m.position)**2))
-	d2 = np.sqrt(sum((screen.camera_position - m2.position)**2))
+	screen.draw_shape(m)
 
-	if d >= d2:
-		screen.draw_shape(m)
-		screen.draw_shape(m2)
-	else:
-		screen.draw_shape(m2)
-		screen.draw_shape(m)
+	# d = np.sqrt(sum((screen.camera_position - m.position)**2))
+	# d2 = np.sqrt(sum((screen.camera_position - m2.position)**2))
+
+	# if d >= d2:
+	# 	screen.draw_shape(m)
+	# 	screen.draw_shape(m2)
+	# else:
+	# 	screen.draw_shape(m2)
+	# 	screen.draw_shape(m)
 
 
-	m.rotation = (0, math.sin(time/10)/50, math.sin(time/10)/50)
-	m.position = (5*math.sin(time), 0, 5*math.cos(time))
-	m2.rotation = (0, -math.sin(time/10+1.6)/50, -math.sin(time/10+1.6)/50)
-	m2.position = (-5*math.sin(time), 0, -5*math.cos(time))
+	# m.rotation = (0, math.sin(time/10)/50, math.sin(time/10)/50)
+	# m.position = (5*math.sin(time), 0, 5*math.cos(time))
+	# m2.rotation = (0, -math.sin(time/10+1.6)/50, -math.sin(time/10+1.6)/50)
+	# m2.position = (-5*math.sin(time), 0, -5*math.cos(time))
 	
+	move = pg.mouse.get_rel()
+	if pg.mouse.get_pressed()[0]:
+		rot = m.rotation
+		m.rotation = [move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))]
+	else:
+		m.rotation = [0.9 *  r for r in m.rotation]
 
 
 

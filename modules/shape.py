@@ -3,14 +3,6 @@ import numpy as np
 from math import cos, sin, pi
 
 
-
-
-
-
-def divide_face(face, parts):
-	pass
-
-
 class Shape:
 	def __init__(self, rotation=(0.,0.,0.), position=(0.,0.,0.)):
 		self.rotation = np.asarray(rotation)
@@ -217,7 +209,6 @@ class Cube(Shape):
 		return self.rotate(points, self.rotation) + np.array(([self.position]))
 
 
-
 class Atom(Shape):
 		def __init__(self, element='H', **kwargs):
 			super().__init__(**kwargs)
@@ -226,19 +217,20 @@ class Atom(Shape):
 			'C':{'colour': (34, 34, 34), 'radius': 67},
 			'H':{'colour': (255, 255, 255), 'radius': 53},
 			'O':{'colour': (255, 22, 0), 'radius': 48},
-			'N':{'colour': (22, 33, 255), 'radius': 56}
+			'N':{'colour': (22, 33, 255), 'radius': 56},
+			'S':{'colour': (225, 225, 48), 'radius': 100},
+			'Ca':{'colour': (61, 255, 0), 'radius': 180},
 			}
 
 			self.colour = self.dictionaries[self.element]['colour']
 			self.radius = self.dictionaries[self.element]['radius']
-
 
 class Molecule(Shape):
 	def __init__(self, atoms=[], **kwargs):
 		super().__init__(**kwargs)
 		self.atoms = atoms
 		self.type = 'molecule'
-		self.scale_factor = 5
+		self.scale_factor = 8
 
 	def load_xyz(self, xyz):
 		elements = np.loadtxt(xyz, skiprows=2, usecols=0, dtype=str)
@@ -251,17 +243,12 @@ class Molecule(Shape):
 		for a in self.atoms:
 			a.radius = int(a.radius * self.scale_factor)
 
+	def load_sdf(self, sdf):
+		
+
 	def update_atoms(self):
 		points = [a.position for a in self.atoms]
 		points = self.rotate(points, self.rotation)
 
 		for a, p in zip(self.atoms, points):
 			a.position = p
-
-
-	
-
-
-if __name__ == '__main__':
-	m = Molecule()
-	m.load_xyz(r"C:\Users\Yuman\Desktop\Programmeren\Python\school\Introduction to scientific programming\Week 4\Sugars\C3.xyz")		
