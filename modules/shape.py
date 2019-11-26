@@ -230,7 +230,7 @@ class Molecule(Shape):
 		super().__init__(**kwargs)
 		self.atoms = atoms
 		self.type = 'molecule'
-		self.scale_factor = 8
+		self.scale_factor = 4
 
 	def load_xyz(self, xyz):
 		elements = np.loadtxt(xyz, skiprows=2, usecols=0, dtype=str)
@@ -244,7 +244,7 @@ class Molecule(Shape):
 			a.radius = int(a.radius * self.scale_factor)
 
 	def load_sdf(self, sdf):
-		
+		pass
 
 	def update_atoms(self):
 		points = [a.position for a in self.atoms]

@@ -5,7 +5,8 @@ import math, os
 import numpy as np
 
 m = shp.Molecule(position=(0,0,0))
-m.load_xyz(os.getcwd() + r'\Molecules\aspirin.xyz')
+m.load_xyz(os.getcwd() + f'\Molecules\hexabenzocoronene2.xyz')
+# m.load_xyz(r'C:\Users\Yuman\Desktop\Programmeren\Python\school\Introduction_to_scientific_programming\Week_5\molecules\benzene_with_hydrogens.xyz')
 
 
 # m2 = shp.Molecule(position=(-5,0,0))
@@ -14,7 +15,7 @@ m.load_xyz(os.getcwd() + r'\Molecules\aspirin.xyz')
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1600, 900)
-screen = scr.Screen3D(SIZE, camera_position=(0., 0, 20.), camera_orientation=(0,0,0))
+screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0))
 clock = pg.time.Clock()
 FPS = 100
 run = True
@@ -29,7 +30,7 @@ while run:
 	updt += 1
 	dT = tick(FPS)/1000
 	time += dT
-	keys = pg.key.get_pressed()
+	
 	screen.clear()
 
 	screen.draw_shape(m)
@@ -57,6 +58,14 @@ while run:
 	else:
 		m.rotation = [0.9 *  r for r in m.rotation]
 
+	keys = pg.key.get_pressed()
+	if keys[pg.K_UP]:
+		if screen.camera_position[2] > 5:
+			screen.camera_position[2] -= dT * screen.camera_position[2]
+	if keys[pg.K_DOWN]:
+		if screen.camera_position[2] < 40:
+			screen.camera_position[2] += dT * screen.camera_position[2]
+
 
 
 	#tick end
@@ -64,7 +73,6 @@ while run:
 
 	if keys[pg.K_ESCAPE]:
 		run = False
-		print(player.position)
 	for event in pg.event.get():
 		if event.type == pg.QUIT:
 			run = False
