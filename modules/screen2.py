@@ -97,6 +97,7 @@ class Screen3D:
 			d = lambda x: np.sqrt(sum((self.camera_position - x.position)**2))
 			atoms.sort(key=d, reverse=True)
 			for a in shape.atoms:
+				self.draw_circle(a.position + shape.position, int(a.radius/d(a))+1, self.bkgr_colour)
 				self.draw_circle(a.position + shape.position, int(a.radius/d(a)), a.colour)
 
 

@@ -6,7 +6,7 @@ import numpy as np
 
 m = shp.Molecule(position=(0,0,0))
 m.load_xyz(os.getcwd() + f'\Molecules\hexabenzocoronene2.xyz')
-# m.load_xyz(r'C:\Users\Yuman\Desktop\Programmeren\Python\school\Introduction_to_scientific_programming\Week_5\molecules\benzene_with_hydrogens.xyz')
+# m.load_xyz(r'C:\Users\Yuman\Desktop\Programmeren\Python\school\Introduction_to_scientific_programming\Week_5\molecules\benzene.xyz')
 
 
 # m2 = shp.Molecule(position=(-5,0,0))
@@ -17,7 +17,7 @@ m.load_xyz(os.getcwd() + f'\Molecules\hexabenzocoronene2.xyz')
 WIDTH, HEIGHT = SIZE = (1600, 900)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0))
 clock = pg.time.Clock()
-FPS = 100
+FPS = 30
 run = True
 
 #main loop
