@@ -63,9 +63,9 @@ class Screen3D:
 		except:
 			raise
 
-	def draw_circle(self, center, radius, colour=(255,255,255)):
+	def draw_circle(self, center, radius, colour=(255,255,255), width=0):
 		pos = self.project(center)
-		pg.draw.circle(self.disp, colour, pos, radius)
+		pg.draw.circle(self.disp, colour, pos, radius, width)
 
 
 	def draw_polygon(self, points, colour=(255,255,255)):
@@ -97,7 +97,7 @@ class Screen3D:
 			d = lambda x: np.sqrt(sum((self.camera_position - x.position)**2))
 			atoms.sort(key=d, reverse=True)
 			for a in shape.atoms:
-				self.draw_circle(a.position + shape.position, int(a.radius/d(a))+1, self.bkgr_colour)
+				self.draw_circle(a.position + shape.position, int(a.radius/d(a))+1, self.bkgr_colour, width=1)
 				self.draw_circle(a.position + shape.position, int(a.radius/d(a)), a.colour)
 
 
