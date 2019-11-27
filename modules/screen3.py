@@ -2,6 +2,8 @@ import pygame as pg
 import numpy as np
 from math import cos, sin
 import math
+from scipy.spatial.distance import euclidean
+from time import perf_counter
 
 
 class Screen3D:
@@ -53,13 +55,21 @@ class Screen3D:
 			proj = self.project
 			poss = [proj(pos) for pos in poss]
 			pg.draw.aalines(self.disp, colour, closed, poss, width)
+
 		except:
 			raise
 
 	def draw_line(self, poss, colour=(255,255,255), width=1):
 		try:
+			
+			h = self.height + 200
+			w = self.width + 200
 			poss = [self.project(pos) for pos in poss]
-			pg.draw.line(self.disp, colour, poss[0], poss[1], width)
+			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
+				# print(poss, euclidean(poss[0], poss[1]))
+				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
+
+
 		except:
 			raise
 
@@ -92,33 +102,41 @@ class Screen3D:
 				self.draw_lines(shape.points, colour, shape.closed)
 
 		elif shape.type == 'molecule':
+			starttime = perf_counter()
 			cam_pos = self.camera_position
 			original_coords = shape.coords
 			dists = np.asarray([shape.distance(cam_pos, x) for x in shape.coords])
+			deltas = np.asarray(shape.coords - self.camera_position)
 			indices = np.argsort(dists)[::-1]
 			coords = shape.coords[indices]
 
 			atoms = shape.atom_types[indices]
 			dists = dists[indices]
+			deltas = deltas[indices]
 
 			radii = shape._atom_radii
 			shape_pos = shape.position
 			colours = shape._atom_colours
 
 			prev_indices = []
-			for i, a, c, d in zip(indices, atoms, coords, dists):
+			no_bond = []
+			for i, a, c, d, delt in zip(indices, atoms, coords, dists, deltas):
 				prev_indices.append(i)
+				if delt[2] < 0:
+					bonds = shape.bonds[i].copy()
+					[bonds.remove(x) for x in prev_indices if x in bonds]
+					[bonds.remove(x) for x in no_bond if x in no_bond and x in bonds]
+					connected_atoms = original_coords[bonds]
 
-				bonds = shape.bonds[i].copy()
-				[bonds.remove(x) for x in prev_indices if x in bonds]
-				connected_atoms = original_coords[bonds]
+					[self.draw_line((c,c1), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
+					[self.draw_line((c,c1), width=int(75/d)) for c1 in connected_atoms]
 
-				[self.draw_line((c,c1), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
-				[self.draw_line((c,c1), width=int(75/d)) for c1 in connected_atoms]
+					self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
+					self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale), colours[a])		
 
-				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
-				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale), colours[a])				
-
+				else:
+					no_bond.append(i)		
+			print(perf_counter()- starttime)
 
 	def draw_axes(self, length):
 		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))

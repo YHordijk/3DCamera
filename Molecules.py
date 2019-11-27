@@ -7,8 +7,8 @@ from time import perf_counter
 import sys
 
 
-if sys.argv is None:
-	m = mol.Molecule(file=os.getcwd() + r'\Molecules\Fullerene.xyz')
+if len(sys.argv) == 1:
+	m = mol.Molecule(file=os.getcwd() + r'\Molecules\rotaxane.xyz')
 else:
 	print(os.path.exists(sys.argv[1]))
 	m = mol.Molecule(file=sys.argv[1])
@@ -37,6 +37,7 @@ while run:
 	dT = tick(FPS)/1000
 	time += dT
 	
+	starttime = perf_counter()
 	screen.clear()
 	screen.draw_shape(m)
 
@@ -57,7 +58,7 @@ while run:
 
 	#tick end
 	screen.update()
-
+	print(perf_counter() - starttime)
 
 	if keys[pg.K_ESCAPE]:
 		run = False
