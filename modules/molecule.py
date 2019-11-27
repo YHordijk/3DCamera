@@ -8,7 +8,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, position=(0.,0.,0.), rotation=[0.,0.,0.], file=None):
+	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], file=None):
 		#check if file ends with xyz and try to load it
 		if file is not None and file.endswith('.xyz'):
 			self._load_xyz(file)

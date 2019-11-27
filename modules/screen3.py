@@ -93,7 +93,7 @@ class Screen3D:
 		pg.display.update()
 
 
-	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill"):
+	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True):
 		if shape.type == 'flat':
 			if mode == "fill":
 				faces = shape.faces(double_sided=double_sided)
@@ -102,14 +102,13 @@ class Screen3D:
 				self.draw_lines(shape.points, colour, shape.closed)
 
 		elif shape.type == 'molecule':
-			starttime = perf_counter()
 			cam_pos = self.camera_position
 			original_coords = shape.coords
 			dists = np.asarray([shape.distance(cam_pos, x) for x in shape.coords])
 			deltas = np.asarray(shape.coords - self.camera_position)
 			indices = np.argsort(dists)[::-1]
 			coords = shape.coords[indices]
-
+			original_atoms = shape.atom_types
 			atoms = shape.atom_types[indices]
 			dists = dists[indices]
 			deltas = deltas[indices]
@@ -119,24 +118,29 @@ class Screen3D:
 			colours = shape._atom_colours
 
 			prev_indices = []
-			no_bond = []
 			for i, a, c, d, delt in zip(indices, atoms, coords, dists, deltas):
 				prev_indices.append(i)
 				if delt[2] < 0:
 					bonds = shape.bonds[i].copy()
 					[bonds.remove(x) for x in prev_indices if x in bonds]
-					[bonds.remove(x) for x in no_bond if x in no_bond and x in bonds]
 					connected_atoms = original_coords[bonds]
 
-					[self.draw_line((c,c1), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
-					[self.draw_line((c,c1), width=int(75/d)) for c1 in connected_atoms]
 
-					self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
-					self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale), colours[a])		
+					if draw_bonds:
+						
+						if colour_bonds:
+							d2 = lambda x, y: (x - y)/2
+							[self.draw_line((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
+							[self.draw_line((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
+							[self.draw_line((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a]) for c1 in connected_atoms]
+							[self.draw_line((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]]) for a2, c1 in zip(bonds, connected_atoms)]
+						else:
+							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
+							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)) for c1 in connected_atoms]
 
-				else:
-					no_bond.append(i)		
-			print(perf_counter()- starttime)
+					if draw_atoms:
+						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
+						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale), colours[a])			
 
 	def draw_axes(self, length):
 		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))

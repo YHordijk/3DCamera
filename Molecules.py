@@ -8,13 +8,13 @@ import sys
 
 
 if len(sys.argv) == 1:
-	m = mol.Molecule(file=os.getcwd() + r'\Molecules\rotaxane.xyz')
+	m = mol.Molecule(file=os.getcwd() + r'\Molecules\aspirin.xyz')
 else:
 	print(os.path.exists(sys.argv[1]))
 	m = mol.Molecule(file=sys.argv[1])
 # m.remove_hydrogens()
 # m.add_hydrogens(1.1)
-m.center()
+# m.center()
 
 
 #game setup
@@ -37,28 +37,42 @@ while run:
 	dT = tick(FPS)/1000
 	time += dT
 	
-	starttime = perf_counter()
 	screen.clear()
-	screen.draw_shape(m)
+	screen.draw_shape(m, draw_atoms=True)
+
+	keys = pg.key.get_pressed()
 
 	move = pg.mouse.get_rel()
+	pos = pg.mouse.get_pos()
 	if pg.mouse.get_pressed()[0]:
-		rot = np.asarray([move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))])
+		m.position[0] -= move[0]/50
+		m.position[1] -= move[1]/50
+
+	if pg.mouse.get_pressed()[2]:
+		if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+			rot = np.asarray([0, 0, (abs(move[0]) + abs(move[1]))/250])
+		else:
+			rot = np.asarray([move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))])
 	else:
 		rot *= 0.6
 	m.rotate(rot)
+	try:
+		print([0].button)
+	except:
+		pass
 
-	keys = pg.key.get_pressed()
-	if keys[pg.K_UP]:
-		if screen.camera_position[2] > 5:
-			screen.camera_position[2] -= dT * screen.camera_position[2]
-	if keys[pg.K_DOWN]:
-		if screen.camera_position[2] < 40:
-			screen.camera_position[2] += dT * screen.camera_position[2]
+	event = pg.event.get(eventtype=pg.MOUSEBUTTONDOWN)
+
+	if len(event) > 0:
+		if event[0].button == 4:
+			if screen.camera_position[2] > 5:
+				screen.camera_position[2] -= dT * screen.camera_position[2] * 3
+		if event[0].button == 5:
+			if screen.camera_position[2] < 40:
+				screen.camera_position[2] += dT * screen.camera_position[2] * 3
 
 	#tick end
 	screen.update()
-	print(perf_counter() - starttime)
 
 	if keys[pg.K_ESCAPE]:
 		run = False
