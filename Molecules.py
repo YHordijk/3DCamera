@@ -8,18 +8,22 @@ import sys
 
 
 if len(sys.argv) == 1:
-	m = mol.Molecule(file=os.getcwd() + r'\Molecules\aspirin.xyz')
+	m = mol.Molecule(file=os.getcwd() + r'\Molecules\Chrysene.xyz')
 else:
 	print(os.path.exists(sys.argv[1]))
 	m = mol.Molecule(file=sys.argv[1])
+
+
+
 # m.remove_hydrogens()
-# m.add_hydrogens(1.1)
-# m.center()
+m.add_hydrogens(1.1)
+m.center()
+
 
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
-screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(0,0,0))
+screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0))
 clock = pg.time.Clock()
 FPS = 60
 run = True
@@ -56,10 +60,7 @@ while run:
 	else:
 		rot *= 0.6
 	m.rotate(rot)
-	try:
-		print([0].button)
-	except:
-		pass
+
 
 	event = pg.event.get(eventtype=pg.MOUSEBUTTONDOWN)
 

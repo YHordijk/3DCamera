@@ -9,6 +9,7 @@ class Molecule:
 	'''
 
 	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], file=None):
+		self._warning_level = 1
 		#check if file ends with xyz and try to load it
 		if file is not None and file.endswith('.xyz'):
 			self._load_xyz(file)
@@ -27,7 +28,7 @@ class Molecule:
 			'CFe': 0.92,
 			'FeH': 0.70,
 			'FeFe': 2.0,
-			'MgN': 2.15,
+			'MgN': 2.071,
 			'CMg': 1.87,
 			'HMg': 1.56,
 			'MgMg': 2.0,
@@ -69,6 +70,16 @@ class Molecule:
 		self.type = 'molecule'
 		self.rotation = rotation
 		self.scale = 400
+
+		self._atom_valence = {
+			'C': 4,
+			'H': 1,
+			'O': 2,
+			'N': 3,
+			'Mg': 2,
+		}
+
+
 		self.set_bonds()
 
 
@@ -94,6 +105,7 @@ Coordinates (angstrom):
 
 	def center(self):
 		self.coords -= self.center_of_mass
+
 
 	def _load_xyz(self, file):
 		'''
@@ -238,6 +250,92 @@ Coordinates (angstrom):
 
 	def set_bonds(self):
 		self.bonds = [self.get_bonded_atoms(a) for a in range(len(self.atom_types))]
+		self.bond_orders = [[1 for _ in self.get_bonded_atoms(a)] for a in range(len(self.atom_types))]
+		self.guess_bond_orders()
+		
+
+	def guess_bond_orders(self):
+		'''
+		Method that guesses the bond orders of the molecule.
+		
+		Current strategy:
+		- Sort elements from low valence to high valence (H < O < N < C, etc..) 
+		  and loops over the elements.
+			- Collect every atom of the element and checks its bond saturation.
+			- If the atom is not saturated, loop over the atoms it is bonded to.
+				- Check the saturation of the bonded atom. If the bonded atom 
+				  is also not saturated, increase the bond order to that bond.
+				- Terminate the loop if the current atom is saturated.
+
+		Problems:
+		- Sometimes all but one atom is saturated. For example with chlorophyll.
+
+		Possible Solution:
+		- Check at the end if there are unsaturated atoms. Redo the calculation but in different orders
+		'''
+
+		#sort the elements by valence
+		valences = list(self._atom_valence.items())
+		valences = sorted(valences, key=lambda x: x[1])
+
+		for el, _ in valences:
+			#get all atoms of element el
+			atoms = self.get_by_element(el)
+			#loop over the atoms
+			for a in atoms:
+				#check if a is saturated
+				if not self.is_saturated(a):
+					#if not, get its neighbours
+					neighbours = self.get_bonded_atoms(a)
+					#loop over the neighbours
+					for i, neighbour in enumerate(neighbours):
+						#check if the neighbour is also unsaturated and whether a has 
+						#become saturated  in the meantime
+						if not self.is_saturated(neighbour) and not self.is_saturated(a):
+							self.bond_orders[a][i] += 1
+							self.bond_orders[neighbour][self.bonds[neighbour].index(a)] = self.bond_orders[a][i]
+
+		#give warnings if necessary
+		if self._warning_level >= 1:
+			mbo = sum([self.is_saturated(a) for a in range(self.natoms)]) - len(self.atom_types)
+			if mbo < 0:
+				print(f'Molecule.guess_bond_orders: bond order guessing was not succesful. Missing bond order: {abs(mbo)}')
+			else:
+				print('Molecule.guess_bond_orders: Bond orders seems fine')
+
+
+	@property
+	def natoms(self):
+		return len(self.atom_types)
+
+
+	def is_saturated(self, a):
+		return self.get_saturation(a) == self._atom_valence[self.atom_types[a]]
+
+
+	def get_saturation(self, a):
+		'''
+		Method that returns the valence saturation of an atom.
+
+		a - integer index of atom
+
+		return integer number of bonds
+		'''
+
+		return sum(self.bond_orders[a])
+
+
+	def get_by_element(self, element):
+		'''
+		Method that returns a list of indices corresponding to the atoms in the 
+		molecule of a certain element.
+
+		element - string specifying the element
+
+		returns list of indices
+		'''
+		
+		return [i for i, a in enumerate(self.atom_types) if a == element]
 
 
 	def get_bonded_atoms(self, a, element='any'):
@@ -328,10 +426,12 @@ Coordinates (angstrom):
 
 				#append the list of new hydrogens
 				new_H_coords.append(self.coords[i] - np.expand_dims(k, 0))
+
 		#add all hydrogen atoms to the molecule. We do this last, so that new hydrogens do not interfere with
 		#the above loop.
-		[self.add_atom('H', c) for c in new_H_coords]
+		[self.add_atom('H', c, set_bonds=False) for c in new_H_coords]
 
+		self.set_bonds()
 
 	def remove_hydrogens(self):
 		'''
@@ -347,9 +447,7 @@ Coordinates (angstrom):
 		self.set_bonds()
 
 
-
-
-	def add_atom(self, element, coords):
+	def add_atom(self, element, coords, set_bonds=True):
 		'''
 		Method that adds an atom to the molecule
 
@@ -359,7 +457,8 @@ Coordinates (angstrom):
 
 		self.atom_types = np.append(self.atom_types, element)
 		self.coords = np.append(self.coords, coords, axis=0)
-		self.set_bonds()
+
+		if set_bonds: self.set_bonds()
 
 
 	def save_to_xyz(self, file):

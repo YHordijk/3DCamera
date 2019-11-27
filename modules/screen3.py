@@ -59,19 +59,33 @@ class Screen3D:
 		except:
 			raise
 
-	def draw_line(self, poss, colour=(255,255,255), width=1):
+	def draw_single_bond(self, poss, colour=(255,255,255), width=1):
 		try:
-			
 			h = self.height + 200
 			w = self.width + 200
 			poss = [self.project(pos) for pos in poss]
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
 				# print(poss, euclidean(poss[0], poss[1]))
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], width+3)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
-
-
 		except:
 			raise
+
+	def draw_double_bond(self, poss, colour=(255,255,255), width=1):
+		try:
+			h = self.height + 200
+			w = self.width + 200
+			poss = np.asarray([self.project(pos) for pos in poss])
+			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
+				d = width
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-d, poss[1]-d, width+3)
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+d, poss[1]+d, width+3)
+
+				pg.draw.line(self.disp, colour, poss[0]-d, poss[1]-d, width)
+				pg.draw.line(self.disp, colour, poss[0]+d, poss[1]+d, width)
+		except:
+			raise
+
 
 	def draw_circle(self, center, radius, colour=(255,255,255), width=0):
 		pos = self.project(center)
@@ -114,6 +128,7 @@ class Screen3D:
 			deltas = deltas[indices]
 
 			radii = shape._atom_radii
+			orders = shape.bond_orders
 			shape_pos = shape.position
 			colours = shape._atom_colours
 
@@ -122,18 +137,23 @@ class Screen3D:
 				prev_indices.append(i)
 				if delt[2] < 0:
 					bonds = shape.bonds[i].copy()
-					[bonds.remove(x) for x in prev_indices if x in bonds]
+					order = orders[i].copy()
+
 					connected_atoms = original_coords[bonds]
 
-
 					if draw_bonds:
-						
 						if colour_bonds:
 							d2 = lambda x, y: (x - y)/2
-							[self.draw_line((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
-							[self.draw_line((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
-							[self.draw_line((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a]) for c1 in connected_atoms]
-							[self.draw_line((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]]) for a2, c1 in zip(bonds, connected_atoms)]
+							for o, a2, c1 in zip(order, bonds, connected_atoms):
+								if not a2 in prev_indices:
+									if o != shape.bond_orders[i][bonds.index(a2)]: print(f'{i}: {o}, {a2}: {shape.bond_orders[i][bonds.index(a2)]}'); print(orders[i])
+									if o == 1:
+										self.draw_single_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
+										self.draw_single_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
+									if o == 2:
+										self.draw_double_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
+										self.draw_double_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
+
 						else:
 							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
 							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)) for c1 in connected_atoms]
