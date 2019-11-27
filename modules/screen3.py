@@ -116,11 +116,8 @@ class Screen3D:
 				[self.draw_line((c,c1), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
 				[self.draw_line((c,c1), width=int(75/d)) for c1 in connected_atoms]
 
-				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=1)
-				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale), colours[a])
-
-				
-				
+				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
+				self.draw_circle(c + shape_pos, int(radii[a]/d * shape.scale), colours[a])				
 
 
 	def draw_axes(self, length):

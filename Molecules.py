@@ -4,15 +4,21 @@ import pygame as pg
 import math, os
 import numpy as np
 from time import perf_counter
+import sys
 
-m = mol.Molecule(file=os.getcwd() + r'\Molecules\hexabenzocoronene2.xyz')
-m.remove_hydrogens()
-m.add_hydrogens(1.1)
+
+if sys.argv is None:
+	m = mol.Molecule(file=os.getcwd() + r'\Molecules\Fullerene.xyz')
+else:
+	print(os.path.exists(sys.argv[1]))
+	m = mol.Molecule(file=sys.argv[1])
+# m.remove_hydrogens()
+# m.add_hydrogens(1.1)
 m.center()
 
 
 #game setup
-WIDTH, HEIGHT = SIZE = (1600, 900)
+WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(0,0,0))
 clock = pg.time.Clock()
 FPS = 60
@@ -38,7 +44,7 @@ while run:
 	if pg.mouse.get_pressed()[0]:
 		rot = np.asarray([move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))])
 	else:
-		rot *= 0.8
+		rot *= 0.6
 	m.rotate(rot)
 
 	keys = pg.key.get_pressed()

@@ -14,18 +14,33 @@ class Molecule:
 			self._load_xyz(file)
 
 		self._bond_len_thresh = { #bond length thresholds between different atoms
-			'CC': 1.56,	#atoms must be sorted alphabetically
-			'CH': 1.111,
+			'CC': 1.60,	#atoms must be sorted alphabetically
+			'CH': 1.2,
 			'CO': 1.50,
 			'HO': 1.00,
 			'HH': 0.74,
-			'OO': 1.49
+			'OO': 1.49,
+			'NO': 1.50,
+			'CN': 1.49,
+			'NN': 1.47,
+			'HN': 1.03,
+			'CFe': 0.92,
+			'FeH': 0.70,
+			'FeFe': 2.0,
+			'MgN': 2.15,
+			'CMg': 1.87,
+			'HMg': 1.56,
+			'MgMg': 2.0,
+			'MgO': 1.83
 		}
 
 		self._atomic_masses = { #masses of the elements
 			'C': 12,
 			'H': 1,
 			'O': 16,
+			'N': 14,
+			'Fe': 55.85,
+			'Mg': 24.3
 		}
 
 		self._atom_colours = {
@@ -35,6 +50,8 @@ class Molecule:
 			'N': (22, 33, 255),
 			'S': (225, 225, 48),
 			'Ca': (61, 255, 0),
+			'Fe': (221, 119, 0),
+			'Mg': (0, 119, 0)
 			}
 
 		self._atom_radii = {
@@ -44,6 +61,8 @@ class Molecule:
 			'N': 0.56,
 			'S': 1.00,
 			'Ca': 1.80,
+			'Fe': 1.40,
+			'Mg': 1.50,
 		}
 
 		self.position = position	
