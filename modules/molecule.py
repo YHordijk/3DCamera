@@ -284,14 +284,14 @@ Coordinates (angstrom):
 			#loop over the atoms
 			for a in atoms:
 				#check if a is saturated
-				if not self.is_saturated(a):
+				if self.is_unsaturated(a):
 					#if not, get its neighbours
 					neighbours = self.get_bonded_atoms(a)
 					#loop over the neighbours
 					for i, neighbour in enumerate(neighbours):
 						#check if the neighbour is also unsaturated and whether a has 
 						#become saturated  in the meantime
-						if not self.is_saturated(neighbour) and not self.is_saturated(a):
+						if self.is_unsaturated(neighbour) and self.is_unsaturated(a):
 							self.bond_orders[a][i] += 1
 							self.bond_orders[neighbour][self.bonds[neighbour].index(a)] = self.bond_orders[a][i]
 
@@ -299,18 +299,21 @@ Coordinates (angstrom):
 		if self._warning_level >= 1:
 			mbo = sum([self.is_saturated(a) for a in range(self.natoms)]) - len(self.atom_types)
 			if mbo < 0:
-				print(f'Molecule.guess_bond_orders: bond order guessing was not succesful. Missing bond order: {abs(mbo)}')
+				print(f'Molecule.guess_bond_orders: bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
 			else:
-				print('Molecule.guess_bond_orders: Bond orders seems fine')
+				print('Molecule.guess_bond_orders: Bond orders seem fine')
 
 
 	@property
 	def natoms(self):
 		return len(self.atom_types)
 
-
 	def is_saturated(self, a):
 		return self.get_saturation(a) == self._atom_valence[self.atom_types[a]]
+
+	def is_unsaturated(self, a):
+		return self.get_saturation(a) < self._atom_valence[self.atom_types[a]]
+
 
 
 	def get_saturation(self, a):

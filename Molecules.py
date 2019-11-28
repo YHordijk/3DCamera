@@ -6,16 +6,16 @@ import numpy as np
 from time import perf_counter
 import sys
 
-
+input_mol = 'hexabenzocoronene'
 if len(sys.argv) == 1:
-	m = mol.Molecule(file=os.getcwd() + r'\Molecules\Chrysene.xyz')
+	m = mol.Molecule(file=os.getcwd() + rf'\Molecules\{input_mol}.xyz')
 else:
 	print(os.path.exists(sys.argv[1]))
 	m = mol.Molecule(file=sys.argv[1])
 
 
 
-# m.remove_hydrogens()
+m.remove_hydrogens()
 m.add_hydrogens(1.1)
 m.center()
 
@@ -25,7 +25,7 @@ m.center()
 WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0))
 clock = pg.time.Clock()
-FPS = 60
+FPS = 120
 run = True
 
 #main loop
@@ -46,13 +46,15 @@ while run:
 
 	keys = pg.key.get_pressed()
 
+	if keys[pg.K_SPACE]:
+		m.position = [0,0,0]
+
 	move = pg.mouse.get_rel()
-	pos = pg.mouse.get_pos()
-	if pg.mouse.get_pressed()[0]:
+	if pg.mouse.get_pressed()[2]:
 		m.position[0] -= move[0]/50
 		m.position[1] -= move[1]/50
 
-	if pg.mouse.get_pressed()[2]:
+	if pg.mouse.get_pressed()[0]:
 		if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
 			rot = np.asarray([0, 0, (abs(move[0]) + abs(move[1]))/250])
 		else:
