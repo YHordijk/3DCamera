@@ -78,13 +78,40 @@ class Screen3D:
 			poss = np.asarray([self.project(pos) for pos in poss])
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
 				d = width
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-d, poss[1]-d, width+3)
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+d, poss[1]+d, width+3)
+				perp = poss - poss[0]
+				
+				perp = np.asarray([perp[0], (perp[1][1], -perp[1][0])])[1]
+				perp = d * perp / np.linalg.norm(perp)
 
-				pg.draw.line(self.disp, colour, poss[0]-d, poss[1]-d, width)
-				pg.draw.line(self.disp, colour, poss[0]+d, poss[1]+d, width)
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-perp, poss[1]-perp, d+3)
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+perp, poss[1]+perp, width+3)
+
+				pg.draw.line(self.disp, colour, poss[0]-perp, poss[1]-perp, d)
+				pg.draw.line(self.disp, colour, poss[0]+perp, poss[1]+perp, d)
 		except:
-			raise
+			pass
+
+	def draw_triple_bond(self, poss, colour=(255,255,255), width=1):
+		try:
+			h = self.height + 200
+			w = self.width + 200
+			poss = np.asarray([self.project(pos) for pos in poss])
+			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
+				d = width
+				perp = poss - poss[0]
+				
+				perp = np.asarray([perp[0], (perp[1][1], -perp[1][0])])[1]
+				perp = 1.5 * d * perp / np.linalg.norm(perp)
+
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-perp, poss[1]-perp, d+3)
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], d+3)
+				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+perp, poss[1]+perp, width+3)
+
+				pg.draw.line(self.disp, colour, poss[0]-perp, poss[1]-perp, d)
+				pg.draw.line(self.disp, colour, poss[0], poss[1], d)
+				pg.draw.line(self.disp, colour, poss[0]+perp, poss[1]+perp, d)
+		except:
+			pass
 
 
 	def draw_circle(self, center, radius, colour=(255,255,255), width=0):
@@ -148,13 +175,17 @@ class Screen3D:
 								if not a2 in prev_indices:
 									if o != shape.bond_orders[i][bonds.index(a2)]: print(f'{i}: {o}, {a2}: {shape.bond_orders[i][bonds.index(a2)]}'); print(orders[i])
 									if o == 1:
+										self.draw_single_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])	
 										self.draw_single_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
-										self.draw_single_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
-									if o == 2:
-										self.draw_double_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
-										self.draw_double_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
 
-						else:
+									if o == 2:
+										self.draw_double_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
+										self.draw_double_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
+
+									if o == 3:
+										self.draw_triple_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
+										self.draw_triple_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
+						else:	
 							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
 							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)) for c1 in connected_atoms]
 

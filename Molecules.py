@@ -5,25 +5,27 @@ import math, os
 import numpy as np
 from time import perf_counter
 import sys
+import pubchempy as pcp
 
-input_mol = 'hexabenzocoronene'
-if len(sys.argv) == 1:
-	m = mol.Molecule(file=os.getcwd() + rf'\Molecules\{input_mol}.xyz')
-else:
-	print(os.path.exists(sys.argv[1]))
-	m = mol.Molecule(file=sys.argv[1])
+input_mol = 'Aminoindane'
 
 
 
-m.remove_hydrogens()
-m.add_hydrogens(1.1)
+# if len(sys.argv) == 1:
+# 	m = mol.Molecule(file=os.getcwd() + rf'\Molecules\{input_mol}.xyz')
+# else:
+# 	print(os.path.exists(sys.argv[1]))
+# 	m = mol.Molecule(file=sys.argv[1])
+
+m = mol.Molecule(molecule_file='Beta-carotene.pcp')
+
+# m.remove_by_element('H')
+# m.add_hydrogens(1.1)
 m.center()
-
-
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
-screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0))
+screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(100, 100, 190))
 clock = pg.time.Clock()
 FPS = 120
 run = True
@@ -60,9 +62,8 @@ while run:
 		else:
 			rot = np.asarray([move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))])
 	else:
-		rot *= 0.6
+		rot *= 0.8
 	m.rotate(rot)
-
 
 	event = pg.event.get(eventtype=pg.MOUSEBUTTONDOWN)
 

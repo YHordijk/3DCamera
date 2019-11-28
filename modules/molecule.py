@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 from math import cos, sin, pi
+import os
+
 
 
 class Molecule:
@@ -8,11 +10,8 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], file=None):
+	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], molecule_file=None):
 		self._warning_level = 1
-		#check if file ends with xyz and try to load it
-		if file is not None and file.endswith('.xyz'):
-			self._load_xyz(file)
 
 		self._bond_len_thresh = { #bond length thresholds between different atoms
 			'CC': 1.60,	#atoms must be sorted alphabetically
@@ -79,8 +78,12 @@ class Molecule:
 			'Mg': 2,
 		}
 
+		#check if file ends with xyz and try to load it
+		if molecule_file is not None and molecule_file.endswith('.xyz'):
+			self._load_xyz(molecule_file)
 
-		self.set_bonds()
+		if molecule_file is not None and molecule_file.endswith('.pcp'):
+			self._load_from_pubchem(molecule_file.strip('.pcp'))
 
 
 	def __str__(self):
@@ -119,6 +122,35 @@ Coordinates (angstrom):
 		self.name = file.split('/')[-1].strip('.xyz')
 		self.coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
 		self.atom_types = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
+
+		self.set_bonds()
+
+
+	def _load_from_pubchem(self, name):
+		'''
+		Method used to load data from pubchem
+
+		name - name of compound to search
+
+		returns nothing
+		'''
+
+		import pubchempy as pcp
+
+		try:
+			name = int(name)
+		except:
+			pass
+
+		mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type='3d')[0]
+		
+		self.coords = np.asarray([[a.x, a.y, a.z] for a in mol.atoms])
+		self.atom_types = np.asarray([a.element for a in mol.atoms])
+		self.name = name
+
+		self.save_to_xyz(os.getcwd() + rf'\Molecules\{name.lower()}.xyz')
+
+		self.set_bonds()
 
 
 	@property 
@@ -286,7 +318,7 @@ Coordinates (angstrom):
 				#check if a is saturated
 				if self.is_unsaturated(a):
 					#if not, get its neighbours
-					neighbours = self.get_bonded_atoms(a)
+					neighbours = np.copy(self.get_bonded_atoms(a))
 					#loop over the neighbours
 					for i, neighbour in enumerate(neighbours):
 						#check if the neighbour is also unsaturated and whether a has 
@@ -296,24 +328,28 @@ Coordinates (angstrom):
 							self.bond_orders[neighbour][self.bonds[neighbour].index(a)] = self.bond_orders[a][i]
 
 		#give warnings if necessary
+		mbo = sum([self.is_saturated(a) for a in range(self.natoms)]) - len(self.atom_types)
 		if self._warning_level >= 1:
-			mbo = sum([self.is_saturated(a) for a in range(self.natoms)]) - len(self.atom_types)
 			if mbo < 0:
-				print(f'Molecule.guess_bond_orders: bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
+				print(f'Molecule.guess_bond_orders: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
 			else:
 				print('Molecule.guess_bond_orders: Bond orders seem fine')
+
+		# if mbo < 0:
+		# 	self.guess_bond_orders()
 
 
 	@property
 	def natoms(self):
 		return len(self.atom_types)
 
+
 	def is_saturated(self, a):
 		return self.get_saturation(a) == self._atom_valence[self.atom_types[a]]
 
+
 	def is_unsaturated(self, a):
 		return self.get_saturation(a) < self._atom_valence[self.atom_types[a]]
-
 
 
 	def get_saturation(self, a):
@@ -436,18 +472,38 @@ Coordinates (angstrom):
 
 		self.set_bonds()
 
-	def remove_hydrogens(self):
+	def remove_by_element(self, element):
 		'''
 		Method that removes hydrogens from the molecule.
+
+		element - string element type of the atom
 		'''
 		#we loop over all atoms in reverse, so that we do not get complications
 		#with out of bounds errors
-		for i, a in zip(range(len(self.atom_types))[::-1], self.atom_types[::-1]):
-			if a == 'H':
-				self.atom_types = np.delete(self.atom_types, i)
-				self.coords = np.delete(self.coords, i, axis=0)
 
+		atoms = sorted(self.get_by_element('H'))[::-1]
+		[self.remove_atom(a) for a in atoms]
+		
 		self.set_bonds()
+
+
+		# for i, a in zip(range(len(self.atom_types))[::-1], self.atom_types[::-1]):
+		# 	if a == 'H':
+		# 		self.atom_types = np.delete(self.atom_types, i)
+		# 		self.coords = np.delete(self.coords, i, axis=0)
+
+		# self.set_bonds()
+
+
+	def remove_atom(self, a):
+		'''
+		Method that removes an atom from the molecule.
+
+		a - integer index of atom a
+		'''
+
+		self.atom_types = np.delete(self.atom_types, a)
+		self.coords = np.delete(self.coords, a, axis=0)
 
 
 	def add_atom(self, element, coords, set_bonds=True):
@@ -472,7 +528,7 @@ Coordinates (angstrom):
 		'''
 
 		with open(file, 'w+') as f:
-			f.write(f'{len(self.atom_types)}\n')
+			f.write(f'{self.natoms}\n')
 			f.write('generated via python\n')
 			for e, c in zip(self.atom_types, self.coords):
 				f.write(f'{e} {c[0]:.5f} {c[1]:.5f} {c[2]:.5f}\n')
