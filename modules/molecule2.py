@@ -5,10 +5,110 @@ import os
 
 
 class Atom:
-	def __init__(self, element, position):
-		self.position = position
+	def __init__(self, element, coords):
+		self.coords = coords
 		self.element = element
 		self.bonds = []
+
+		self.mass = { #masses of the elements
+			'C': 12,
+			'H': 1,
+			'O': 16,
+			'N': 14,
+			'Fe': 55.85,
+			'Mg': 24.3,
+			'P': 31,
+			'Cl': 35.5,
+			'S': 32.02,
+			'Na': 23,
+		}[element]
+
+		self.colour = {
+			'C': (34, 34, 34),
+			'H': (255, 255, 255),
+			'O': (255, 22, 0),
+			'N': (22, 33, 255),
+			'S': (225, 225, 48),
+			'Ca': (61, 255, 0),
+			'Fe': (221, 119, 0),
+			'Mg': (0, 119, 0),
+			'P': (255, 153, 0),
+			'Cl': (31, 240, 31),
+			'Na': (119, 0, 255),
+			}[element]
+
+		self.radius = {
+			'C': 0.67,
+			'H': 0.53,
+			'O': 0.48,
+			'N': 0.56,
+			'S': 1.00,
+			'Ca': 1.80,
+			'Fe': 1.40,
+			'Mg': 1.50,
+			'P': 1.10,
+			'Cl': 1.00,
+			'Na': 1.80,
+		}[element]
+
+		self.max_valence = {
+			'C': 4,
+			'H': 1,
+			'O': 2,
+			'N': 3,
+			'Mg': 2,
+			'P': 6,
+			'Cl': 1,
+			'S': 2,
+			'Na': 1,
+		}[element]
+
+
+	def distance_to(self, p):
+		'''
+		Method that returns the distance to a point p. If p is of class Atom, use p's coords.
+
+		p - float or Atom type.
+
+		return float
+		'''
+
+		if type(p) is Atom:
+			p = p.coords
+
+		return euclidean(self.coords, p)
+
+
+	def fix_overbonding(self):
+		'''
+		Method that attempts to fix overbonding.
+		It does so by elminating the longest bond.
+		'''
+
+		while len(self.bonds) > self.max_valence:
+			#sort bonds by distance
+			sorted(self.bonds, key=lambda b: self.distance_to(b))
+			#remove last item from sorted list
+			del(self.bonds[-1])
+			#remove self from the neighbours bonds list
+			print(self, b.bonds)
+			b.bonds.remove(self)
+
+
+	def set_bonds(self, molecule):
+		'''
+		Method that determines bonds based on  
+		'''
+
+		for atom in molecule.atoms:
+			if not atom == self:
+				if self.distance_to(atom) < self.radius + atom.radius + 0.4:
+					self.bonds.append(atom)
+					atom.bonds.append(self)
+
+
+	# def __str__(self):
+	# 	return f'Atom({self.element}, {self.coords})'
 
 
 
@@ -21,84 +121,10 @@ class Molecule:
 	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], molecule_file=None):
 		self._warning_level = 1
 
-		self._bond_len_thresh = { #bond length thresholds between different atoms
-			# 'CC': 1.60,	#atoms must be sorted alphabetically
-			# 'CH': 1.2,
-			# 'CO': 1.50,
-			# 'HO': 1.00,
-			# 'HH': 0.74,
-			# 'OO': 1.49,
-			# 'NO': 1.50,
-			# 'CN': 1.6,
-			# 'NN': 1.47,
-			# 'HN': 1.03,
-			# 'CFe': 0.92,
-			# 'FeH': 0.70,
-			# 'FeFe': 2.0,
-			# 'MgN': 2.071,
-			# 'CMg': 1.87,
-			# 'HMg': 1.56,
-			# 'MgMg': 2.0,
-			# 'MgO': 1.83
-		}
-
-		self._atomic_masses = { #masses of the elements
-			'C': 12,
-			'H': 1,
-			'O': 16,
-			'N': 14,
-			'Fe': 55.85,
-			'Mg': 24.3,
-			'P': 31,
-			'Cl': 35.5,
-			'S': 32.02,
-			'Na': 23,
-		}
-
-		self._atom_colours = {
-			'C': (34, 34, 34),
-			'H': (255, 255, 255),
-			'O': (255, 22, 0),
-			'N': (22, 33, 255),
-			'S': (225, 225, 48),
-			'Ca': (61, 255, 0),
-			'Fe': (221, 119, 0),
-			'Mg': (0, 119, 0),
-			'P': (255, 153, 0),
-			'Cl': (31, 240, 31),
-			'Na': (119, 0, 255),
-			}
-
-		self._atom_radii = {
-			'C': 0.67,
-			'H': 0.53,
-			'O': 0.48,
-			'N': 0.56,
-			'S': 1.00,
-			'Ca': 1.80,
-			'Fe': 1.40,
-			'Mg': 1.50,
-			'P': 1.10,
-			'Cl': 1.00,
-			'Na': 1.80,
-		}
-
 		self.position = position	
 		self.type = 'molecule'
 		self.rotation = rotation
 		self.scale = 400
-
-		self._atom_valence = {
-			'C': 4,
-			'H': 1,
-			'O': 2,
-			'N': 3,
-			'Mg': 2,
-			'P': 6,
-			'Cl': 1,
-			'S': 2,
-			'Na': 1,
-		}
 
 		#check if file ends with xyz and try to load it
 		if molecule_file is not None and molecule_file.endswith('.xyz'):
@@ -129,7 +155,8 @@ Coordinates (angstrom):
 
 
 	def center(self):
-		self.coords -= self.center_of_mass
+		for a in self.atoms:
+			a.coords -= self.center_of_mass
 
 
 	def _load_xyz(self, file):
@@ -142,8 +169,11 @@ Coordinates (angstrom):
 		'''
 
 		self.name = file.split('/')[-1].strip('.xyz')
-		self.coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
-		self.atom_types = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
+		coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
+		elements = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
+
+		self.atoms = []
+		[self.atoms.append(Atom(elements[i], coords[i])) for i in range(len(coords))]
 
 		self.set_bonds()
 
@@ -205,7 +235,7 @@ Coordinates (angstrom):
 		'''
 
 		#cast self.atom_types to a list and count the number of 'C'
-		return self.atom_types.tolist().count(element)
+		return [a.element for a in self.atoms].count(element)
 
 
 	def bond_angle(self, a1, a2, a3, in_degrees=False):
@@ -234,8 +264,8 @@ Coordinates (angstrom):
 
 		'''
 
-		u = self.coords[a1] - self.coords[a2]
-		v = self.coords[a3] - self.coords[a2]
+		u = a1.coords - a2.coords
+		v = a3.coords - a2.coords
 
 		#We know that cos(theta) = u @ v / (|u| * |v|)
 		#function to calculate the magnitude of a vector
@@ -249,15 +279,15 @@ Coordinates (angstrom):
 		'''
 		Method that returns the euclidean distance between two atoms
 
-		a1 - integer index of atom 1 or coordinates
-		a2 - integer index of atom 2 or coordinates
+		a1 - atom 1 or coordinates
+		a2 - atom 2 or coordinates
 
 		returns float distance between a1 and a2
 		'''
-		if type(a1) is int:
-			a1 = self.coords[a1]
-		if type(a2) is int:
-			a2 = self.coords[a2]
+		if type(a1) is Atom:
+			a1 = a1.coords
+		if type(a2) is Atom:
+			a2 = a2.coords
 
 		return euclidean(a1, a2)
 
@@ -266,33 +296,14 @@ Coordinates (angstrom):
 		'''
 		Method that returns whether two atoms are considered to be bonded.
 
-		a1 - integer index of atom 1
-		a2 - integer index of atom 2
+		a1 - atom 1
+		a2 - atom 2
 
 		returns boolean 
 		'''
 
-		#get the atom_types of a1 and a2
-		#sort the elements so that we can use self._bond_len_thresh which 
-		#expects alphabetically sorted keys
-		e1, e2 = sorted((self.atom_types[a1], self.atom_types[a2]))
+		return a2 in a1.bonds
 
-		#get the distance between a1 and a2 and compare them to the e1-e2 bond
-		#length threshold set in self.__init__
-		if e1 + e2 in list(self._bond_len_thresh.keys()):
-			return self.distance(a1, a2) < self._bond_len_thresh[e1 + e2]
-		return self.distance(a1, a2) < self._atom_radii[e1] + self._atom_radii[e2] + 0.4
-		# return self.distance(a1, a2) < (rad[elem[a1]] + rad[elem[a2]]) * 1.1
-
-
-	@property 
-	def masses(self):
-		'''
-		Property method that returns the masses of the atoms in the molecule
-		as an np.array
-		'''
-
-		return np.asarray([self._atomic_masses[e] for e in self.atom_types])
 
 
 	@property
@@ -308,22 +319,16 @@ Coordinates (angstrom):
 		#we simply multiply the (n, ) row vector self.masses by the (n,3) 
 		#self.coords matrix. Matrix multiplication and dividing by M gives 
 		#us the (1,3) coordinates of the COM.
-		return self.masses @ self.coords / np.sum(self.masses) 
+		masses = np.asarray([a.mass for a in self.atoms])
+		return masses @ np.asarray([a.coords for a in self.atoms]) / np.sum(masses) 
 
 
 	def set_bonds(self):
-		'''
-		Method that sets the bonds for the molecule.
-		Saves them into self.bonds. Also initializes self.bond_orders as all 1.
-		Also calls self.guess_bond_orders
-		'''
+		
+		[a.set_bonds(self) for a in self.atoms]
 
-		self.bonds = [self.get_bonded_atoms(a) for a in range(len(self.atom_types))]
 		self.fix_overbonding()
 
-		self.bond_orders = [[1 for _ in self.get_bonded_atoms(a)] for a in range(len(self.atom_types))]
-		self.guess_bond_orders()
-		
 
 	def guess_bond_orders(self):
 		'''
@@ -380,7 +385,7 @@ Coordinates (angstrom):
 
 	@property
 	def natoms(self):
-		return len(self.atom_types)
+		return len(self.atoms)
 
 
 	def is_saturated(self, a):
@@ -392,15 +397,8 @@ Coordinates (angstrom):
 
 
 	def fix_overbonding(self):
-		for a in range(self.natoms):
-			while len(self.bonds[a]) > self._atom_valence[self.atom_types[a]]:
-				sorted_bonds = sorted(self.bonds[a].copy(), key=lambda x: self.distance(a, x))
-				print([self.distance(a,x) for x in sorted_bonds	])
-				furthest = self.bonds[a].index(sorted_bonds[-1])
-				# del(self.bonds[furthest][self.bonds[furthest].index(a)])
-				del(self.bonds[a][furthest])
-				print(self.bonds[furthest], furthest, self.atom_types[a])
-				# del(self.bonds[furthest][self.bonds[furthest].index(a)])
+		# [a.fix_overbonding() for a in self.atoms]
+		pass
 
 
 	def get_saturation(self, a):
@@ -425,7 +423,7 @@ Coordinates (angstrom):
 		returns list of indices
 		'''
 		
-		return [i for i, a in enumerate(self.atom_types) if a == element]
+		return [a for a in self.atoms if a.element is element]
 
 
 	def get_bonded_atoms(self, a, element='any'):
@@ -437,15 +435,10 @@ Coordinates (angstrom):
 		returns list of integers as indices of atoms bonded to a
 		'''
 
-		#Let i loop over the atoms and return i if it is bonded to a and i is not a 
-		bonds = [i for i in range(self.natoms) if self.isbonded(a, i) and i != a]
-		# while len(bonds) > self._atom_valence[self.atom_types[a]]:
-		# 	sorted_bonds = sorted(bonds.copy(), key=lambda x: self.distance(a, x))
-
 		if element == 'any':
-			return bonds
+			return a.bonds
 		else:
-			return [a for a in bonds if self.atom_types[a] == element]
+			return [b for b in a.bonds if b.element is element]
 
 
 	def nbonds(self, a, element='any'):
@@ -457,12 +450,7 @@ Coordinates (angstrom):
 		returns integer number of bonds to a
 		'''
 
-		#First make a list of booleans (in python equivalent to 0 and 1) based on
-		#self.isbonded between atom a and the rest of the atoms.
-		#Then return the sum of the list.
-		if element == 'any':
-			return sum([self.isbonded(a, i) for i in range(len(self.atom_types)) if i != a])
-		return sum([self.isbonded(a, i) for i in range(len(self.atom_types)) if i != a and self.atom_types[i] == element])
+		return len(get_bonded_atoms(a, element))
 
 
 	def add_hydrogens(self, bond_len=1.1):
@@ -610,7 +598,15 @@ Coordinates (angstrom):
 					   [ sin(r),  cos(r), 	   0],
 					   [ 	  0, 	   0, 	   1]))
 
-		self.coords = np.asarray([Rx @ Ry @ Rz @ p for p in (self.coords - self.center_of_mass)])
+		for a in self.atoms:
+			a.coords = Rx @ Ry @ Rz @ a.coords
 
 
 
+a = Atom('H', (0,0,0))
+b = Atom('H', (0,2,2))
+print(a.distance_to(b))
+
+
+m = Molecule(molecule_file = r'C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\benzene.xyz')
+print(m.atoms[1].bonds)

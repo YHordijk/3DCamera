@@ -1,11 +1,12 @@
 import modules.screen3 as scr 
-import modules.molecule as mol 
-import pygame as pg
+import modules.molecule2 as mol 
+
 import math, os
 import numpy as np
 from time import perf_counter
 import sys
 import pubchempy as pcp
+import pygame as pg
 
 input_mol = 'Aminoindane'
 
@@ -17,17 +18,19 @@ input_mol = 'Aminoindane'
 # 	print(os.path.exists(sys.argv[1]))
 # 	m = mol.Molecule(file=sys.argv[1])
 
-m = mol.Molecule(molecule_file='Beta-carotene.pcp')
+# m = mol.Molecule(molecule_file='Basketane.pcp')
+m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\hexabenzocoronene.xyz')
 
 # m.remove_by_element('H')
 # m.add_hydrogens(1.1)
 m.center()
 
+
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(100, 100, 190))
 clock = pg.time.Clock()
-FPS = 120
+FPS = 60
 run = True
 
 #main loop
@@ -38,6 +41,7 @@ time = 0
 rot = np.array([0.,0.,0.])
 
 while run:
+	start = perf_counter()
 	#tick prep
 	updt += 1
 	dT = tick(FPS)/1000
@@ -84,3 +88,5 @@ while run:
 		if event.type == pg.QUIT:
 			run = False
 			break
+
+	print(perf_counter()-start)

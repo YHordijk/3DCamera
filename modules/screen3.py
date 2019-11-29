@@ -126,9 +126,9 @@ class Screen3D:
 			points = [proj(point) for point in points]
 			colour = (255-dist,255-dist,255-dist)
 			pg.draw.polygon(self.disp, colour, points)
-
 		except:
 			raise
+
 
 	def update(self):
 		pg.display.update()
@@ -141,6 +141,41 @@ class Screen3D:
 				[self.draw_polygon(face, colour) for face in faces]
 			if mode == "lines":
 				self.draw_lines(shape.points, colour, shape.closed)
+
+		elif shape.type == 'molecule':
+			p = shape.position
+
+			cam_pos = self.camera_position #reference to camera position
+			atoms = shape.atoms #reference to the atoms
+			coords = np.asarray([a.coords for a in atoms]) #coordinates converted to np array
+
+			dists = np.asarray([a.distance_to(cam_pos) for a in atoms])#calculate dists to determine order of drawing
+			indices = np.argsort(dists)[::-1] #determine order of drawing by sorting the dists and reversing
+
+			atoms = np.asarray(atoms)[indices] #sort atoms by distance to cam_pos
+			dists = dists[indices]
+			deltas = coords - cam_pos #determine delta distance to determine the 
+			deltas = deltas[indices]
+
+			d2 = lambda x, y: (x - y)/2
+
+			prev_indices = []
+			for i, a1 in enumerate(atoms):
+				prev_indices.append(a1)
+				if deltas[i][2] < 0:
+					c1 = a1.coords
+					if draw_bonds:
+						if colour_bonds:
+							for a2 in a1.bonds:
+								if not a2 in prev_indices:
+									c2 = a2.coords
+									self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
+									self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
+
+					if draw_atoms:
+						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale)+1, self.bkgr_colour, width=2)
+						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale), a1.colour)
+
 
 		elif shape.type == 'molecule':
 			cam_pos = self.camera_position
