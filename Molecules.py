@@ -11,20 +11,14 @@ import pygame as pg
 input_mol = 'Aminoindane'
 
 
+# m = mol.Molecule(molecule_file='coronene.pcp')
 
-# if len(sys.argv) == 1:
-# 	m = mol.Molecule(file=os.getcwd() + rf'\Molecules\{input_mol}.xyz')
-# else:
-# 	print(os.path.exists(sys.argv[1]))
-# 	m = mol.Molecule(file=sys.argv[1])
+m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\coronene.xyz')
 
-# m = mol.Molecule(molecule_file='Basketane.pcp')
-m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\hexabenzocoronene.xyz')
+m.remove_by_element('H')
+m.add_hydrogens(1.1)
 
-# m.remove_by_element('H')
-# m.add_hydrogens(1.1)
 m.center()
-
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
@@ -41,14 +35,14 @@ time = 0
 rot = np.array([0.,0.,0.])
 
 while run:
-	start = perf_counter()
+	# start = perf_counter()
 	#tick prep
 	updt += 1
 	dT = tick(FPS)/1000
 	time += dT
 	
 	screen.clear()
-	screen.draw_shape(m, draw_atoms=True)
+	screen.draw_shape(m, draw_atoms=True, draw_bonds=True)
 
 	keys = pg.key.get_pressed()
 
@@ -89,4 +83,4 @@ while run:
 			run = False
 			break
 
-	print(perf_counter()-start)
+	# print(perf_counter()-start)

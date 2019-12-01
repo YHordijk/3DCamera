@@ -65,7 +65,6 @@ class Screen3D:
 			w = self.width + 200
 			poss = [self.project(pos) for pos in poss]
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
-				# print(poss, euclidean(poss[0], poss[1]))
 				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], width+3)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
 		except:
@@ -169,12 +168,28 @@ class Screen3D:
 							for a2 in a1.bonds:
 								if not a2 in prev_indices:
 									c2 = a2.coords
-									self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
-									self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
+									if a1.bond_orders[a2] == 1:
+										self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
+									elif a1.bond_orders[a2] == 2:
+										self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
+									elif a1.bond_orders[a2] == 3:
+										self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
 
 					if draw_atoms:
 						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale)+1, self.bkgr_colour, width=2)
 						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale), a1.colour)
+
+					if draw_bonds:
+						if colour_bonds:
+							for a2 in a1.bonds:
+								if not a2 in prev_indices:
+									c2 = a2.coords
+									if a1.bond_orders[a2] == 1:
+										self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
+									elif a1.bond_orders[a2] == 2:
+										self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
+									elif a1.bond_orders[a2] == 3:
+										self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
 
 
 		elif shape.type == 'molecule':
