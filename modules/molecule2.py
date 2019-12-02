@@ -178,8 +178,8 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], molecule_file=None):
-		self._warning_level = 1
+	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], molecule_file=None, warning_level=1):
+		self._warning_level = warning_level
 
 		self.position = position	
 		self.type = 'molecule'
@@ -436,6 +436,7 @@ Coordinates (angstrom):
 		#self.coords matrix. Matrix multiplication and dividing by M gives 
 		#us the (1,3) coordinates of the COM.
 		masses = np.asarray([a.mass for a in self.atoms])
+
 		return masses @ np.asarray([a.coords for a in self.atoms]) / np.sum(masses) 
 
 
@@ -514,11 +515,17 @@ Coordinates (angstrom):
 
 		#give warnings if necessary
 		mbo = sum([a.is_saturated() for a in self.get_by_element('C')]) - len(self.get_by_element('C'))
-		if self._warning_level >= 1:
+		if self._warning_level == 2:
 			if mbo < 0:
 				print(f'Molecule.guess_bond_orders: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
 			else:
-				print('Molecule.guess_bond_orders: Bond orders seem fine')
+				print(f'Molecule.guess_bond_orders: Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+
+		elif self._warning_level == 1:
+			if mbo == 0:
+				print(f'Molecule.guess_bond_orders: Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+			elif self.guess_bond_order_iters == self.natoms:
+				print(f'Molecule.guess_bond_orders: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
 		
 		if mbo < 0 and self.guess_bond_order_iters < self.natoms:
 			self.guess_bond_order_iters += 1
@@ -609,7 +616,7 @@ Coordinates (angstrom):
 			#the atom. Because the molecule if a PAH we know that carbons with only two
 			#C-C bonds must also get a hydrogen.
 			
-			if a.element == 'C' and len(a.get_bonds_by_elements('C')) == 2:
+			if a.element == 'C' and a.hybridisation == 'sp2' and a.HA_valence == 2:
 				#get the atoms bonded to atom a
 				'''
 				The strategy we will use to find the new position of the hydrogen is to first get the bond

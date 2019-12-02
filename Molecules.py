@@ -8,17 +8,15 @@ import sys
 import pubchempy as pcp
 import pygame as pg
 
-input_mol = 'Aminoindane'
 
+# m = mol.Molecule(molecule_file='Naphtalene.pcp')
+m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\gelsemine.xyz', warning_level=1)
 
-# m = mol.Molecule(molecule_file='coronene.pcp')
-
-m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\coronene.xyz')
-
-m.remove_by_element('H')
-m.add_hydrogens(1.1)
+# m.remove_by_element('H')
+# m.add_hydrogens(1.1)
 
 m.center()
+
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
@@ -40,6 +38,9 @@ while run:
 	updt += 1
 	dT = tick(FPS)/1000
 	time += dT
+
+	if time > 3:
+		m.center()
 	
 	screen.clear()
 	screen.draw_shape(m, draw_atoms=True, draw_bonds=True)
