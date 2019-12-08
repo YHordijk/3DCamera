@@ -1,6 +1,5 @@
 import modules.screen3 as scr 
 import modules.molecule2 as mol 
-
 import math, os
 import numpy as np
 from time import perf_counter
@@ -9,20 +8,22 @@ import pubchempy as pcp
 import pygame as pg
 
 
-# m = mol.Molecule(molecule_file='Naphtalene.pcp')
-m = mol.Molecule(molecule_file=os.getcwd() + rf'\Molecules\gelsemine.xyz', warning_level=1)
 
-# m.remove_by_element('H')
-# m.add_hydrogens(1.1)
+# mols = [mol.Molecule(molecule_file='penicilline.pcp', warning_level=1, scale=400)]
 
-m.center()
+mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400)]
+
+# mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\gelsemine.xyz', warning_level=1, position=[5,0,0], scale=400),
+# 		mol.Molecule(molecule_file='tryptophan.pcp', warning_level=1, position=[-5,0,0], scale=400),]
 
 
-#game setup
+
+#screen setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(100, 100, 190))
+pg.display.set_caption(', '.join([m.name.capitalize() for m in mols]))
 clock = pg.time.Clock()
-FPS = 60
+FPS = 120
 run = True
 
 #main loop
@@ -31,6 +32,9 @@ updt = 0
 time = 0
 
 rot = np.array([0.,0.,0.])
+zoom = 0
+
+pg.key.set_repeat()
 
 while run:
 	# start = perf_counter()
@@ -39,40 +43,46 @@ while run:
 	dT = tick(FPS)/1000
 	time += dT
 
-	if time > 3:
-		m.center()
+	screen.draw_axes(100)
 	
 	screen.clear()
-	screen.draw_shape(m, draw_atoms=True, draw_bonds=True)
+	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
+	[m.rotate(rot) for m in mols]
+	# screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)
 
 	keys = pg.key.get_pressed()
 
-	if keys[pg.K_SPACE]:
-		m.position = [0,0,0]
+	# if keys[pg.K_SPACE]:
+	# 	m.position = [0,0,0]
 
 	move = pg.mouse.get_rel()
 	if pg.mouse.get_pressed()[2]:
-		m.position[0] -= move[0]/50
-		m.position[1] -= move[1]/50
+			screen.camera_position[0] += move[0]/50
+			screen.camera_position[1] += move[1]/50
 
 	if pg.mouse.get_pressed()[0]:
 		if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
 			rot = np.asarray([0, 0, (abs(move[0]) + abs(move[1]))/250])
 		else:
-			rot = np.asarray([move[1]/250, -move[0]/150, max(-0.5*math.pi, min(rot[0], 0.5*math.pi))])
+			rot = np.asarray([move[1]/150, -move[0]/150, 0])
 	else:
 		rot *= 0.8
-	m.rotate(rot)
+
+
+	# m.rotate(rot)
 
 	event = pg.event.get(eventtype=pg.MOUSEBUTTONDOWN)
 
 	if len(event) > 0:
 		if event[0].button == 4:
-			if screen.camera_position[2] > 5:
-				screen.camera_position[2] -= dT * screen.camera_position[2] * 3
+			if screen.camera_position[2] > 3:
+				zoom = -dT * screen.camera_position[2] * 3
 		if event[0].button == 5:
 			if screen.camera_position[2] < 40:
-				screen.camera_position[2] += dT * screen.camera_position[2] * 3
+				zoom = dT * screen.camera_position[2] * 3
+
+	screen.camera_position[2] += zoom
+	zoom *= 0.8
 
 	#tick end
 	screen.update()

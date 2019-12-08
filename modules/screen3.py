@@ -67,6 +67,7 @@ class Screen3D:
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
 				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], width+3)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
+
 		except:
 			raise
 
@@ -133,7 +134,7 @@ class Screen3D:
 		pg.display.update()
 
 
-	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True):
+	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True, draw_hydrogens=True):
 		if shape.type == 'flat':
 			if mode == "fill":
 				faces = shape.faces(double_sided=double_sided)
@@ -145,10 +146,13 @@ class Screen3D:
 			p = shape.position
 
 			cam_pos = self.camera_position #reference to camera position
-			atoms = shape.atoms #reference to the atoms
+			if draw_hydrogens:
+				atoms = shape.atoms #reference to the atoms
+			else:
+				atoms = shape.get_by_element('H', blacklist=True)
 			coords = np.asarray([a.coords for a in atoms]) #coordinates converted to np array
 
-			dists = np.asarray([a.distance_to(cam_pos) for a in atoms])#calculate dists to determine order of drawing
+			dists = np.asarray([a.distance_to(cam_pos + np.array(cam_pos)) for a in atoms])#calculate dists to determine order of drawing
 			indices = np.argsort(dists)[::-1] #determine order of drawing by sorting the dists and reversing
 
 			atoms = np.asarray(atoms)[indices] #sort atoms by distance to cam_pos
@@ -160,36 +164,41 @@ class Screen3D:
 
 			prev_indices = []
 			for i, a1 in enumerate(atoms):
+				width = int(150/dists[i])
+
 				prev_indices.append(a1)
 				if deltas[i][2] < 0:
 					c1 = a1.coords
 					if draw_bonds:
 						if colour_bonds:
 							for a2 in a1.bonds:
-								if not a2 in prev_indices:
-									c2 = a2.coords
-									if a1.bond_orders[a2] == 1:
-										self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
-									elif a1.bond_orders[a2] == 2:
-										self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
-									elif a1.bond_orders[a2] == 3:
-										self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=int(75/dists[i]), colour=a1.colour)
+								if not a2.element == 'H' or draw_hydrogens:
+									if not a2 in prev_indices:
+										c2 = a2.coords
+										if a1.bond_orders[a2] == 1:
+											self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+										elif a1.bond_orders[a2] == 2:
+											self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+										elif a1.bond_orders[a2] == 3:
+											self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+
 
 					if draw_atoms:
-						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale)+1, self.bkgr_colour, width=2)
+						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale)+1, self.bkgr_colour)
 						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale), a1.colour)
 
 					if draw_bonds:
 						if colour_bonds:
 							for a2 in a1.bonds:
-								if not a2 in prev_indices:
-									c2 = a2.coords
-									if a1.bond_orders[a2] == 1:
-										self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
-									elif a1.bond_orders[a2] == 2:
-										self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
-									elif a1.bond_orders[a2] == 3:
-										self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=int(75/dists[i]), colour=a2.colour)	
+								if not a2.element == 'H' or draw_hydrogens:
+									if not a2 in prev_indices:
+										c2 = a2.coords
+										if a1.bond_orders[a2] == 1:
+											self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
+										elif a1.bond_orders[a2] == 2:
+											self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
+										elif a1.bond_orders[a2] == 3:
+											self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
 
 
 		elif shape.type == 'molecule':
@@ -243,10 +252,10 @@ class Screen3D:
 						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
 						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale), colours[a])			
 
-	def draw_axes(self, length):
-		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
-		self.draw_line([np.asarray((0,0,0)),np.asarray((0,length,0))], colour=(0,255,0))
-		self.draw_line([np.asarray((0,0,0)),np.asarray((0,0,length))], colour=(0,0,255))
+	def draw_axes(self, length=1):
+		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
+		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((0,length,0))], colour=(0,255,0))
+		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((0,0,length))], colour=(0,0,255))
 
 	def clear(self):
 		self.disp.fill(self.bkgr_colour)

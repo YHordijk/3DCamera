@@ -22,7 +22,7 @@ class Atom:
 			'Cl': 35.5,
 			'S': 32.02,
 			'Na': 23,
-		}[element]
+			}[element]
 
 		self.colour = {
 			'C': (34, 34, 34),
@@ -79,7 +79,7 @@ class Atom:
 			'P': 1.10,
 			
 			'Na': 1.80,
-		}[element]
+			}[element]
 
 		self.max_valence = {
 			'C': 4,
@@ -92,7 +92,9 @@ class Atom:
 			'S': 6,
 			'Na': 1,
 			'Fe': 2,
-		}[element]
+			}[element]
+
+
 
 
 	def distance_to(self, p):
@@ -131,6 +133,16 @@ class Atom:
 
 			#remove self from the neighbours bonds list
 			b.bonds.remove(self)
+
+
+	@property 
+	def valence(self):
+		return sum([bo for bo in self.bond_orders.values()])
+
+
+	@property 
+	def penalty_score(self):
+		return self.max_valence - self.valence
 
 
 	def set_bonds(self, molecule):
