@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
-from math import cos, sin, pi
+from math import cos, sin, pi, atan2, acos
 import os
 
 
@@ -13,6 +13,19 @@ class Atom:
 
 		self.mass = { #masses of the elements
 			'C': 12,
+			'H': 1,
+			'O': 16,
+			'N': 14,
+			'Fe': 55.85,
+			'Mg': 24.3,
+			'P': 31,
+			'Cl': 35.5,
+			'S': 32.02,
+			'Na': 23,
+			}[element]
+
+		self.nuc_charge = { #nuclear charges of the elements
+			'C': 3.2,
 			'H': 1,
 			'O': 16,
 			'N': 14,
@@ -93,8 +106,6 @@ class Atom:
 			'Na': 1,
 			'Fe': 2,
 			}[element]
-
-
 
 
 	def distance_to(self, p):
@@ -187,8 +198,6 @@ class Atom:
 		return sum(self.bond_orders.values()) == self.max_valence
 
 
-
-
 class Molecule:
 	'''
 	Class representation of a molecule
@@ -219,7 +228,7 @@ class Molecule:
 			self._load_xyz(molecule_file)
 
 		if molecule_file is not None and molecule_file.endswith('.pcp'):
-			self._load_from_pubchem(molecule_file.strip('.pcp'))
+			self._load_from_pubchem(molecule_file[0:-4])
 
 
 	def __str__(self):
@@ -375,6 +384,34 @@ Coordinates (angstrom):
 		return np.arccos((u @ v) / (mag(u) * mag(v))) * (1, 180/pi)[in_degrees]
 
 
+	def torsion_angle(self, a1, a2, a3, a4, in_degrees=False):
+		'''
+		Method that returns the torsion angle or dihedral angle of the 
+		a1 -- a2 -- a3 and a2 -- a3 -- a4 planes.
+
+		a - atom object
+		in_degrees - boolean specifying whether to return angle in degrees or radians
+					 set to True for degrees or False for radians
+
+		returns float
+		'''
+
+		norm = lambda x: x / np.sqrt(x @ x)
+		mag = lambda x: np.sqrt(x @ x)
+
+		b1 = a2.coords - a1.coords
+		b2 = a3.coords - a2.coords
+		b3 = a4.coords - a3.coords
+
+		n1 = norm(np.cross(b1, b2))
+		n2 = norm(np.cross(b2, b3))
+		m1 = n1 * b2
+
+		print(acos(np.dot(n1,n2)/(mag(n1) * mag(n2))))
+
+		return atan2(np.dot(m1, n2), np.dot(n1, n2)) * (1, 180/pi)[in_degrees]
+
+
 	def set_HA_valence(self):
 		for a in self.atoms:
 			a.HA_valence = len(a.get_bonds_by_elements(['H'], blacklist=True))
@@ -493,10 +530,68 @@ Coordinates (angstrom):
 		self.guess_bond_orders()
 
 
+	def get_unique_atom_pairs(self):
+		'''
+		Generator method that yields all unique pairs of atoms in the molecule
+		'''
+
+		for a1 in self.atoms:
+			for a2 in self.atoms:
+				if a1 is not a2:
+					yield sorted((a1,a2), key=lambda x: id(x))
+
+
+	def get_unique_bonds(self):
+		'''
+		Generator method that yields all unique bonds in the molecule.
+		'''
+
+		prev_atoms = []
+
+		for a1 in self.atoms:
+			prev_atoms.append(a1)
+			for a2 in a1.bonds:
+				if not a2 in prev_atoms:
+					yield (a1, a2)
+
+
+	def get_unique_bond_angles(self, in_degrees=False):
+		'''
+		Generator method that yields all unique bond angles in the molecule along with the atoms over which the bond angle is calculated.
+		'''
+
+		prev_angles = []
+
+		for a1 in self.atoms:
+			for a2 in a1.bonds:
+				for a3 in a2.bonds:
+					sorted_atoms = sorted((a1,a2,a3), key=lambda x: id(x))
+					if not sorted_atoms in prev_angles and len(set((a1, a2, a3))) == 3:
+						prev_angles.append(sorted_atoms)
+						yield (a1, a2, a3, self.bond_angle(a1, a2, a3, in_degrees=in_degrees))
+
+
+	def get_unique_torsion_angles(self, in_degrees=False):
+		'''
+		Generator method that yields all unique torsion angles in the molecule along with the atoms over which the torsion angle is calculated.
+		'''
+
+		prev_angles = []
+		for a1 in self.atoms:
+			for a2 in a1.bonds:
+				for a3 in a2.bonds:
+					for a4 in a3.bonds:
+						sorted_atoms = sorted((a1,a2,a3, a4), key=lambda x: id(x))
+						if not sorted_atoms in prev_angles and len(set((a1, a2, a3, a4))) == 4:
+							prev_angles.append(sorted_atoms)
+							yield (a1, a2, a3, a4, self.torsion_angle(a1, a2, a3, a4, in_degrees=in_degrees))
+
+
 	def reset_bond_orders(self):
 		for a in self.atoms:
 			for key in a.bond_orders.keys():
 				a.bond_orders[key] = 1
+
 
 	def guess_bond_orders(self):
 		'''
@@ -598,6 +693,13 @@ Coordinates (angstrom):
 
 		return sum(self.bond_orders[a])
 
+	def get_elements(self):
+		'''
+		Method that returns a set of all elements in the molecule
+		'''
+
+		return set([a.element for a in self.atoms])
+
 
 	def get_by_element(self, element, blacklist=False):
 		'''
@@ -608,6 +710,7 @@ Coordinates (angstrom):
 
 		returns list of indices
 		'''
+
 		if blacklist:
 			return [a for a in self.atoms if not a.element == element]
 		return [a for a in self.atoms if a.element == element]
@@ -716,11 +819,29 @@ Coordinates (angstrom):
 		'''
 		Method that removes an atom from the molecule.
 
-		a - integer index of atom a
+		a - atom type
 		'''
 
-		self.atom_types = np.delete(self.atom_types, a)
-		self.coords = np.delete(self.coords, a, axis=0)
+		self.atoms.remove(a)
+
+		for i in self.atoms:
+			try: 
+				i.bonds.remove(a)
+			except:
+				pass
+
+		self.set_bonds()
+
+
+	def remove_atoms(self, a):
+		'''
+		Method that removes multiple atoms from the molecule.
+
+		a - atom type
+		'''
+
+		for i in a:
+			self.remove_atom(i)
 
 
 	def add_atom(self, element, coords, set_bonds=True):

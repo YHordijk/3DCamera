@@ -1,5 +1,6 @@
 import modules.screen3 as scr 
-import modules.molecule2 as mol 
+import modules.molecule3 as mol 
+import modules.forcefields as ff
 import math, os
 import numpy as np
 from time import perf_counter
@@ -9,14 +10,22 @@ import pygame as pg
 
 
 
-# mols = [mol.Molecule(molecule_file='penicilline.pcp', warning_level=1, scale=400)]
+# mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
 
-mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400)]
+mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\ethane.xyz', warning_level=1, scale=400)]
 
-# mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\gelsemine.xyz', warning_level=1, position=[5,0,0], scale=400),
-# 		mol.Molecule(molecule_file='tryptophan.pcp', warning_level=1, position=[-5,0,0], scale=400),]
+# mols = [mol.Molecule(molecule_file='Glucose.pcp', warning_level=1, position=[5,0,0], scale=400),
+# 		  mol.Molecule(molecule_file='Altrose.pcp', warning_level=1, position=[-5,0,0], scale=400),]
 
 
+mol = mols[0]
+atoms = mol.atoms
+# print(mol.torsion_angle(atoms[2], atoms[0], atoms[1], atoms[7]))
+
+# print(id(atoms[0]))
+
+mm = ff.MM2()
+print(mm.get_energy(mol))
 
 #screen setup
 WIDTH, HEIGHT = SIZE = (1200, 720)

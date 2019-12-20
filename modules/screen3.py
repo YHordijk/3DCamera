@@ -152,9 +152,8 @@ class Screen3D:
 				atoms = shape.get_by_element('H', blacklist=True)
 			coords = np.asarray([a.coords for a in atoms]) #coordinates converted to np array
 
-			dists = np.asarray([a.distance_to(cam_pos + np.array(cam_pos)) for a in atoms])#calculate dists to determine order of drawing
+			dists = np.asarray([a.distance_to((0,0,cam_pos[2]*2)) for a in atoms])#calculate dists to determine order of drawing
 			indices = np.argsort(dists)[::-1] #determine order of drawing by sorting the dists and reversing
-
 			atoms = np.asarray(atoms)[indices] #sort atoms by distance to cam_pos
 			dists = dists[indices]
 			deltas = coords - cam_pos #determine delta distance to determine the 
@@ -223,6 +222,7 @@ class Screen3D:
 				prev_indices.append(i)
 				if delt[2] < 0:
 					bonds = shape.bonds[i].copy()
+					print(shape)
 					order = orders[i].copy()
 
 					connected_atoms = original_coords[bonds]
@@ -250,7 +250,12 @@ class Screen3D:
 
 					if draw_atoms:
 						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
-						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale), colours[a])			
+						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale), colours[a])
+
+
+	# def on_click(self, x, y):
+
+
 
 	def draw_axes(self, length=1):
 		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
