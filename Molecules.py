@@ -4,11 +4,10 @@ import modules.forcefields as ff
 import math, os
 import numpy as np
 from time import perf_counter
-import sys
 import pubchempy as pcp
 import pygame as pg
 
-
+pg.init()
 
 # mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
 
@@ -24,8 +23,8 @@ atoms = mol.atoms
 
 # print(id(atoms[0]))
 
-mm = ff.MM2()
-print(mm.get_energy(mol))
+# mm = ff.MM2()
+# print(mm.get_energy(mol))
 
 #screen setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
@@ -39,6 +38,8 @@ run = True
 tick = clock.tick_busy_loop
 updt = 0
 time = 0
+
+selected_atoms = set()
 
 rot = np.array([0.,0.,0.])
 zoom = 0
@@ -57,43 +58,104 @@ while run:
 	screen.clear()
 	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
-	# screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)
+
 
 	keys = pg.key.get_pressed()
+	ev = pg.event.get()
 
-	# if keys[pg.K_SPACE]:
-	# 	m.position = [0,0,0]
+	mbd = pg.MOUSEBUTTONDOWN in [e.type for e in ev]
 
+
+	rot *= 0.8
 	move = pg.mouse.get_rel()
-	if pg.mouse.get_pressed()[2]:
-			screen.camera_position[0] += move[0]/50
-			screen.camera_position[1] += move[1]/50
+	if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+		if pg.mouse.get_pressed()[2]:
+				screen.camera_position[0] += move[0]/50
+				screen.camera_position[1] += move[1]/50
 
-	if pg.mouse.get_pressed()[0]:
-		if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
-			rot = np.asarray([0, 0, (abs(move[0]) + abs(move[1]))/250])
-		else:
+		if pg.mouse.get_pressed()[0]:
 			rot = np.asarray([move[1]/150, -move[0]/150, 0])
-	else:
-		rot *= 0.8
 
 
+	elif mbd and ev[0].button == 1:
+		pos = pg.mouse.get_pos()
+		selected_atom = screen.get_atom_at_pos(pos)
+		if not selected_atom == None:
+			if selected_atom.selected:
+				selected_atoms.discard(selected_atom)
+				selected_atom.draw_colour = selected_atom.colour 
+				selected_atom.selected = False
+			else:
+				selected_atoms.add(selected_atom)
+				selected_atom.selected = True
+				selected_atom.draw_colour = (247,240,111)
+		else:
+			selected_atoms = set()
+			for mol in mols:
+				mol.reset_colours()
+
+		
+
+		
 	# m.rotate(rot)
 
-	event = pg.event.get(eventtype=pg.MOUSEBUTTONDOWN)
-
-	if len(event) > 0:
-		if event[0].button == 4:
+	if mbd:
+		if ev[0].button == 4:
 			if screen.camera_position[2] > 3:
 				zoom = -dT * screen.camera_position[2] * 3
-		if event[0].button == 5:
+		if ev[0].button == 5:
 			if screen.camera_position[2] < 40:
 				zoom = dT * screen.camera_position[2] * 3
 
 	screen.camera_position[2] += zoom
 	zoom *= 0.8
 
+
+
 	#tick end
+	l = len(selected_atoms)
+	if l > 0:
+		sa = list(selected_atoms)
+		if l == 1:
+			atom = list(selected_atoms)[0]
+
+			if len(mols) > 1:
+				for mol in mols:
+					if atom in mol.atoms:
+						index = mol.atoms.index(atom)
+			else:
+				index = mols[0].atoms.index(atom)
+
+			screen.display_text(f'{atom.element} {index}', (0,0))
+
+		elif l == 2:
+			atoms = list(selected_atoms)
+			index = []
+			for atom in atoms:
+				if len(mols) > 1:
+					for mol in mols:
+						if atom in mol.atoms:
+							index.append(atoms.index(atom))
+				else:
+					index.append(mols[0].atoms.index(atom))
+
+			screen.display_text(f'{atoms[0].element} {index[0]} -- {atoms[1].element} {index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)', (0,0))
+
+		elif l == 3:
+
+			atoms = list(selected_atoms)
+			index = []
+			for atom in atoms:
+				if len(mols) > 1:
+					for mol in mols:
+						if atom in mol.atoms:
+							index.append(atoms.index(atom))
+				else:
+					index.append(mols[0].atoms.index(atom))
+
+			screen.display_text(f'{atoms[0].element} {index[0]} -- {atoms[1].element} {index[1]} -- {atoms[2].element} {index[2]}: {round(mols[0].bond_angle(*atoms, in_degrees=True), 1)} (deg)', (0,0))
+
+
 	screen.update()
 
 	if keys[pg.K_ESCAPE]:

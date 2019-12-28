@@ -10,6 +10,7 @@ class Atom:
 		self.element = element
 		self.bonds = []
 		self.bond_orders = {}
+		self.selected = False
 
 		self.mass = { #masses of the elements
 			'C': 12,
@@ -50,6 +51,8 @@ class Atom:
 			'Cl': (31, 240, 31),
 			'Na': (119, 0, 255),
 			}[element]
+
+		self.draw_colour = self.colour
 
 		self.radius = {
 			'Ac': 1.88,
@@ -255,6 +258,11 @@ Coordinates (angstrom):
 		for a in self.atoms:
 			a.coords -= self.center_of_mass
 
+
+	def reset_colours(self):
+		for a in self.atoms:
+			a.draw_colour = a.colour
+			
 
 	def _load_xyz(self, file):
 		'''

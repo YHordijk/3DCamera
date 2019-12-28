@@ -1,6 +1,6 @@
 import pygame as pg
 import numpy as np
-from math import cos, sin
+from math import cos, sin, sqrt
 import math
 from scipy.spatial.distance import euclidean
 from time import perf_counter
@@ -16,11 +16,16 @@ class Screen3D:
 		self.disp = pg.display.set_mode(self.size)
 		self.disp.fill(self.bkgr_colour)
 
-		self.trail = []
 
 	def follow(self, target, offset=0):
 		delta = (target.position - self.camera_position + offset)/4
 		self.camera_position += delta
+
+
+	def display_text(self, text, pos):
+		f = pg.font.Font(pg.font.get_default_font(), 20)
+		surf = f.render(text, True, (0,0,0), (255,255,255))
+		self.disp.blit(surf, pos)
 
 
 	def project(self, coord):
@@ -134,6 +139,20 @@ class Screen3D:
 		pg.display.update()
 
 
+	def get_atom_at_pos(self, pos):
+		pos = np.asarray(pos)
+		dists = sorted([(euclidean(pos, p), a) for a, p in self.atom_draw_pos.items()], key=lambda x: x[0])
+		atom = None
+		for dist, a in dists:
+			if dist < self.atom_draw_rad[a]:
+				try:
+					if a.distance_to(self.camera_position) < atom.distance_to(self.camera_position):
+						atom = a
+				except:
+					atom = a
+		return atom
+
+
 	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True, draw_hydrogens=True):
 		if shape.type == 'flat':
 			if mode == "fill":
@@ -143,6 +162,8 @@ class Screen3D:
 				self.draw_lines(shape.points, colour, shape.closed)
 
 		elif shape.type == 'molecule':
+			atom_draw_pos = {}
+			atom_draw_rad = {}
 			p = shape.position
 
 			cam_pos = self.camera_position #reference to camera position
@@ -175,16 +196,19 @@ class Screen3D:
 									if not a2 in prev_indices:
 										c2 = a2.coords
 										if a1.bond_orders[a2] == 1:
-											self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+											self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
 										elif a1.bond_orders[a2] == 2:
-											self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+											self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
 										elif a1.bond_orders[a2] == 3:
-											self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.colour)
+											self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
 
 
 					if draw_atoms:
-						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale)+1, self.bkgr_colour)
-						self.draw_circle(c1+p, int(a1.radius/dists[i] * shape.scale), a1.colour)
+						rad = int(a1.radius/dists[i] * shape.scale)
+						self.draw_circle(c1+p, rad+1, self.bkgr_colour)
+						self.draw_circle(c1+p, rad, a1.draw_colour)
+						atom_draw_pos[a1] = self.project(c1+p)
+						atom_draw_rad[a1] = rad*1.1
 
 					if draw_bonds:
 						if colour_bonds:
@@ -193,12 +217,14 @@ class Screen3D:
 									if not a2 in prev_indices:
 										c2 = a2.coords
 										if a1.bond_orders[a2] == 1:
-											self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
+											self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
 										elif a1.bond_orders[a2] == 2:
-											self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
+											self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
 										elif a1.bond_orders[a2] == 3:
-											self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.colour)	
+											self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
 
+			self.atom_draw_pos = atom_draw_pos
+			self.atom_draw_rad = atom_draw_rad
 
 		elif shape.type == 'molecule':
 			cam_pos = self.camera_position
