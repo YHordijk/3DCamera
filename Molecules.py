@@ -65,6 +65,36 @@ while run:
 
 	mbd = pg.MOUSEBUTTONDOWN in [e.type for e in ev]
 
+	for e in ev:
+
+		if e.type == pg.MOUSEBUTTONDOWN:
+			if e.button == 1:
+				if not(keys[pg.K_LCTRL] or keys[pg.K_RCTRL]):
+					pos = pg.mouse.get_pos()
+					selected_atom = screen.get_atom_at_pos(pos)
+					if not selected_atom == None:
+						if selected_atom.selected:
+							selected_atoms.discard(selected_atom)
+							selected_atom.draw_colour = selected_atom.colour 
+							selected_atom.selected = False
+						else:
+							selected_atoms.add(selected_atom)
+							selected_atom.selected = True
+							selected_atom.draw_colour = (247,240,111)
+					else:
+						selected_atoms = set()
+						for mol in mols:
+							mol.reset_colours()
+							for a in mol.atoms:
+								a.selected = False
+			elif e.button == 4:
+				if screen.camera_position[2] > 3:
+					zoom = -dT * screen.camera_position[2] * 3
+			elif e.button == 5:
+				if screen.camera_position[2] < 40:
+					zoom = dT * screen.camera_position[2] * 3
+
+
 
 	rot *= 0.8
 	move = pg.mouse.get_rel()
@@ -75,41 +105,10 @@ while run:
 
 		if pg.mouse.get_pressed()[0]:
 			rot = np.asarray([move[1]/150, -move[0]/150, 0])
-
-
-	elif mbd and ev[0].button == 1:
-		pos = pg.mouse.get_pos()
-		selected_atom = screen.get_atom_at_pos(pos)
-		if not selected_atom == None:
-			if selected_atom.selected:
-				selected_atoms.discard(selected_atom)
-				selected_atom.draw_colour = selected_atom.colour 
-				selected_atom.selected = False
-			else:
-				selected_atoms.add(selected_atom)
-				selected_atom.selected = True
-				selected_atom.draw_colour = (247,240,111)
-		else:
-			selected_atoms = set()
-			for mol in mols:
-				mol.reset_colours()
-
 		
-
-		
-	# m.rotate(rot)
-
-	if mbd:
-		if ev[0].button == 4:
-			if screen.camera_position[2] > 3:
-				zoom = -dT * screen.camera_position[2] * 3
-		if ev[0].button == 5:
-			if screen.camera_position[2] < 40:
-				zoom = dT * screen.camera_position[2] * 3
 
 	screen.camera_position[2] += zoom
 	zoom *= 0.8
-
 
 
 	#tick end
@@ -126,7 +125,7 @@ while run:
 			else:
 				index = mols[0].atoms.index(atom)
 
-			screen.display_text(f'{atom.element} {index}', (0,0))
+			screen.display_text(f'  {atom.element}{index}  ', (0,0))
 
 		elif l == 2:
 			atoms = list(selected_atoms)
@@ -139,10 +138,9 @@ while run:
 				else:
 					index.append(mols[0].atoms.index(atom))
 
-			screen.display_text(f'{atoms[0].element} {index[0]} -- {atoms[1].element} {index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)', (0,0))
+			screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (0,0))
 
 		elif l == 3:
-
 			atoms = list(selected_atoms)
 			index = []
 			for atom in atoms:
@@ -153,7 +151,15 @@ while run:
 				else:
 					index.append(mols[0].atoms.index(atom))
 
-			screen.display_text(f'{atoms[0].element} {index[0]} -- {atoms[1].element} {index[1]} -- {atoms[2].element} {index[2]}: {round(mols[0].bond_angle(*atoms, in_degrees=True), 1)} (deg)', (0,0))
+			a1, a2, a3 = atoms
+			if a2 in a1.bonds and a3 in a1.bonds:
+				screen.display_text(f'  {atoms[1].element}{index[1]}, {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (0,0))
+			elif a1 in a2.bonds and a3 in a2.bonds:
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (0,0))
+			elif a1 in a3.bonds and a2 in a3.bonds:
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}, {atoms[1].element}{index[1]}: {round(mols[0].bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (0,0))
+			else:
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}  ', (0,0))
 
 
 	screen.update()
