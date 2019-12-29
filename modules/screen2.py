@@ -21,6 +21,31 @@ class Screen3D:
 		self.camera_position += delta
 
 
+	def project_array(self, array):
+		#accepts array in the form:
+		'''
+		array = [x0, y0, z0]
+				[x1, y1, z1]
+					...
+				[xn, yn, zn]
+		'''
+
+		a = array
+		c = self.camera_position.T
+		t = self.camera_orientation
+		e = np.array([self.width/2, self.height/2, 600])
+
+		x_rot_mat = np.array([[1,0,0], [0, cos(t[0]), sin(t[0])], [0, -sin(t[0]), cos(t[0])]])
+		y_rot_mat = np.array([[cos(t[1]), 0, -sin(t[1])], [0,1,0], [sin(t[1]), 0, cos(t[1])]])
+		z_rot_mat = np.array([[cos(t[2]), sin(t[2]), 0], [-sin(t[2]), cos(t[2]), 0], [0,0,1]])
+		z_rot_mat = np.array([[1,0,0], [0,1,0], [0,0,1]])
+
+
+		d = x_rot_mat @ y_rot_mat @ z_rot_mat @ (a - c).T
+
+		f = np.array([[1, 0, e[0]/e[2]], [0, 1, e[1]/e[2]], [0, 0, 1/e[2]]]) @ d
+		return np.vstack((f[0]/f[2], f[1]/f[2])).T.astype(int)
+
 	def project(self, coord):
 		a = coord.T
 		c = self.camera_position.T
@@ -42,11 +67,16 @@ class Screen3D:
 			pos = self.project(pos)
 			self.disp.set_at(pos, colour)
 		except Exception as e:
-			pass
+			raise
 
 	def draw_pixels(self, poss, colour=(255,255,255)):
-		draw = self.draw_pixel
-		[draw(pos, colour) for pos in poss]
+		if type(poss) is np.ndarray:
+			# set_at = 
+			poss = self.project_array(poss)
+			[self.disp.set_at(pos, colour) for pos in poss]
+		else:
+			draw = self.draw_pixel
+			[draw(pos, colour) for pos in poss]
 
 	def draw_lines(self, poss, colour=(255,255,255), closed=True):
 		try:
@@ -100,8 +130,6 @@ class Screen3D:
 				self.draw_circle(a.position + shape.position, int(a.radius/d(a))+1, self.bkgr_colour, width=1)
 				self.draw_circle(a.position + shape.position, int(a.radius/d(a)), a.colour)
 
-
-
 	def draw_axes(self, length):
 		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
 		self.draw_line([np.asarray((0,0,0)),np.asarray((0,length,0))], colour=(0,255,0))
@@ -136,3 +164,10 @@ class Screen3D:
 		rotz = math.atan2( math.cos(rotx), math.sin(rotx) * math.sin(roty))
 		self.camera_orientation = np.array([roty, rotx, rotz])
 		return self.camera_orientation
+
+
+if __name__ == '__main__':
+	screen = Screen3D((100, 100))
+	for i in range(5): 
+		print(screen.project(np.array((i, i, i))))
+	print(screen.project_array(np.array([[i,i,i] for i in range(5)])))

@@ -24,7 +24,7 @@ class Screen3D:
 
 	def display_text(self, text, pos):
 		f = pg.font.Font(pg.font.get_default_font(), 20)
-		surf = f.render(text, True, (0,0,0), (255,255,255))
+		surf = f.render(text, True, (255,255,255))
 		self.disp.blit(surf, pos)
 
 
@@ -44,6 +44,7 @@ class Screen3D:
 		f = np.array([[1, 0, e[0]/e[2]], [0, 1, e[1]/e[2]], [0, 0, 1/e[2]]]) @ d
 		return int(round(f[0]/f[2])), int(round(f[1]/f[2]))
 
+
 	def draw_pixel(self, pos, colour=(255,255,255)):
 		try:
 			pos = self.project(pos)
@@ -51,9 +52,11 @@ class Screen3D:
 		except Exception as e:
 			pass
 
+
 	def draw_pixels(self, poss, colour=(255,255,255)):
 		draw = self.draw_pixel
 		[draw(pos, colour) for pos in poss]
+
 
 	def draw_lines(self, poss, colour=(255,255,255), closed=True, width=1):
 		try:
@@ -64,6 +67,7 @@ class Screen3D:
 		except:
 			raise
 
+
 	def draw_single_bond(self, poss, colour=(255,255,255), width=1):
 		try:
 			h = self.height + 200
@@ -72,9 +76,9 @@ class Screen3D:
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
 				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], width+3)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
-
 		except:
 			raise
+
 
 	def draw_double_bond(self, poss, colour=(255,255,255), width=1):
 		try:

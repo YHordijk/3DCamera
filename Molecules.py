@@ -11,11 +11,10 @@ pg.init()
 
 # mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
 
-mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\ethane.xyz', warning_level=1, scale=400)]
+mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400)]
 
 # mols = [mol.Molecule(molecule_file='Glucose.pcp', warning_level=1, position=[5,0,0], scale=400),
 # 		  mol.Molecule(molecule_file='Altrose.pcp', warning_level=1, position=[-5,0,0], scale=400),]
-
 
 mol = mols[0]
 atoms = mol.atoms
@@ -32,7 +31,6 @@ screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,
 pg.display.set_caption(', '.join([m.name.capitalize() for m in mols]))
 clock = pg.time.Clock()
 FPS = 120
-run = True
 
 #main loop
 tick = clock.tick_busy_loop
@@ -46,28 +44,29 @@ zoom = 0
 
 pg.key.set_repeat()
 
+run = True
 while run:
-	# start = perf_counter()
 	#tick prep
 	updt += 1
 	dT = tick(FPS)/1000
 	time += dT
 
-	screen.draw_axes(100)
-	
 	screen.clear()
-	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
+	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=False) for m in mols]
 	[m.rotate(rot) for m in mols]
 
 
 	keys = pg.key.get_pressed()
 	ev = pg.event.get()
 
-	mbd = pg.MOUSEBUTTONDOWN in [e.type for e in ev]
+	if keys[pg.K_ESCAPE]:
+		run = False
 
 	for e in ev:
+		if e.type == pg.QUIT:
+			run = False
 
-		if e.type == pg.MOUSEBUTTONDOWN:
+		elif e.type == pg.MOUSEBUTTONDOWN:
 			if e.button == 1:
 				if not(keys[pg.K_LCTRL] or keys[pg.K_RCTRL]):
 					pos = pg.mouse.get_pos()
@@ -125,7 +124,7 @@ while run:
 			else:
 				index = mols[0].atoms.index(atom)
 
-			screen.display_text(f'  {atom.element}{index}  ', (0,0))
+			screen.display_text(f'  {atom.element}{index}  ', (10,10))
 
 		elif l == 2:
 			atoms = list(selected_atoms)
@@ -138,7 +137,7 @@ while run:
 				else:
 					index.append(mols[0].atoms.index(atom))
 
-			screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (0,0))
+			screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
 
 		elif l == 3:
 			atoms = list(selected_atoms)
@@ -153,22 +152,13 @@ while run:
 
 			a1, a2, a3 = atoms
 			if a2 in a1.bonds and a3 in a1.bonds:
-				screen.display_text(f'  {atoms[1].element}{index[1]}, {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (0,0))
+				screen.display_text(f'  {atoms[1].element}{index[1]}, {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a2.bonds and a3 in a2.bonds:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (0,0))
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a3.bonds and a2 in a3.bonds:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}, {atoms[1].element}{index[1]}: {round(mols[0].bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (0,0))
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}, {atoms[1].element}{index[1]}: {round(mols[0].bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
 			else:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}  ', (0,0))
+				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}  ', (10,10))
 
 
 	screen.update()
-
-	if keys[pg.K_ESCAPE]:
-		run = False
-	for event in pg.event.get():
-		if event.type == pg.QUIT:
-			run = False
-			break
-
-	# print(perf_counter()-start)

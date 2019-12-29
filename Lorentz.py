@@ -4,6 +4,33 @@ import math
 import numpy as np
 import random
 
+class GTAO:
+	def __init__(self, ao_type='2px', n=5):
+		self.ao_type = ao_type
+		self.coords = 0
+
+		self.n = n
+		self.l = list(range(n+1))[::-2]
+		self.k = [k//2 for k in list(range(n+1))[::2]]
+
+	@staticmethod
+	def get_func(ao_type):
+		if ao_type == '1s':
+			return lambda x, y, z: 0.08724638*(x**3 + y**3 + z**3) * np.exp(-0.151623*(x**2+y**2+z**2)) + 0.27181242724*(x**3 + y**3 + z**3)*np.exp(-0.851819*(x**2+y**2+z**2))
+		elif ao_type == '2s':
+			return lambda x, y, z: 0.61282*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*np.exp(-0.851819*(x**2+y**2+z**2))
+		elif ao_type == '2px':
+			return lambda x, y, z: 0.61282*x*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*x*np.exp(-0.851819*(x**2+y**2+z**2))
+		elif ao_type == '2py':
+			return lambda x, y, z: 0.61282*y*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*y*np.exp(-0.851819*(x**2+y**2+z**2))
+		elif ao_type == '2pz':
+			return lambda x, y, z: 0.61282*z*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*z*np.exp(-0.851819*(x**2+y**2+z**2))
+		return 
+
+orb_1s = GTAO.get_func('1s')
+orb_2px = GTAO.get_func('2px')
+orb_2py = GTAO.get_func('2py')
+
 def Lorentz(pos, dT, sigma=10, ro=28, beta=8/3):
 	x, y, z = pos
 	x += dT * (sigma * (pos[1] - pos[0]))
@@ -27,7 +54,6 @@ def Bouali (pos, dT, a=0.3, b=1.):
 	nz = z + dT * (-x*(1.5-b*z)-0.05*z)
 	
 	return np.array([nx, ny, nz])
-
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1600, 900)
@@ -102,8 +128,6 @@ while run:
 		pg.event.set_grab(False)
 		pg.mouse.set_visible(True)
 		s.clear()
-
-
 
 
 	#code

@@ -51,6 +51,8 @@ while run:
 	screen.follow(player, offset=np.array([0,10,0]))
 	screen.camera_position[2] = max(3,abs(np_norm(p_vel)))*3 + 20
 
+	
+
 	#tick end
 	screen.update()
 
