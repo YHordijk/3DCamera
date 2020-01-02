@@ -1,5 +1,5 @@
 import modules.screen3 as scr 
-import modules.molecule3 as mol 
+import modules.molecule4 as mol 
 import modules.forcefields as ff
 import math, os
 import numpy as np
@@ -12,6 +12,7 @@ pg.init()
 # mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
 
 mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400)]
+mols[0].get_orb_density((0,0,0))
 
 # mols = [mol.Molecule(molecule_file='Glucose.pcp', warning_level=1, position=[5,0,0], scale=400),
 # 		  mol.Molecule(molecule_file='Altrose.pcp', warning_level=1, position=[-5,0,0], scale=400),]

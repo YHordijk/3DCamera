@@ -26,6 +26,8 @@ tick = clock.tick_busy_loop
 updt = 0
 time = 0
 
+cube = Cube(4)
+print(cube.points)
 
 
 while run:
@@ -38,19 +40,24 @@ while run:
 	screen.draw_axes(10)
 
 
+
 	#code
 	player.update(dT, keys)
 	dist = (screen.camera_position[2] - player.position[2])*6
 
-	screen.draw_shape(floor, mode="lines", colour=(255-dist, 255-dist, 255-dist))
-	screen.draw_shape(player, mode="lines", colour=(255-dist, 255-dist, 255-dist))
+	screen.draw_shape(cube, mode="lines", colour=(255, 255, 255))
+
+	# screen.draw_shape(floor, mode="lines", colour=(255-dist, 255-dist, 255-dist))
+	# screen.draw_shape(player, mode="lines", colour=(255-dist, 255-dist, 255-dist))
 	
 	# screen.draw_shape(floor, mode="fill")
 	# print(player.velocity)
 
-	screen.follow(player, offset=np.array([0,10,0]))
-	screen.camera_position[2] = max(3,abs(np_norm(p_vel)))*3 + 20
+	# screen.follow(player, offset=np.array([0,10,0]))
+	# screen.camera_position[2] = max(3,abs(np_norm(p_vel)))*3 + 20
 
+	screen.camera_position = np.array([20*sin(math.pi * time/5), 6, 20*cos(math.pi * time/5)])
+	screen.camera_orientation = np.array([-.3, math.pi * time/5, 0])
 	
 
 	#tick end

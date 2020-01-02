@@ -1,34 +1,33 @@
 from modules.screen2 import *
 from modules.shape import *
-import modules.platformfuncs as pf
+import modules.renderer as rend 
+import modules.colour_maps as cmap
 import math
 import numpy as np
 import random
+import os
 
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
-screen = Screen3D(SIZE, camera_position=(0., 0., 10.), camera_orientation=(0,0,0))
+screen = Screen3D(SIZE, camera_position=(4., 4., 10.), camera_orientation=(-0.35,0.35,0), bkgr_colour=(0,0,0))
+renderer = rend.Renderer(SIZE, colour_map=cmap.CoolWarm())
 clock = pg.time.Clock()
 FPS = 100
 run = True
 
 
-player = pf.Player(position=(0.,5.,0.), length=5, width=5, height=7, centering="center bottom")
-floor = Rectangle(position=(0.,0.,0.), length=10, width=50, height=30, centering="center top")
-p_vel = player.velocity
-np_norm = np.linalg.norm
-
-
 #main loop
 
 tick = clock.tick_busy_loop
-
 updt = 0
 time = 0
 
 
+config = [1,1,1,1]
+
+
 class GTAO:
-	def __init__(self, ao_type='2px', n=5):
+	def __init__(self, ao_type, n=5):
 		self.ao_type = ao_type
 		self.coords = 0
 
@@ -39,7 +38,7 @@ class GTAO:
 	@staticmethod
 	def get_func(ao_type):
 		if ao_type == '1s':
-			return lambda x, y, z: 0.08724638*(x**3 + y**3 + z**3) * np.exp(-0.151623*(x**2+y**2+z**2)) + 0.27181242724*(x**3 + y**3 + z**3)*np.exp(-0.851819*(x**2+y**2+z**2))
+			return lambda x, y, z: (0.08724638 * np.exp(-0.151623*(x**2+y**2+z**2)) + 0.27181242724*np.exp(-0.851819*(x**2+y**2+z**2)))
 		elif ao_type == '2s':
 			return lambda x, y, z: 0.61282*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*np.exp(-0.851819*(x**2+y**2+z**2))
 		elif ao_type == '2px':
@@ -50,29 +49,112 @@ class GTAO:
 			return lambda x, y, z: 0.61282*z*np.exp(-0.151623*(x**2+y**2+z**2)) + 0.0494718*z*np.exp(-0.851819*(x**2+y**2+z**2))
 		return 
 
+orb_1s = GTAO.get_func('1s')
 orb_2s = GTAO.get_func('2s')
 orb_2px = GTAO.get_func('2px')
 orb_2py = GTAO.get_func('2py')
-
-mapper = lambda x: x/0.9 * 255
-
+orb_2pz = GTAO.get_func('2pz')
 maxi = 0 
+mapper = lambda x: x/maxi * 255
+mapper = cmap.BlackWhite()
+
+array = np.zeros(SIZE)
+
+
+# x_range = np.linspace(-8,8,5)
+# y_range = np.linspace(-8,8,5)
+# z_range = np.linspace(-8,8,5)
+
+# x, y, z = np.meshgrid(x_range, y_range, z_range)
+
+# print(x)
+# d = (orb_2py(x+3, y, z) + orb_2py(x-3, y, z))**2
+# x, y = screen.project_array((x, y, z))
+
+# array[x, y] = d
+
+# print(array)
+
+# screen.blit_array(array)
+
+# screen.draw_axes(2)
+# screen.show()
+
+draw_circle = screen.draw_circle
+
+file = os.getcwd() + f'\\Molecules\\ethane.xyz'
+mol = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
+print(mol)
+samples = 10_000_0
+points = 20000
+x, y, z = ((np.random.randint(-80000, 80000, size=samples)/10000), (np.random.randint(-80000, 80000, size=samples)/10000), (np.random.randint(-80000, 80000, size=samples)/10000))
+
+d = np.zeros((samples))
+for atom in mol:
+	d += orb_1s(x-atom[0], y-atom[1], z-atom[2])
+
+d = orb_1s(x-mol[2][0], y-mol[2][1], z-mol[2][2])
+
+d = d**2
+
+
+
+
+# samples = 10_000_00
+# points = 20000
+
+# x, y, z = ((np.random.randint(-80000, 80000, size=samples)/10000), (np.random.randint(-80000, 80000, size=samples)/10000), (np.random.randint(-80000, 80000, size=samples)/10000))
+# # d = (orb_2py(x+3, y, z) + orb_2py(x-3, y, z))**2
+# d = (config[0]*orb_2s(x,y,z) + config[1]*orb_2py(x,y,z) + config[2]*orb_2px(x,y,z) + config[3]*orb_2pz(x,y,z))**2
+# d = orb_2pz(x,y,z)**2
+maxi = np.amax(d)
+colours = mapper[d].T
+index = np.arange(0, samples)
+index = np.where(abs(d) > maxi/15, index, 0)
+index = index[index > 0]
+
+x, y, z, d, colours = x[index][0:points], y[index][0:points], z[index][0:points], d[index][0:points], colours[index][0:points]
+# x, y, z, d = x[index][0:points], y[index][0:points], z[index][0:points], d[index][0:points]
+
+
+# colours = np.array([mapper[d], mapper[d], mapper[d]]).astype(int).T
+
+
+maxc = math.sqrt(abs(np.amax(x)) + abs(np.amax(y)))*3
+
+
+# circles = []
+# while len(circles) < 10000:
+# 	for _ in range(10000):
+# 		x, y, z = (random.randrange(-80000, 80000)/10000,random.randrange(-80000, 80000)/10000,random.randrange(-80000, 80000)/10000)
+# 		# d = (orb_2py(x+3, y, z) - orb_2px(x-3, y, z))**2
+
+# 		# d = (orb_2py(x+3, y, z) - orb_2py(x-3, y, z))**2
+# 		d = (orb_2s(x,y,z) + orb_2py(x,y,z) + orb_2px(x,y,z))**2
+# 		if d > maxi: 
+# 			maxi = d
+# 			circles = []
+# 			break
+# 		circles.append((np.asarray((x, y, z)), int(math.sqrt(mapper(d))), (mapper(d),mapper(d),mapper(d))))
+
+
+
 while run:
 	#tick prep
 	updt += 1
 	dT = tick(FPS)/1000
 	time += dT
 	keys = pg.key.get_pressed()
-	# screen.clear()
-	screen.draw_axes(2)
 
+	screen.clear()
 
+	
+
+	screen.camera_position = np.array([maxc*sin(math.pi * time/5), 3, maxc*cos(math.pi * time/5)])
+	screen.camera_orientation = np.array([-.3, math.pi * time/5, 0])
+	
 	#code
-	# x_range = np.linspace(-8,8,1600)
-	# y_range = np.linspace(-8,8,1600)
-	# z_range = np.linspace(-8,8,1600)
 
-	# x, y, z = np.meshgrid(x_range, y_range, z_range)
 
 	# d = (orb_2py(x+3, y, z) + orb_2py(x-3, y, z))**2
 
@@ -82,37 +164,46 @@ while run:
 
 	# x, y, z = (np.random.randint(-80000, 80000, size=50000)/10000, np.random.randint(-80000, 80000, size=50000)/10000, np.random.randint(-80000, 80000, size=50000)/10000)
 	# d = (orb_2py(x+3, y, z) + orb_2py(x-3, y, z))**2
-	# if np.amax(d) > maxi:
-	# 	maxi = np.amax(d)
-	# 	print(maxi)
+
+
 	# pos = np.asarray(np.vstack((x, y, z)).T)
-	# pos = pos[np.random.choice(np.arange(50000), size=10000, p=d/sum(d))]
-	# screen.draw_pixels(pos)
+	# selection = np.random.choice(np.arange(50000), size=10000, p=d/sum(d))
+	# pos = pos[selection]
+	# d = d[selection]
 
-	for _ in range(1000):
-		x, y, z = (random.randrange(-80000, 80000)/10000,random.randrange(-80000, 80000)/10000,random.randrange(-80000, 80000)/10000)
-		# d = (orb_2py(x+3, y, z) - orb_2px(x-3, y, z))**2
-		d = (orb_2px(x+3, y, z) - orb_2px(x-3, y, z))**2
-		if d > maxi:
-			maxi = d
-			print(maxi)
+	# pos = screen.project_array(pos)
 
-		screen.draw_circle(np.asarray((x, y, z)), int(math.sqrt(mapper(d))), (mapper(d),mapper(d),mapper(d)))
+	# x, y  = np.hsplit(pos, 2)
+	# x, y = x.flatten(), y.flatten()
+	# x = np.minimum(x, WIDTH-1)
+	# y = np.minimum(y, HEIGHT-1)
+
+	# array[x,y] = d
+
+	for atom in mol:
+		draw_circle(atom, 5, (255,0,0))
 
 		# screen.draw_pixels(np.asarray((x, y, z)), (mapper(d),mapper(d),mapper(d)))
 
+	
 
-	#tick end
+
+
+	screen.draw_pixels(np.asarray((x, y, z)).T, colour_array=colours)
+
+	screen.draw_axes(4)
+	# tick end
 	screen.update()
+
 
 	if keys[pg.K_ESCAPE]:
 		run = False
-		print(player.position)
 	for event in pg.event.get():
 		if event.type == pg.QUIT:
 			run = False
 			break
+	
 
-
-
+# renderer.input_array(array)
+# renderer.show()
 
