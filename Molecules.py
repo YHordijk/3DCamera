@@ -11,7 +11,7 @@ pg.init()
 
 # mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
 
-mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400)]
+mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400, basis_set_type='STO-4G')]
 mols[0].get_orb_density((0,0,0))
 
 # mols = [mol.Molecule(molecule_file='Glucose.pcp', warning_level=1, position=[5,0,0], scale=400),

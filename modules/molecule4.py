@@ -370,7 +370,7 @@ Coordinates (angstrom):
 				print('Succesfully obtained basis set file')
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
-					self._basis_set_params = json.load(response.text)['elements']
+				self._load_basis_set()
 			else:
 				print('Failed to obtain basis set file')
 		else:
@@ -389,8 +389,6 @@ Coordinates (angstrom):
 			for param in params:
 				if param['function_type'] == 'gto':
 					params = param
-			print(params)
-
 
 	@property 
 	def ncarbons(self):
