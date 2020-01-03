@@ -1,7 +1,104 @@
 import numpy as np
-from scipy.spatial.distance import euclidean
-from math import cos, sin, pi, atan2, acos
+from scipy.spatial.distance import euclidean, sqeuclidean
+from math import cos, sin, pi, atan2, acos, exp
 import os, json
+
+
+class BasisSet:
+	def __init__(self, basis_type, atoms=[]):
+		self.basis_type = basis_type
+		self.atoms = atoms
+
+
+	@property
+	def basis_type(self):
+		return self._basis_type
+
+	@basis_type.setter
+	def basis_type(self, val):
+		'''
+		Method that loads basis type whenever the basis type changes.
+		'''
+		self._basis_type = val
+		self.load_basis()
+
+
+	def __getitem__(self, val):
+		'''
+		Support for calling the object, returns the parameters.
+		'''
+
+		return self.params[val]
+
+
+	def __call__(self, p):
+		'''
+		Support for calling the object like a function, takes position as argument
+		Returns density of basis set at the location
+		'''
+
+		d = 0
+		for atom in self.atoms:
+			x, y, z = np.hsplit(p - atom.coords, 3)
+			r2 = x**2 + y**2 + z**2
+			#loop over all atoms and get the correct basis set parameters depending on the element
+			params = self.params[str(atom.atomic_number)]['electron_shells']
+			for param in params:
+				#find the last (valence) parameters of the element
+				if param['function_type'] == 'gto':
+					params = param
+			#get the exponential and coefficient parameters
+			expon = params['exponents']
+			coeff = params['coefficients']
+			angmom = params['angular_momentum']
+
+			#implement formula d = Ne^(-ar^2), N = (2a/pi)^(3/4)
+			for m, coef in zip(angmom, coeff):
+				for a, c in zip(expon, coef):
+					a, c = float(a), float(c)
+					if m == 0:
+						d += (2*a/pi)**(3/4) * np.exp(-a*r2)
+					if m == 1:
+						d += (2*a/pi)**(3/4) * x * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * y * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * z * np.exp(-a*r2)
+					if m == 2:
+						d += (2*a/pi)**(3/4) * x * x * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * x * y * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * x * z * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * y * y * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * y * z * np.exp(-a*r2)
+						d += (2*a/pi)**(3/4) * z * z * np.exp(-a*r2)
+		return d**2
+
+
+	def load_basis(self):
+		'''
+		Method that loads the basis set for the atoms in the molecule. If the basis set 
+		does not exist in the database, we will download the basis set from https://www.basissetexchange.org/
+		using their API
+		'''
+
+		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_type}.bsf'
+		if not os.path.exists(bsf_path):
+			print(f'Error: Basis set {self.basis_type} not found, downloading ...')
+			import requests
+			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
+			if response:
+				print('Succesfully obtained basis set file')
+				with open(bsf_path, 'w+') as f:
+					f.write(response.text)
+				self.load_basis()
+			else:
+				print('Failed to obtain basis set file')
+		else:
+			print(f'Succesfully loaded {self.basis_type}.bsf')
+			with open(bsf_path, 'r') as f:
+				self.params = json.load(f)['elements']
+
+
+
+	
 
 
 class Atom:
@@ -126,6 +223,31 @@ class Atom:
 			}[element]
 
 
+		self._ref_electron_fill_order = ['1s', '2s', '2p', '3s', '3p', '4s', '3d', '4p', '5s', '4d', '5p', '6s', '5d', '6p', '7s', '5f', '6d']
+
+		elec = self._nelectrons
+
+		self._electron_fill_order = []
+		
+
+		for fo in self._ref_electron_fill_order:
+			if fo[1] == 's':
+				if elec > 0: self._valence_orbs = []
+				delta = min(elec, 2)
+			elif fo[1] == 'p':
+				delta = min(elec, 6)
+			elif fo[1] == 'd':
+				delta = min(elec, 10)
+			elif fo[1] == 'f':
+				delta = min(elec, 14)
+
+			if elec > 0: self._valence_orbs.append(fo)
+			elec -= delta
+			self._electron_fill_order.append(delta)
+
+
+
+
 	def distance_to(self, p):
 		'''
 		Method that returns the distance to a point p. If p is of class Atom, use p's coords.
@@ -221,7 +343,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, position=[0.,0.,0.], rotation=[0.,0.,0.], molecule_file=None, warning_level=1, scale=200, basis_set_type='STO-6G'):
+	def __init__(self, molecule_file, position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=400, basis_set_type='STO-6G'):
 		self._warning_level = warning_level
 
 		self.position = position	
@@ -356,27 +478,7 @@ Coordinates (angstrom):
 
 
 	def _load_basis_set(self):
-		'''
-		Method that loads the basis set for the atoms in the molecule. If the basis set 
-		does not exist in the database, we will download the basis set from https://www.basissetexchange.org/
-		using their API
-		'''
-		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_set_type}.bsf'
-		if not os.path.exists(bsf_path):
-			print(f'Error: Basis set {self.basis_set_type} not found, downloading ...')
-			import requests
-			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_set_type}/format/json')
-			if response:
-				print('Succesfully obtained basis set file')
-				with open(bsf_path, 'w+') as f:
-					f.write(response.text)
-				self._load_basis_set()
-			else:
-				print('Failed to obtain basis set file')
-		else:
-			print(f'Succesfully loaded {self.basis_set_type}.bsf')
-			with open(bsf_path, 'r') as f:
-				self._basis_set_params = json.load(f)['elements']
+		self.basis_set = BasisSet(self.basis_set_type, self.atoms)
 
 
 	def get_orb_density(self, p):
@@ -384,11 +486,8 @@ Coordinates (angstrom):
 		Method that returns the density value at a point based on the selected basis set
 		'''
 
-		for atom in self.atoms:
-			params = self._basis_set_params[str(atom.atomic_number)]['electron_shells']
-			for param in params:
-				if param['function_type'] == 'gto':
-					params = param
+		return self.basis_set(p)
+
 
 	@property 
 	def ncarbons(self):

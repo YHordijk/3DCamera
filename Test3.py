@@ -82,7 +82,7 @@ array = np.zeros(SIZE)
 
 draw_circle = screen.draw_circle
 
-file = os.getcwd() + f'\\Molecules\\ethane.xyz'
+file = os.getcwd() + f'\\Molecules\\aspirin.xyz'
 mol = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
 print(mol)
 samples = 10_000_0
@@ -93,7 +93,7 @@ d = np.zeros((samples))
 for atom in mol:
 	d += orb_1s(x-atom[0], y-atom[1], z-atom[2])
 
-d = orb_1s(x-mol[2][0], y-mol[2][1], z-mol[2][2])
+d = orb_1s(x-mol[0][0], y-mol[0][1], z-mol[0][2])
 
 d = d**2
 
@@ -108,7 +108,9 @@ d = d**2
 # d = (config[0]*orb_2s(x,y,z) + config[1]*orb_2py(x,y,z) + config[2]*orb_2px(x,y,z) + config[3]*orb_2pz(x,y,z))**2
 # d = orb_2pz(x,y,z)**2
 maxi = np.amax(d)
+print(d)
 colours = mapper[d].T
+print(colours)
 index = np.arange(0, samples)
 index = np.where(abs(d) > maxi/15, index, 0)
 index = index[index > 0]
@@ -121,7 +123,7 @@ x, y, z, d, colours = x[index][0:points], y[index][0:points], z[index][0:points]
 
 
 maxc = math.sqrt(abs(np.amax(x)) + abs(np.amax(y)))*3
-
+print(maxc)
 
 # circles = []
 # while len(circles) < 10000:

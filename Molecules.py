@@ -9,22 +9,23 @@ import pygame as pg
 
 pg.init()
 
-# mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=1, scale=400)]
+mols = [mol.Molecule('ethane.pcp', basis_set_type='STO-2G')]
 
-mols = [mol.Molecule(molecule_file=os.getcwd() + f'\\Molecules\\chlorophyll.xyz', warning_level=1, scale=400, basis_set_type='STO-4G')]
-mols[0].get_orb_density((0,0,0))
 
-# mols = [mol.Molecule(molecule_file='Glucose.pcp', warning_level=1, position=[5,0,0], scale=400),
-# 		  mol.Molecule(molecule_file='Altrose.pcp', warning_level=1, position=[-5,0,0], scale=400),]
+
+# mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\chlorophyll.xyz', basis_set_type='STO-4G')]
+
+samples = 200
+rang = 3
+x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
+
+p = np.asarray((x, y, z)).T
+
+print(mols[0].get_orb_density(p))
+
 
 mol = mols[0]
 atoms = mol.atoms
-# print(mol.torsion_angle(atoms[2], atoms[0], atoms[1], atoms[7]))
-
-# print(id(atoms[0]))
-
-# mm = ff.MM2()
-# print(mm.get_energy(mol))
 
 #screen setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
@@ -53,7 +54,7 @@ while run:
 	time += dT
 
 	screen.clear()
-	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=False) for m in mols]
+	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
 
 
