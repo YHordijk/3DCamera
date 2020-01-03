@@ -43,10 +43,10 @@ class BasisSet:
 			r2 = x**2 + y**2 + z**2
 			#loop over all atoms and get the correct basis set parameters depending on the element
 			params = self.params[str(atom.atomic_number)]['electron_shells']
-			for param in params:
-				#find the last (valence) parameters of the element
-				if param['function_type'] == 'gto':
-					params = param
+			# for param in params:
+			# 	#find the last (valence) parameters of the element
+			# 	params = param
+			params = params[-1]
 			#get the exponential and coefficient parameters
 			expon = params['exponents']
 			coeff = params['coefficients']
@@ -69,6 +69,7 @@ class BasisSet:
 						d += (2*a/pi)**(3/4) * y * y * np.exp(-a*r2)
 						d += (2*a/pi)**(3/4) * y * z * np.exp(-a*r2)
 						d += (2*a/pi)**(3/4) * z * z * np.exp(-a*r2)
+
 		return d**2
 
 

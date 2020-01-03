@@ -29,7 +29,6 @@ class ColourMap:
 	def colour_array(self, val):
 		val = (val - val.min())
 		val = val/val.max()
-		val = val
 
 		p = np.empty(val.shape)
 		cd = self.colours * self.cycles

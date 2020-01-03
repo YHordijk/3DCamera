@@ -1,4 +1,4 @@
-from modules.screen2 import *
+from modules.screen3 import *
 from modules.shape import *
 import modules.molecule4 as mol
 import modules.renderer as rend 
@@ -16,35 +16,12 @@ clock = pg.time.Clock()
 FPS = 100
 run = True
 
-
 #main loop
-
 tick = clock.tick_busy_loop
 updt = 0
 time = 0
 
 molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\ethane.xyz', basis_set_type='STO-6G')
-
-rang = 4
-samples = 1000000
-x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
-d = molecule.get_orb_density(np.asarray((x, y, z)).T).flatten()
-
-index = np.arange(0, samples)
-print(np.amax(d)/15)
-index = np.where(abs(d) > 20, index, 0)
-index = index[index > 0]
-
-mapper = cmap.BlackWhite()
-colours = mapper[d].T
-
-points = 50000
-x, y, z, d, colours = x[index][0:points], y[index][0:points], z[index][0:points], d[index][0:points], colours[index][0:points]
-
-
-maxc = 4
-
-draw_circle = screen.draw_circle
 
 while run:
 	#tick prep
@@ -55,19 +32,15 @@ while run:
 
 	screen.clear()
 
-	
-
-	screen.camera_position = np.array([maxc*sin(math.pi * time/5), 1.5, maxc*cos(math.pi * time/5)])
+	screen.camera_position = np.array([4*sin(math.pi * time/5), 1.5, 4*cos(math.pi * time/5)])
 	screen.camera_orientation = np.array([-.3, math.pi * time/5, 0])
 	
 
-	# for atom in molecule.atoms:
-	# 	draw_circle(atom.coords, 5, (255,0,0))
+	screen.draw_axes(1)
+	screen.draw_density(molecule, 50000, colour_map=cmap.CoolWarm())
+	screen.draw_shape(molecule, wireframe=True)
 
-
-	screen.draw_pixels(np.asarray((x, y, z)).T, colour_array=colours)
-
-	screen.draw_axes(0.2)
+	
 	# tick end
 	screen.update()
 
