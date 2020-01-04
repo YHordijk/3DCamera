@@ -76,8 +76,6 @@ class Screen3D:
 			self.disp.set_at(pos, colour)
 		except Exception as e:
 			pass
-
-
 	
 	def draw_pixels(self, poss, colour=(255,255,255), colour_func=None, colour_array=None):
 		set_at = self.disp.set_at
@@ -214,12 +212,13 @@ class Screen3D:
 
 			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
 			d = molecule.get_orb_density(np.asarray((x, y, z)).T).flatten()
-
-			index = np.arange(0, samples)
-			index = np.where(abs(d) > np.amax(d)/20, index, 0)
-			index = index[index > 0]
-
+			index = d.argsort()[::-1]
 			colours = colour_map[d].T
+
+			# index = np.arange(0, samples)
+			# index = np.where(abs(d) > np.amax(d)/2, index, 0)
+
+			# index = index[index > 0]
 
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
 			self._dens_pos, self._dens_colours = np.asarray((x, y, z)).T, colours

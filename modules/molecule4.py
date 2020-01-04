@@ -57,18 +57,19 @@ class BasisSet:
 				for a, c in zip(expon, coef):
 					a, c = float(a), float(c)
 					if m == 0:
-						d += (2*a/pi)**(3/4) * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * np.exp(-a*r2)
+						pass
 					if m == 1:
-						d += (2*a/pi)**(3/4) * x * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * y * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * z * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * x * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * y * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * z * np.exp(-a*r2)
 					if m == 2:
-						d += (2*a/pi)**(3/4) * x * x * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * x * y * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * x * z * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * y * y * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * y * z * np.exp(-a*r2)
-						d += (2*a/pi)**(3/4) * z * z * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * x * x * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * x * y * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * x * z * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * y * y * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * y * z * np.exp(-a*r2)
+						d += c * (2*a/pi)**(3/4) * z * z * np.exp(-a*r2)
 
 		return d**2
 
@@ -96,10 +97,6 @@ class BasisSet:
 			print(f'Succesfully loaded {self.basis_type}.bsf')
 			with open(bsf_path, 'r') as f:
 				self.params = json.load(f)['elements']
-
-
-
-	
 
 
 class Atom:
