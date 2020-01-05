@@ -3,7 +3,7 @@ import math
 
 
 class ColourMap:
-	def __init__(self, strength=1, cycles=1):
+	def __init__(self, strength=(1,1,1), cycles=1):
 		self.strength = strength
 		self.cycles = cycles
 
@@ -35,7 +35,7 @@ class ColourMap:
 		cd = self.colours * self.cycles
 
 		r, g, b = zip(*cd)
-		r, g, b = np.asarray(r)*self.strength, np.asarray(g)*self.strength, np.asarray(b)*self.strength
+		r, g, b = np.asarray(r)*self.strength[0], np.asarray(g)*self.strength[1], np.asarray(b)*self.strength[2]
 
 		l = len(cd)-1
 

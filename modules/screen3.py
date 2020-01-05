@@ -223,11 +223,6 @@ class Screen3D:
 			index = (d**2).argsort()[::-1]
 			colours = colour_map[d].T
 
-			# index = np.arange(0, samples)
-			# index = np.where(abs(d) > np.amax(d)/2, index, 0)
-
-			# index = index[index > 0]
-
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
 			self._dens_pos, self._dens_colours = np.asarray((x, y, z)).T, colours
 

@@ -95,12 +95,12 @@ class BasisSet:
 							d -= self.orbital(0, 0, float(a), float(c), x, y, z, r2) 
 					if mo == 6:
 						if i == 0:
-							d += self.orbital(1, 1, float(a), float(c), x, y, z, r2)
+							d -= self.orbital(1, 1, float(a), float(c), x, y, z, r2)
 						else:
 							d += self.orbital(0, 0, float(a), float(c), x, y, z, r2) * (-1,1)[i in (1,3)]
 					# d += sum([self.orbital(l, ml, float(a), float(c), x, y, z, r2) for ml in range(-l, l+1)])
 					
-		return d
+		return d**2
 
 
 	def load_basis(self):

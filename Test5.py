@@ -22,18 +22,17 @@ time = 0
 
 basis = bs.BasisSet('STO-6G', [mol.Atom('Cl', (0,0,0))])
 
-colour_map = cmap.BlueRed()
+colour_map = cmap.BlackRed()
 
 def dens():
 	points = 50000
 	samples = 50*points
 	rang = 4
 
-	x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
-	d = basis(np.asarray((x, y, z)).T).flatten()
+	x, y, z = ((np.random.randint(-rang*300, rang*300, size=samples)/300), (np.random.randint(-rang*300, rang*300, size=samples)/300), (np.random.randint(-rang*300, rang*300, size=samples)/300))
+	d = basis(np.asarray((x, y, z)).T).flatten()**2
 	index = np.arange(0, samples)
-	print(np.amax(abs(d)))
-	index = np.where(abs(d) > np.amax(abs(d))/2, index, 0)
+	index = np.where(abs(d) > np.amax(abs(d))/15, index, 0)
 
 	index = index[index > 0]
 

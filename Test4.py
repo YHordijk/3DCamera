@@ -35,7 +35,7 @@ while run:
 	
 
 	screen.draw_axes(1)
-	screen.draw_density(molecule, 15000, colour_map=cmap.CoolWarm(), mo=6)
+	screen.draw_density(molecule, 15000, colour_map=cmap.BlackWhite(strength=(1,0,1)), mo=6)
 	screen.draw_shape(molecule, wireframe=True)
 
 	
