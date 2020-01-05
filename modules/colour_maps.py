@@ -1,6 +1,7 @@
 import numpy as np
 import math
 
+
 class ColourMap:
 	def __init__(self, strength=1, cycles=1):
 		self.strength = strength

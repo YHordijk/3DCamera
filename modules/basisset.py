@@ -55,17 +55,18 @@ class BasisSet:
 			if ml ==  1: return d * y*z*z
 			if ml ==  2: return d * x*z*z
 			if ml ==  3: return d * z*z*z
+		return 0
 
 
 
-	def __call__(self, p):
+	def __call__(self, p, mo=0):
 		'''
 		Support for calling the object like a function, takes position as argument
 		Returns density of basis set at the location
 		'''
 
 		d = 0
-		for atom in self.atoms:
+		for i, atom in enumerate(self.atoms):
 			x, y, z = np.hsplit(p - atom.coords, 3)
 			r2 = x**2 + y**2 + z**2
 			#loop over all atoms and get the correct basis set parameters depending on the element
@@ -80,25 +81,25 @@ class BasisSet:
 			angmom = params['angular_momentum']
 
 			#implement formula d = Ne^(-ar^2), N = (2a/pi)^(3/4)
-			for m, coef in zip(angmom, coeff):
-				for a, c in zip(expon, coef):
-					a, c = float(a), float(c)
-					return self.orbital(2,2, a, c, x, y, z, r2)
-					if m == 0:
-						d += c * (2*a/pi)**(3/4) * np.exp(-a*r2)
-						pass
-					if m == 1:
-						d += c * (2*a/pi)**(3/4) * x * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * y * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * z * np.exp(-a*r2)
-					if m == 2:
-						d += c * (2*a/pi)**(3/4) * x * x * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * x * y * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * x * z * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * y * y * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * y * z * np.exp(-a*r2)
-						d += c * (2*a/pi)**(3/4) * z * z * np.exp(-a*r2)
 
+			for l, coef in zip(angmom, coeff):
+				for a, c in zip(expon, coef):
+					# return self.orbital(3,-1, a, c, x, y, z, r2)
+
+					if mo == 1:
+						d += self.orbital(0,0, float(a), float(c), x, y, z, r2)
+					if mo == 8:
+						if i == 0:
+							d += self.orbital(0, 0, float(a), float(c), x, y, z, r2)
+						else:
+							d -= self.orbital(0, 0, float(a), float(c), x, y, z, r2) 
+					if mo == 6:
+						if i == 0:
+							d += self.orbital(1, 1, float(a), float(c), x, y, z, r2)
+						else:
+							d += self.orbital(0, 0, float(a), float(c), x, y, z, r2) * (-1,1)[i in (1,3)]
+					# d += sum([self.orbital(l, ml, float(a), float(c), x, y, z, r2) for ml in range(-l, l+1)])
+					
 		return d
 
 

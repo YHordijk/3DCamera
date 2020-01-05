@@ -104,6 +104,13 @@ class Screen3D:
 				[draw(pos, colour_func(pos)) for pos in poss]
 
 
+	def draw_line(self, poss, colour=(255,255,255)):
+		try:
+			poss = [self.project(pos) for pos in poss]
+			pg.draw.aaline(self.disp, colour, poss[0], poss[1])
+		except:
+			raise
+
 
 	def draw_lines(self, poss, colour=(255,255,255), closed=True, width=1):
 		try:
@@ -204,15 +211,16 @@ class Screen3D:
 		return atom
 
 
-	def draw_density(self, molecule, points=50000, colour_map=cmap.BlackWhite()):
+	def draw_density(self, molecule, points=50000, colour_map=cmap.BlackWhite(), mo=0):
+		bs = molecule.basis_set
 		if not hasattr(self, '_dens_pos'):
 			print(f'Calculating density of {molecule.name} with {molecule.basis_set.basis_type} ...')
 			samples = 50*points
 			rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
 
 			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
-			d = molecule.get_orb_density(np.asarray((x, y, z)).T).flatten()
-			index = d.argsort()[::-1]
+			d = bs(np.asarray((x, y, z)).T, mo).flatten()
+			index = (d**2).argsort()[::-1]
 			colours = colour_map[d].T
 
 			# index = np.arange(0, samples)

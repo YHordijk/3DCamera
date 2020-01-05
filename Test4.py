@@ -1,7 +1,6 @@
 from modules.screen3 import *
 from modules.shape import *
 import modules.molecule4 as mol
-import modules.renderer as rend 
 import modules.colour_maps as cmap
 import math
 import numpy as np
@@ -11,7 +10,6 @@ import os
 #game setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = Screen3D(SIZE, camera_position=(4., 4., 10.), camera_orientation=(-0.35,0.35,0), bkgr_colour=(0,0,0))
-renderer = rend.Renderer(SIZE, colour_map=cmap.CoolWarm())
 clock = pg.time.Clock()
 FPS = 100
 run = True
@@ -21,7 +19,7 @@ tick = clock.tick_busy_loop
 updt = 0
 time = 0
 
-molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\ethane.xyz', basis_set_type='STO-6G')
+molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-6G')
 
 while run:
 	#tick prep
@@ -37,7 +35,7 @@ while run:
 	
 
 	screen.draw_axes(1)
-	screen.draw_density(molecule, 50000, colour_map=cmap.CoolWarm())
+	screen.draw_density(molecule, 15000, colour_map=cmap.CoolWarm(), mo=6)
 	screen.draw_shape(molecule, wireframe=True)
 
 	
@@ -52,7 +50,3 @@ while run:
 			run = False
 			break
 	
-
-# renderer.input_array(array)
-# renderer.show()
-

@@ -9,11 +9,11 @@ import pygame as pg
 
 pg.init()
 
-mols = [mol.Molecule('ethane.pcp', basis_set_type='STO-2G')]
+# mols = [mol.Molecule('ethane.pcp', basis_set_type='STO-2G')]
 
 
 
-# mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\chlorophyll.xyz', basis_set_type='STO-4G')]
+mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-4G')]
 
 samples = 200
 rang = 3
@@ -21,7 +21,7 @@ x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np
 
 p = np.asarray((x, y, z)).T
 
-print(mols[0].get_orb_density(p))
+# print(mols[0].get_orb_density(p))
 
 
 mol = mols[0]
@@ -54,9 +54,10 @@ while run:
 	time += dT
 
 	screen.clear()
-	[screen.draw_shape(m, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
+	[screen.draw_shape(m, wireframe=False, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
 
+	screen.draw_axes(1)
 
 	keys = pg.key.get_pressed()
 	ev = pg.event.get()
