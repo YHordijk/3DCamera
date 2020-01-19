@@ -1,4 +1,5 @@
 import numpy as np
+np.seterr(all='raise')
 import math
 
 
@@ -29,9 +30,10 @@ class ColourMap:
 
 	def colour_array(self, val):
 		val = (val - val.min())
-		val = val/val.max()
+		try:
+			val = val/val.max()
+		except: val = np.ones(val.shape)
 
-		p = np.empty(val.shape)
 		cd = self.colours * self.cycles
 
 		r, g, b = zip(*cd)
@@ -58,6 +60,10 @@ def get_cmap_names():
 def get_cmap_classes():
 	return [o for o in ColourMap.__subclasses__()]
 
+
+
+
+
 class BlueRed(ColourMap):
 	colours = [
 	(58, 76, 192),
@@ -67,7 +73,8 @@ class BlueRed(ColourMap):
 class BlackWhite(ColourMap):
 	colours = [
 	(0,0,0),
-	(255,255,255)]
+	(255,255,255)
+	]
 
 class WaveFunction(ColourMap):
 	colours = [
@@ -76,7 +83,15 @@ class WaveFunction(ColourMap):
 	(201, 64, 67),
 	(251, 119, 6),
 	(255, 185, 49),
-	(255, 255, 255)]
+	(255, 255, 255)
+	]
+
+class ElectroStat(ColourMap):
+	colours = [
+	(24, 30, 217),
+	(195, 209, 16),
+	(179, 14, 10),
+	]
 
 class CoolWarm(ColourMap):
 	colours = [

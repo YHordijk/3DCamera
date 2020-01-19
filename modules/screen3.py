@@ -211,22 +211,61 @@ class Screen3D:
 		return atom
 
 
-	def draw_density(self, molecule, points=50000, colour_map=cmap.BlackWhite(), mo=0):
-		bs = molecule.basis_set
-		if not hasattr(self, '_dens_pos'):
-			print(f'Calculating density of {molecule.name} with {molecule.basis_set.basis_type} ...')
+	# def draw_density(self, molecule, points=50000, colour_map=cmap.BlackWhite(), mo=0):
+	# 	bs = molecule.basis_set
+	# 	if not hasattr(self, '_dens_pos'):
+	# 		print(f'Calculating density of {molecule.name} with {molecule.basis_set.basis_type} ...')
+	# 		samples = 50*points
+	# 		rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
+
+	# 		x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
+	# 		d = bs(np.asarray((x, y, z)).T, mo).flatten()
+	# 		print(d)
+	# 		index = (d**2).argsort()[::-1]
+	# 		colours = colour_map[d].T
+
+	# 		x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
+	# 		self._dens_pos, self._dens_colours = np.asarray((x, y, z)).T, colours
+
+	# 	self.draw_pixels(self._dens_pos, colour_array=self._dens_colours)
+
+
+	def draw_density(self, molecule, orbital, points=50000, colour_map=cmap.CoolWarm()):
+		if not hasattr(molecule, '_dens_pos'):
+			print(f'Calculating density of {molecule.name} ...')
 			samples = 50*points
 			rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
 
 			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
-			d = bs(np.asarray((x, y, z)).T, mo).flatten()
-			index = (d**2).argsort()[::-1]
+			d = orbital(np.asarray((x, y, z)).T).flatten()
+			index = abs(d).argsort()[::-1]
+			d = np.maximum(d, np.mean(d)*4)
 			colours = colour_map[d].T
 
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
-			self._dens_pos, self._dens_colours = np.asarray((x, y, z)).T, colours
+			molecule._dens_pos, molecule._dens_colours = np.asarray((x, y, z)).T, colours
 
-		self.draw_pixels(self._dens_pos, colour_array=self._dens_colours)
+		self.draw_pixels(molecule._dens_pos, colour_array=molecule._dens_colours)
+
+
+	def draw_electrostatic_potential(self, molecule, points=50000, colour_map=cmap.ElectroStat()):
+		if not hasattr(molecule, '_elec_stat_pos'):
+			print(f'Calculating electrostatic potential of {molecule.name} ...')
+			samples = 50*points
+			rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
+
+			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
+			d = molecule.electrostatic_potential(np.asarray((x, y, z)).T).flatten()
+			index = abs(d).argsort()[::-1]
+			d = np.maximum(d, np.mean(d)*4)
+			print(d, np.amax(d), np.amin(d), np.mean(d))
+			colours = colour_map[d].T
+
+			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
+			molecule._elec_stat_pos, molecule._elec_stat_colours = np.asarray((x, y, z)).T, colours
+
+		self.draw_pixels(molecule._elec_stat_pos, colour_array=molecule._elec_stat_colours)
+
 
 	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True, draw_hydrogens=True, wireframe=False):
 		if shape.type == 'flat':
@@ -248,28 +287,26 @@ class Screen3D:
 				atoms = shape.get_by_element('H', blacklist=True)
 			coords = np.asarray([a.coords for a in atoms]) #coordinates converted to np array
 
-			dists = np.asarray([a.distance_to((cam_pos*2)) for a in atoms])#calculate dists to determine order of drawing
+			dists = np.asarray([a.distance_to((cam_pos)) for a in atoms])#calculate dists to determine order of drawing
 			indices = np.argsort(dists)[::-1] #determine order of drawing by sorting the dists and reversing
 			atoms = np.asarray(atoms)[indices] #sort atoms by distance to cam_pos
 			dists = dists[indices]
-			deltas = coords - cam_pos #determine delta distance to determine the 
+			deltas = coords - cam_pos
 			deltas = deltas[indices]
 
 			d2 = lambda x, y: (x - y)/2
 
 			prev_indices = []
 			for i, a1 in enumerate(atoms):
-				if not wireframe:
-					width = int(150/dists[i])
-
-					prev_indices.append(a1)
-					# if deltas[i][2] < 0:
-					if True:
+				width = int(50/dists[i])
+				if deltas[i][2] < 0:
+					if not wireframe:
+						prev_indices.append(a1)
 						c1 = a1.coords
 						if draw_bonds:
 							if colour_bonds:
 								for a2 in a1.bonds:
-									if not a2.element == 'H' or draw_hydrogens:
+									if not a2.symbol == 'H' or draw_hydrogens:
 										if not a2 in prev_indices:
 											c2 = a2.coords
 											if a1.bond_orders[a2] == 1:
@@ -290,7 +327,7 @@ class Screen3D:
 						if draw_bonds:
 							if colour_bonds:
 								for a2 in a1.bonds:
-									if not a2.element == 'H' or draw_hydrogens:
+									if not a2.symbol == 'H' or draw_hydrogens:
 										if not a2 in prev_indices:
 											c2 = a2.coords
 											if a1.bond_orders[a2] == 1:
@@ -299,20 +336,21 @@ class Screen3D:
 												self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
 											elif a1.bond_orders[a2] == 3:
 												self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
-				elif wireframe:
-					c1 = a1.coords
-					for a2 in a1.bonds:
-						if not a2 in prev_indices:
-							c2 = a2.coords
-							if a1.bond_orders[a2] == 1:
-								self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=3, colour=a1.draw_colour)
-								self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=3, colour=a2.draw_colour)
-							elif a1.bond_orders[a2] == 2:
-								self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=3, colour=a1.draw_colour)
-								self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=3, colour=a2.draw_colour)	
-							elif a1.bond_orders[a2] == 3:
-								self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=3, colour=a1.draw_colour)
-								self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=3, colour=a2.draw_colour)
+					
+					elif wireframe:
+							c1 = a1.coords
+							for a2 in a1.bonds:
+								if not a2 in prev_indices:
+									c2 = a2.coords
+									if a1.bond_orders[a2] == 1:
+										self.draw_single_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
+										self.draw_single_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)
+									elif a1.bond_orders[a2] == 2:
+										self.draw_double_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
+										self.draw_double_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)	
+									elif a1.bond_orders[a2] == 3:
+										self.draw_triple_bond((c1 + p, c1 + p + d2(c2,c1)), width=width, colour=a1.draw_colour)
+										self.draw_triple_bond((c2 + p - d2(c2,c1), c2 + p), width=width, colour=a2.draw_colour)
 
 
 			self.atom_draw_pos = atom_draw_pos

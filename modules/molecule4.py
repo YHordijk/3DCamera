@@ -2,152 +2,71 @@ import numpy as np
 from scipy.spatial.distance import euclidean, sqeuclidean
 from math import cos, sin, pi, atan2, acos, exp
 import os, json
-import modules.basisset as bs
+import modules.basisset2 as bs
+import periodictable as pt
+
 
 
 class Atom:
 	def __init__(self, element, coords):
 		self.coords = coords
-		self.element = element
 		self.bonds = []
 		self.bond_orders = {}
 		self.selected = False
 
-		self.atomic_number = {
-			'C': 6,
-			'H': 1,
-			'O': 8,
-			'N': 7,
-			'Fe': 26,
-			'Mg': 12,
-			'P': 15,
-			'Cl': 17,
-			'S': 16,
-			'Na': 11,
-			}[element]
+		try:
+			el = pt.elements[element]
+		except:
+			try:
+				el = pt.elements.symbol(element)
+			except:
+				try:
+					el = pt.elements.name(element)
+				except:
+					print(f'Could not parse element {element}.')
 
-		self._nelectrons = self.atomic_number
+		self.ionisation_energy = np.genfromtxt('modules\\ionisation_energies', usecols=(1,2), missing_values='', delimiter=';')[el.number]
 
-		self.mass = { #masses of the elements
-			'C': 12,
-			'H': 1,
-			'O': 16,
-			'N': 14,
-			'Fe': 55.85,
-			'Mg': 24.3,
-			'P': 31,
-			'Cl': 35.5,
-			'S': 32.02,
-			'Na': 23,
-			}[element]
+		self.symbol = el.symbol
+		self.name = el.name
+		self.atomic_number = el.number
+		self.mass = el.mass
+		self.radius = el.covalent_radius
 
-		self.nuc_charge = { #nuclear charges of the elements
-			'C': 3.2,
-			'H': 1,
-			'O': 16,
-			'N': 14,
-			'Fe': 55.85,
-			'Mg': 24.3,
-			'P': 31,
-			'Cl': 35.5,
-			'S': 32.02,
-			'Na': 23,
-			}[element]
+		try:
+			self.colour = self.draw_colour = {
+				'C': (34, 34, 34),
+				'H': (255, 255, 255),
+				'O': (255, 22, 0),
+				'N': (22, 33, 255),
+				'S': (225, 225, 48),
+				'Ca': (61, 255, 0),
+				'Fe': (221, 119, 0),
+				'Mg': (0, 119, 0),
+				'P': (255, 153, 0),
+				'Cl': (31, 240, 31),
+				'Na': (119, 0, 255),
+				}[self.symbol]
+		except:
+			print(f'No default colour found for {self.symbol}')
+			self.colour = (0,0,0)
 
-		self.colour = {
-			'C': (34, 34, 34),
-			'H': (255, 255, 255),
-			'O': (255, 22, 0),
-			'N': (22, 33, 255),
-			'S': (225, 225, 48),
-			'Ca': (61, 255, 0),
-			'Fe': (221, 119, 0),
-			'Mg': (0, 119, 0),
-			'P': (255, 153, 0),
-			'Cl': (31, 240, 31),
-			'Na': (119, 0, 255),
-			}[element]
-
-		self.draw_colour = self.colour
-
-		self.radius = {
-			'Ac': 1.88,
-			'Ag': 1.59,
-			'Al': 1.35,
-			'Am': 1.51,
-			'As': 1.21,
-			'Au': 1.50,
-			'B': 0.83,
-			'Ba': 1.34,
-			'Be': 0.35,
-			'Bi': 1.54,
-			'Br': 0.68,
-			'C': 0.68,
-			'Ca': 0.99,
-			'Cd': 1.69,
-			'Ce': 1.83,
-			'Cl': 0.99,
-			'Co': 1.33,
-			'Cr': 1.35,
-			'Cs': 1.67,
-			'Cu': 1.52,
-			'D': 0.23,
-			'Dy': 1.75,
-			'Er': 1.73,
-			'Eu': 1.99,
-			'F': 0.64,
-			'Fe': 1.34,
-			'Ga': 1.22,
-			'Gd': 1.79,
-			'Ge': 1.17,
-			'H': 0.23,
-			'Hf': 1.57,
-			'O': 0.68,
-			'N': 0.68,
-			'S': 1.02,
-
-			
-			'Mg': 1.50,
-			'P': 1.10,
-			
-			'Na': 1.80,
-			}[element]
-
-		self.max_valence = {
-			'C': 4,
-			'H': 1,
-			'O': 2,
-			'N': 3,
-			'Mg': 2,
-			'P': 6,
-			'Cl': 1,
-			'S': 6,
-			'Na': 1,
-			'Fe': 2,
-			}[element]
-
-
-		self._ref_electron_fill_order = ['1s', '2s', '2p', '3s', '3p', '4s', '3d', '4p', '5s', '4d', '5p', '6s', '5d', '6p', '7s', '5f', '6d']
-
-		elec = self._nelectrons
-
-		self._electron_fill_order = []
-		
-
-		for fo in self._ref_electron_fill_order:
-			if fo[1] == 's':
-				if elec > 0: self._valence_orbs = []
-				delta = min(elec, 2)
-			elif fo[1] == 'p':
-				delta = min(elec, 6)
-			elif fo[1] == 'd':
-				delta = min(elec, 10)
-			elif fo[1] == 'f':
-				delta = min(elec, 14)
-
-			if elec > 0: self._valence_orbs.append(fo)
-			elec -= delta
-			self._electron_fill_order.append(delta)
+		try:
+			self.max_valence = {
+				'C': 4,
+				'H': 1,
+				'O': 2,
+				'N': 3,
+				'Mg': 2,
+				'P': 6,
+				'Cl': 1,
+				'S': 6,
+				'Na': 1,
+				'Fe': 2,
+				}[self.symbol]
+		except:
+			print(f'No max_valence found for {self.symbol}')
+			self.max_valence = 1
 
 
 	def distance_to(self, p):
@@ -225,12 +144,12 @@ class Atom:
 		'''
 
 		if blacklist:
-			return [a for a in self.bonds if a.element not in elements]
-		return [a for a in self.bonds if a.element in elements]
+			return [a for a in self.bonds if a.symbol not in elements]
+		return [a for a in self.bonds if a.symbol in elements]
 
 
 	def __repr__(self):
-		return f'Atom({self.element}, {self.coords})'
+		return f'Atom({self.symbol}, {self.coords})'
 
 
 	def is_unsaturated(self):
@@ -292,6 +211,18 @@ Coordinates (angstrom):
 		string += f'\n\tCOM  {self.center_of_mass[0]: >10.5f} {self.center_of_mass[1]: >10.5f} {self.center_of_mass[2]: >10.5f}\t#Center of mass'
 
 		return string
+
+
+	def electrostatic_potential(self, pos):
+		from scipy.spatial.distance import cdist
+
+		p = np.expand_dims(np.zeros(pos.shape[0]),1)
+		for atom in self.atoms:
+			a = np.expand_dims(atom.coords, 1).T
+			r = cdist(pos, a) # calculate separation
+			p -= atom.atomic_number / r
+
+		return p
 
 
 	def center(self):
@@ -380,7 +311,8 @@ Coordinates (angstrom):
 
 
 	def _load_basis_set(self):
-		self.basis_set = bs.BasisSet(self.basis_set_type, self.atoms)
+		for a in self.atoms:
+			a.atomic_orbitals = bs.AtomicOrbital(self.basis_set_type, a)
 
 
 	def get_orb_density(self, p):
@@ -413,7 +345,7 @@ Coordinates (angstrom):
 		'''
 
 		#cast self.atom_types to a list and count the number of 'C'
-		return [a.element for a in self.atoms].count(element)
+		return [a.symbol for a in self.atoms].count(element)
 
 
 	def bond_angle(self, a1, a2, a3, in_degrees=False):
@@ -767,7 +699,7 @@ Coordinates (angstrom):
 		Method that returns a set of all elements in the molecule
 		'''
 
-		return set([a.element for a in self.atoms])
+		return set([a.symbol for a in self.atoms])
 
 
 	def get_by_element(self, element, blacklist=False):
@@ -781,8 +713,8 @@ Coordinates (angstrom):
 		'''
 
 		if blacklist:
-			return [a for a in self.atoms if not a.element == element]
-		return [a for a in self.atoms if a.element == element]
+			return [a for a in self.atoms if not a.symbol == element]
+		return [a for a in self.atoms if a.symbol == element]
 
 
 	def get_bonded_atoms(self, a, element='any'):
@@ -797,7 +729,7 @@ Coordinates (angstrom):
 		if element == 'any':
 			return a.bonds
 		else:
-			return [b for b in a.bonds if b.element == element]
+			return [b for b in a.bonds if b.symbol == element]
 
 
 	def nbonds(self, a, element='any'):
@@ -826,7 +758,7 @@ Coordinates (angstrom):
 			#the atom. Because the molecule if a PAH we know that carbons with only two
 			#C-C bonds must also get a hydrogen.
 			
-			if a.element == 'C' and a.hybridisation == 'sp2' and a.HA_valence == 2:
+			if a.symbol == 'C' and a.hybridisation == 'sp2' and a.HA_valence == 2:
 				'''
 				The strategy we will use to find the new position of the hydrogen is to first get the bond
 				vectors of the C-C-C frame originating from C2.
@@ -935,13 +867,14 @@ Coordinates (angstrom):
 			f.write(f'{self.natoms}\n')
 			f.write('generated via python\n')
 			for a in self.atoms:
-				f.write(f'{a.element} {a.coords[0]:.5f} {a.coords[1]:.5f} {a.coords[2]:.5f}\n')
+				f.write(f'{a.symbol} {a.coords[0]:.5f} {a.coords[1]:.5f} {a.coords[2]:.5f}\n')
 
 
 	def rotate(self, rotation):
 		'''
 		Method that rotates atom coordinates by rotation
 		'''
+		self.rotation += rotation
 
 		r = rotation[0]
 		Rx = np.array(([	  1, 	  0,	   0],
@@ -960,4 +893,9 @@ Coordinates (angstrom):
 
 		for a in self.atoms:
 			a.coords = Rx @ Ry @ Rz @ a.coords
+
+		if hasattr(self, '_elec_stat_pos'):
+			self._elec_stat_pos = (Rx @ Ry @ Rz @ self._elec_stat_pos.T).T
+		if hasattr(self, '_dens_pos'):
+			self._dens_pos = (Rx @ Ry @ Rz @ self._dens_pos.T).T
 

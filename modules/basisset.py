@@ -4,6 +4,7 @@ import os
 from math import pi
 
 
+
 class BasisSet:
 	def __init__(self, basis_type, atoms=[]):
 		self.basis_type = basis_type
@@ -32,8 +33,38 @@ class BasisSet:
 		return self.params[val]
 
 
+	def orbital_func(self, l, ml, a, c, x, y, z, r2):
+		e = np.exp(-a*r2)
+		e[np.abs(e) < 0.0001] = 0
+		d = c * (2*a/pi)**(3/4) * e
+
+		if l == 0:
+			return d
+		if l == 1:
+			if ml == -1: return lambda x, y, z: d * x
+			if ml ==  0: return lambda x, y, z: d * y
+			if ml ==  1: return lambda x, y, z: d * z
+		if l == 2:
+			if ml == -2: return lambda x, y, z: d * (x**2-y**2)
+			if ml == -1: return lambda x, y, z: d * x*y
+			if ml ==  0: return lambda x, y, z: d * x*z
+			if ml ==  1: return lambda x, y, z: d * y*z
+			if ml ==  2: return lambda x, y, z: d * z*z
+		if l == 3:
+			if ml == -3: return lambda x, y, z: d * y*(y*y-3*x*x)
+			if ml == -2: return lambda x, y, z: d * x*(x*x-3*y*y)
+			if ml == -1: return lambda x, y, z: d * z*(x*x-y*y)
+			if ml ==  0: return lambda x, y, z: d * x*y*z
+			if ml ==  1: return lambda x, y, z: d * y*z*z
+			if ml ==  2: return lambda x, y, z: d * x*z*z
+			if ml ==  3: return lambda x, y, z: d * z*z*z
+		return 0
+
+
 	def orbital(self, l, ml, a, c, x, y, z, r2):
-		d = c * (2*a/pi)**(3/4) * np.exp(-a*r2)
+		e = np.exp(-a*r2)
+		e[np.abs(e) < 0.0001] = 0
+		d = c * (2*a/pi)**(3/4) * e
 
 		if l == 0:
 			return d
@@ -98,7 +129,8 @@ class BasisSet:
 							d -= self.orbital(1, 1, float(a), float(c), x, y, z, r2)
 						else:
 							d += self.orbital(0, 0, float(a), float(c), x, y, z, r2) * (-1,1)[i in (1,3)]
-					# d += sum([self.orbital(l, ml, float(a), float(c), x, y, z, r2) for ml in range(-l, l+1)])
+					else:
+						d += sum([self.orbital(l, ml, float(a), float(c), x, y, z, r2) for ml in range(-l, l+1)])
 					
 		return d**2
 

@@ -22,7 +22,7 @@ time = 0
 
 basis = bs.BasisSet('STO-6G', [mol.Atom('Cl', (0,0,0))])
 
-colour_map = cmap.BlackRed()
+colour_map = cmap.CoolWarm()
 
 def dens():
 	points = 50000

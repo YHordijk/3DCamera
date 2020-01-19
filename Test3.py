@@ -93,7 +93,7 @@ d = np.zeros((samples))
 for atom in mol:
 	d += orb_1s(x-atom[0], y-atom[1], z-atom[2])
 
-d = orb_1s(x-mol[0][0], y-mol[0][1], z-mol[0][2])
+# d = orb_1s(x-mol[0][0], y-mol[0][1], z-mol[0][2])
 
 d = d**2
 

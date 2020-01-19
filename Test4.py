@@ -1,5 +1,6 @@
 from modules.screen3 import *
 from modules.shape import *
+import modules.basisset2 as bs
 import modules.molecule4 as mol
 import modules.colour_maps as cmap
 import math
@@ -21,6 +22,10 @@ time = 0
 
 molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-6G')
 
+mos = bs.extended_huckel(molecule)
+print(mos[0]((1,1,1)))
+
+
 while run:
 	#tick prep
 	updt += 1
@@ -30,12 +35,12 @@ while run:
 
 	screen.clear()
 
-	screen.camera_position = np.array([4*sin(math.pi * time/5), 1.5, 4*cos(math.pi * time/5)])
+	screen.camera_position = np.array([6*sin(math.pi * time/5), 1.5, 6*cos(math.pi * time/5)])
 	screen.camera_orientation = np.array([-.3, math.pi * time/5, 0])
 	
 
 	screen.draw_axes(1)
-	screen.draw_density(molecule, 15000, colour_map=cmap.BlackWhite(strength=(1,0,1)), mo=6)
+	# screen.draw_density(molecule, 15000, mo=8)
 	screen.draw_shape(molecule, wireframe=True)
 
 	

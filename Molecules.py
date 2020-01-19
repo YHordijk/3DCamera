@@ -1,6 +1,7 @@
 import modules.screen3 as scr 
 import modules.molecule4 as mol 
 import modules.forcefields as ff
+import modules.basisset2 as bs
 import math, os
 import numpy as np
 from time import perf_counter
@@ -9,27 +10,31 @@ import pygame as pg
 
 pg.init()
 
-# mols = [mol.Molecule('ethane.pcp', basis_set_type='STO-2G')]
+# mols = [mol.Molecule('ethene.pcp', basis_set_type='STO-6G')]
 
 
 
-mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-4G')]
+mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-6G')]
 
 samples = 200
-rang = 3
+rang = 6
 x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
 
 p = np.asarray((x, y, z)).T
 
-# print(mols[0].get_orb_density(p))
-
 
 mol = mols[0]
+mo = bs.extended_huckel(mol) 
+print(len(mo))
+
+
+
 atoms = mol.atoms
 
 #screen setup
 WIDTH, HEIGHT = SIZE = (1200, 720)
 screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(100, 100, 190))
+screen.bkgr_colour = (0,0,0)
 pg.display.set_caption(', '.join([m.name.capitalize() for m in mols]))
 clock = pg.time.Clock()
 FPS = 120
@@ -45,7 +50,7 @@ rot = np.array([0.,0.,0.])
 zoom = 0
 
 pg.key.set_repeat()
-
+draw_dens = False
 run = True
 while run:
 	#tick prep
@@ -53,14 +58,24 @@ while run:
 	dT = tick(FPS)/1000
 	time += dT
 
+	keys = pg.key.get_pressed()
+	ev = pg.event.get()
+
 	screen.clear()
-	[screen.draw_shape(m, wireframe=False, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
+
+	# if keys[pg.K_SPACE]:
+	# 	screen.draw_electrostatic_potential(mols[0], 15000)
+
+	# if keys[pg.K_SPACE]:
+	# 	draw_dens += 1
+	screen.draw_density(mol, mo[0], 5000)
+
+	[screen.draw_shape(m, wireframe=True, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
 
 	screen.draw_axes(1)
 
-	keys = pg.key.get_pressed()
-	ev = pg.event.get()
+	
 
 	if keys[pg.K_ESCAPE]:
 		run = False
@@ -92,11 +107,14 @@ while run:
 			elif e.button == 4:
 				if screen.camera_position[2] > 3:
 					zoom = -dT * screen.camera_position[2] * 3
+				else:
+					screen.camera_position[2] = 3
 			elif e.button == 5:
 				if screen.camera_position[2] < 40:
 					zoom = dT * screen.camera_position[2] * 3
-
-
+				else:
+					screen.camera_position[2] = 40
+					
 
 	rot *= 0.8
 	move = pg.mouse.get_rel()
@@ -107,10 +125,13 @@ while run:
 
 		if pg.mouse.get_pressed()[0]:
 			rot = np.asarray([move[1]/150, -move[0]/150, 0])
-		
+
+	                
+
 
 	screen.camera_position[2] += zoom
 	zoom *= 0.8
+
 
 
 	#tick end
@@ -127,7 +148,7 @@ while run:
 			else:
 				index = mols[0].atoms.index(atom)
 
-			screen.display_text(f'  {atom.element}{index}  ', (10,10))
+			screen.display_text(f'  {atom.symbol}{index}  ', (10,10))
 
 		elif l == 2:
 			atoms = list(selected_atoms)
@@ -140,7 +161,7 @@ while run:
 				else:
 					index.append(mols[0].atoms.index(atom))
 
-			screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
+			screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
 
 		elif l == 3:
 			atoms = list(selected_atoms)
@@ -155,13 +176,13 @@ while run:
 
 			a1, a2, a3 = atoms
 			if a2 in a1.bonds and a3 in a1.bonds:
-				screen.display_text(f'  {atoms[1].element}{index[1]}, {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[1].symbol}{index[1]}, {atoms[0].symbol}{index[0]}, {atoms[2].symbol}{index[2]}: {round(mols[0].bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a2.bonds and a3 in a2.bonds:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}: {round(mols[0].bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}, {atoms[2].symbol}{index[2]}: {round(mols[0].bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a3.bonds and a2 in a3.bonds:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[2].element}{index[2]}, {atoms[1].element}{index[1]}: {round(mols[0].bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[2].symbol}{index[2]}, {atoms[1].symbol}{index[1]}: {round(mols[0].bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
 			else:
-				screen.display_text(f'  {atoms[0].element}{index[0]}, {atoms[1].element}{index[1]}, {atoms[2].element}{index[2]}  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}, {atoms[2].symbol}{index[2]}  ', (10,10))
 
 
 	screen.update()
