@@ -1,25 +1,37 @@
-import modules.basisset2 as bs 
-import modules.molecule4 as mol
+import modules.basisset3 as bs 
+import modules.molecule5 as mol
+import modules.renderer as rend
+import gbasis.evals.eval as gb_eval
+from gbasis.integrals.overlap import overlap_integral
 import numpy as np 
 import os
 
-# molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\altrose.xyz', basis_set_type='STO-6G')
-# molecule = mol.Molecule('fluorine.pcp', basis_set_type='STO-6G')
-
-# print(molecule.atoms[0].atomic_orbitals.primitives_list)
-# print(molecule.atoms)
+# molecule = mol.Molecule('methane.pcp')
 
 
-g1 = bs.AtomicOrbital('STO-6G', mol.Atom('C', (0,0,0)))
-g2 = bs.AtomicOrbital('STO-6G', mol.Atom('H', (0,0,1)))
+# atoms = [mol.Atom('H', (0,0,0)), mol.Atom('H', (1,0,0))]
+atoms = [mol.Atom('C', (0,0,0)), mol.Atom('H', (1,0,0)), mol.Atom('H', (1,0,0))]
 
-print(g1.primitives_list)
-print(g2.primitives_list)
+basis = bs.BasisSet(atoms, 'STO-6G')
+print(basis.basis)
 
-print(bs.overlap_integral(g1.primitives_list[2], g2.primitives_list[0]))
+# print(len(molecule.basis.basis))
+
+size = 600
+grid = np.linspace(-2,2,size)
+X, Y = np.meshgrid(grid, grid)
+grid_3d = np.vstack([X.ravel(), Y.ravel(), np.zeros(size*size).ravel()]).T
+
+transform = [[0,0,1,1]]
+transform = np.asarray([np.asarray(t/np.linalg.norm(t)**2) for t in transform])
 
 
+a = gb_eval.evaluate_basis(basis.basis, grid_3d, coord_type='cartesian')[2]
+a = np.reshape(a, (size,size))
+
+# print(overlap_integral(basis.basis, coord_type='cartesian', transform=transform))
 
 
-# print(bs.extended_huckel(molecule))
-
+renderer = rend.Renderer()
+renderer.input_array(a)
+renderer.show()

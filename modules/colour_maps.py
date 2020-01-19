@@ -1,10 +1,8 @@
 import numpy as np
-np.seterr(all='raise')
 import math
 
-
 class ColourMap:
-	def __init__(self, strength=(1,1,1), cycles=1):
+	def __init__(self, strength=1, cycles=1):
 		self.strength = strength
 		self.cycles = cycles
 
@@ -25,19 +23,16 @@ class ColourMap:
 			else:
 				return cd[i]
 
-	def reverse(self):
-		self.colours = self.colours[::-1]
-
 	def colour_array(self, val):
 		val = (val - val.min())
-		try:
-			val = val/val.max()
-		except: val = np.ones(val.shape)
+		val = val/val.max()
+		val = val
 
+		p = np.empty(val.shape)
 		cd = self.colours * self.cycles
 
 		r, g, b = zip(*cd)
-		r, g, b = np.asarray(r)*self.strength[0], np.asarray(g)*self.strength[1], np.asarray(b)*self.strength[2]
+		r, g, b = np.asarray(r)*self.strength, np.asarray(g)*self.strength, np.asarray(b)*self.strength
 
 		l = len(cd)-1
 
@@ -49,8 +44,6 @@ class ColourMap:
 		g = np.round(g[i] + (g[np.minimum(i+1, l)] - g[i]) * d)
 		b = np.round(b[i] + (b[np.minimum(i+1, l)] - b[i]) * d)
 
-		return np.asarray([r, g, b])
-
 		p = b + g * 256 + r * 256**2
 		return p.astype(int)
 
@@ -59,7 +52,6 @@ def get_cmap_names():
 
 def get_cmap_classes():
 	return [o for o in ColourMap.__subclasses__()]
-
 
 
 

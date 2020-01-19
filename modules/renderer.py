@@ -24,7 +24,6 @@ class Renderer:
 		self.pixel_array = np.zeros(resolution)
 
 	def map_rgb_to_surface(self, array):
-		print(array)
 		return cmap.Ocean[array]
 
 	@property
@@ -39,6 +38,7 @@ class Renderer:
 
 	def blit_array(self, array):
 		pg.surfarray.blit_array(self.disp, self.colour_map[self.pixel_array])
+
 
 	def show(self, clickable=False, range_set=False):
 		self.blit_array(self.pixel_array)
@@ -136,20 +136,16 @@ class Renderer:
 
 		return x.astype(int), y.astype(int)
 
-	def shader(self, shader_type):
-		pass
 
-
-# def draw_cmap_sample(colour_map):
-# 	res = (600,200)
-# 	print(colour_map.cycles)
-# 	array = np.empty(res)
-# 	s = Renderer(res, colour_map=colour_map)
-# 	for y in range(res[1]):
-# 		for x in range(res[0]):
-# 			array[x,y] = x
-# 	s.input_array(array)
-# 	s.show(clickable=False)
+def draw_cmap_sample(colour_map):
+	res = (600,200)
+	array = np.empty(res)
+	s = Renderer(res, colour_map=colour_map)
+	for y in range(res[1]):
+		for x in range(res[0]):
+			array[x,y] = x
+	s.input_array(array)
+	s.show(clickable=False)
 
 
 # def mandelbrott(x, y, res, rangex, rangey, max=400):

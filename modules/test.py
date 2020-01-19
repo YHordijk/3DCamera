@@ -1,4 +1,4 @@
-def hash(n):
-	return (n%3>0, (n+1)%3>0, (n+2)%2>0)
-
-print(hash(-1))
+from past.translation import install_hooks, remove_hooks
+install_hooks(['PyQuante'])
+import PyQuante
+remove_hooks()

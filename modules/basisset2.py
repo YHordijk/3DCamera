@@ -3,6 +3,7 @@ import numpy as np
 import os
 from math import pi, exp, sqrt, factorial
 from scipy.spatial.distance import cdist
+import gbasis as gb
 
 
 def extended_huckel(molecule, K=1.75):
