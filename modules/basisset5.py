@@ -33,36 +33,7 @@ def extended_huckel(molecule, K=1.75):
 		for j in range(i, dim):
 			om[i,j] = om[j,i] = overlap_integral(orbitals[i], orbitals[j])
 
-	print(om)
 
-	# #calculate huckelmatrix
-	# dim = om.shape[0]
-	# hm = np.zeros((dim,dim))
-
-	# #first set diagonals elements
-	# for i in range(dim):
-	# 	hm[i,i] = -orbitals[i].atom.ionisation_energy[sum(orbitals[i].cardinal_powers)]
-
-	# print(om)
-	# print()
-	# print(hm)
-
-	# #set the off-diagonals
-	# for i in range(1,dim):
-	# 	for j in range(i+1, dim):
-	# 		#H[i,j] = K * S[i,j] * (H[i,i] + H[j,j])/2
-	# 		#H[i,i] is atomisation energy corresponding to either s or p orbitals
-
-	# 		hm[i,j] = hm[j,i] = -K * om[i,j] * (hm[i,i] + hm[j,j])/2
-	# 		if i==1 and j==4:
-	# 			print()
-	# 			print(-K * om[i,j] * (hm[i,i] + hm[j,j])/2)
-
-
-
-
-
-	print(H)
 	#construct MO's based on eigenvectors
 	mos = []
 	energy, weights = np.linalg.eigh(H)
@@ -75,6 +46,17 @@ def extended_huckel(molecule, K=1.75):
 
 	molecule.mos = mos
 	return mos
+
+
+def overlap_matrix(ao):
+	om = np.zeros((len(ao), len(ao)))
+
+	for i in range(len(ao)):
+		for j in range(i, len(ao)):
+			if i == j:
+				om[i,j] = 1
+			else:
+				om[i,j] = om[j,i] = overlap_integral(ao[i], ao[j])
 
 
 def overlap_integral(ao1, ao2):
@@ -90,115 +72,43 @@ def overlap_integral(ao1, ao2):
 		return f
 
 
-	def bin(n, k):
+	def nCk(n, k):
 		#calculates the binomial coefficient
 		return factorial(n)/(factorial(k) * factorial(n-k))
 
-	A, B = ao1.coords, ao2.coords
-	alpha, beta = ao1.exp
-	EAB = 
+
+	def S(alpha, beta, carda, cardb, A, B):
+		s = sqrt(pi/)
+		p = alpha + beta
+		P = (alpha*A+beta*B)/p
+		for i in range(carda):
+			for j in range(cardb):
+				s += nCk(carda, i) * nCk(cardb, j) * dfac(i+j-1)/((2*p)**((i+j)/2)) * (P-A)**(carda-i) * (P-B)**(cardb-j)
 
 
+	coorda, coordb = ao1.atom.coords, ao2.atom.coords
+	alpha, beta = ao1.a, ao2.a 
+	coeffa, coeffb = ao1.c, ao2.c
+	carda, cardb = ao1.cardinal_powers, ao2.cardinal_powers
 
+	#loop over all exponents
 
-# def overlap_integral(ao1, ao2):
-# 	'''
-# 	Function that calculates the overlap between two gaussians
-# 	based on https://joshuagoings.com/2017/04/28/integrals/
-# 	'''
+	s = 0
 
-# 	def dfac(n):
-# 		'''
-# 		calculate double factorials n!! = n * (n-2) * ... * (1 or 2)
-# 		'''
+	for ia, a in enumerate(alpha):
+		for ia, b in enumerate(beta):
+			p = a+b
 
-# 		f = 1
-# 		for x in range(n%2, n+1, 2):
-# 			if x != 0:
-# 				f *= x
-# 		return f
+			EAB = exp(-a*b/(p) * np.linalg.norm(coorda-coordb)**2)
 
+			Sx = S(a, b, carda[0], cardb[0], coorda[0], coordb[0])
+			Sy = S(a, b, carda[1], cardb[1], coorda[1], coordb[1])
+			Sz = S(a, b, carda[2], cardb[2], coorda[2], coordb[2])
 
-# 	def E(i, j, t, Qx, a, b):
-# 		p = a + b
-# 		q = a*b/p
+			s += coorda[ia] * coordb[ib] * EAB * Sx * Sy * Sz
 
-# 		if t < 0 or t > i+j:
-# 			return 0
-# 		elif i == j == t == 0:
-# 			return exp(-q*Qx**2)
-# 		elif i == 0:
-# 			return 1/(2*p) * E(i, j-1, t-1, Qx, a, b) + q*Qx/b * E(i, j-1, t, Qx, a, b) + (t+1) * E(i, j-1, t+1, Qx, a, b)
-# 		else:
-# 			return 1/(2*p) * E(i-1, j, t-1, Qx, a, b) + q*Qx/b * E(i-1, j, t, Qx, a, b) + (t+1) * E(i-1, j, t+1, Qx, a, b)
+	return s
 
-# 	def overlap(a, A, lmn1, b, B, lmn2):
-# 		l1, m1, n1 = lmn1
-# 		l2, m2, n2 = lmn2
-
-# 		S1 = E(l1, l2, 0, A[0]-B[0], a, b)
-# 		S2 = E(m1, m2, 0, A[1]-B[1], a, b)
-# 		S3 = E(n1, n2, 0, A[2]-B[2], a, b)
-
-# 		return S1 * S2 * S3 * (pi/(a+b))**1.5
-
-
-# 	#calculate the integral:
-# 	s = 0
-# 	for ia, ca in enumerate(ao1.c):
-# 		for ib, cb in enumerate(ao2.c):
-# 			s += ao1.norms[ia] * ao2.norms[ib] * ca * cb * \
-# 				overlap(ao1.a[ia], ao1.centre, ao1.cardinal_powers,
-# 						ao2.a[ib], ao2.centre, ao2.cardinal_powers)
-
-
-# 	return s
-
-
-class BasisSet:
-	def __init__(self, basis_type, atoms=[]):
-		self.basis_type = basis_type
-		self.atoms = atoms
-
-
-	@property
-	def basis_type(self):
-		return self._basis_type
-
-
-	@basis_type.setter
-	def basis_type(self, val):
-		'''
-		Method that loads basis type whenever the basis type changes.
-		'''
-
-		self._basis_type = val
-		self.load_basis()
-
-
-	def load_basis(self):
-		'''
-		Method that loads the basis set for the atoms in the molecule. If the basis set 
-		does not exist in the database, we will download the basis set from https://www.basissetexchange.org/
-		using their API
-		'''
-
-		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_type}.bsf'
-		if not os.path.exists(bsf_path):
-			print(f'Error: Basis set {self.basis_type} not found, downloading ...')
-			import requests
-			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
-			if response:
-				print('Succesfully obtained basis set file')
-				with open(bsf_path, 'w+') as f:
-					f.write(response.text)
-				self.load_basis()
-			else:
-				print('Failed to obtain basis set file')
-		else:
-			print(f'Succesfully loaded {self.basis_type}.bsf')
-			with open(bsf_path, 'r') as f:
-				self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 
 
 class CGTO:
@@ -246,6 +156,7 @@ class CGTO:
 		
 		self.cardinal_powers = A
 
+
 	def __repr__(self):
 		return f'{self.atom.symbol}({("s", "p", "d", "f")[self.l]}{("x" + str(self.cardinal_powers[0]))*self.cardinal_powers[0]}{("y" + str(self.cardinal_powers[1]))*self.cardinal_powers[1]}{("z" + str(self.cardinal_powers[2]))*self.cardinal_powers[2]})'
 
@@ -255,46 +166,9 @@ class CGTO:
 		Method that calculates the norms of the primitives and the contracted GTO set
 		'''
 
-		def dfac(n):
-			'''
-			calculate double factorials n!! = n * (n-2) * ... * (1 or 2)
-			'''
-			f = 1
-			for x in range(n%2, n+1, 2):
-				if x != 0:
-					f *= x
-			return f
-
-
-		l, m, n = self.cardinal_powers
-		L = l+m+n
-
-		# self.norms = np.sqrt(np.power(2,2*(L)+1.5)*
-		# 	np.power(self.a,L+1.5)/
-		# 	dfac(2*l-1)/dfac(2*m-1)/
-		# 	dfac(2*n-1)/np.power(np.pi,1.5))
-
 		self.norms = []
-
-		for a in self.a:
-			self.norms.append(np.sqrt(np.sqrt(2*a/pi) * 2**(2*L) * a**L / \
-				(dfac(2*l-1) * dfac(2*m-1) * dfac(2*n-1))))
-
-		prefactor = np.power(np.pi,1.5)* \
-			dfac(2*l - 1)*dfac(2*m - 1)*dfac(2*n - 1)/np.power(2.0,L)
-
-
-		N = 0.0
-		num_exps = len(self.a)
-		for ia in range(num_exps):
-			for ib in range(num_exps):
-				N += self.norms[ia]*self.norms[ib]*self.c[ia]*self.c[ib]/\
-						 np.power(self.a[ia] + self.a[ib],L+1.5)
-
-		N *= prefactor
-		N = np.power(N,-0.5)
-		for ia in range(num_exps):
-			self.c[ia] *= N
+		for ao in self.primitives_list:
+			self.norms.append(sqrt(overlap_integral(ao, ao)))
 
 
 	def __call__(self, p):
@@ -317,7 +191,7 @@ class CGTO:
 		return dens
 
 
-class AtomicOrbital(BasisSet):
+class CGTO:
 	def __init__(self, basis_type, atom):
 		self.atom = atom
 		self.basis_type = basis_type
@@ -354,7 +228,48 @@ class AtomicOrbital(BasisSet):
 					except:
 						raise
 
+
 		self.primitives_valence = self.primitives_valence[-1]
+
+
+	@property
+	def basis_type(self):
+		return self._basis_type
+
+
+	@basis_type.setter
+	def basis_type(self, val):
+		'''
+		Method that loads basis type whenever the basis type changes.
+		'''
+
+		self._basis_type = val
+		self.load_basis()
+
+
+	def load_basis(self):
+		'''
+		Method that loads the basis set for the atoms in the molecule. If the basis set 
+		does not exist in the database, we will download the basis set from https://www.basissetexchange.org/
+		using their API
+		'''
+
+		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_type}.bsf'
+		if not os.path.exists(bsf_path):
+			print(f'Error: Basis set {self.basis_type} not found, downloading ...')
+			import requests
+			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
+			if response:
+				print('Succesfully obtained basis set file')
+				with open(bsf_path, 'w+') as f:
+					f.write(response.text)
+				self.load_basis()
+			else:
+				print('Failed to obtain basis set file')
+		else:
+			print(f'Succesfully loaded {self.basis_type}.bsf')
+			with open(bsf_path, 'r') as f:
+				self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 
 
 class MolecularOrbital:
@@ -363,9 +278,89 @@ class MolecularOrbital:
 		self.weights = weights
 		self.energy = energy
 
+
 	def __call__(self, p):
 		dens = np.zeros(p.shape[0])
 		for ao, w in zip(self.atomic_orbitals, self.weights):
 			dens += ao(p) * w
 
 		return dens
+
+
+
+class BasisLoader:
+	def __init__(self, molecule, basis_type):
+		self.molecule = molecule
+		self.basis_type = basis_type
+
+	@property
+	def basis_type(self):
+		return self._basis_type
+
+
+	@basis_type.setter
+	def basis_type(self, val):
+		'''
+		Method that loads basis type whenever the basis type changes.
+		'''
+
+		self._basis_type = val
+		self.load_basis()
+
+
+	def load_basis(self):
+		'''
+		Method that loads the basis set for the atoms in the molecule. If the basis set 
+		does not exist in the database, we will download the basis set from https://www.basissetexchange.org/
+		using their API
+		'''
+
+		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_type}.bsf'
+		if not os.path.exists(bsf_path):
+			print(f'Error: Basis set {self.basis_type} not found, downloading ...')
+			import requests
+			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
+			if response:
+				print('Succesfully obtained basis set file')
+				with open(bsf_path, 'w+') as f:
+					f.write(response.text)
+				self.load_basis()
+			else:
+				print('Failed to obtain basis set file')
+		else:
+			print(f'Succesfully loaded {self.basis_type}')
+			with open(bsf_path, 'r') as f:
+				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
+				self.params = json.load(f)['elements']
+
+
+	def set_orbitals(self):
+		for atom in self.molecule.atoms:
+
+			atom.primitives = {}
+			atom.primitives_list = []
+			atom.primitives_valence = []
+
+			atom_params = self.params[str(atom.atomic_number)]['electron_shells']
+			for n in range(len(atom_params)):
+				atom.primitives_valence.append([])
+				for l in range(n+1):
+					atom.primitives[l] = dict()
+
+					for m in ([0], (-1,0,1), (-2,-1,0,1,2,3), (-3,-2,-1,0,1,2,3,4))[l]:
+						params = atom_params[n]
+						exponents = params['exponents']
+
+						try:
+							coefficients = params['coefficients'][params['angular_momentum'].index(l)]
+
+							a = [float(a) for a in exponents]
+							c = [float(c) for c in coefficients]
+							atom.primitives[l][m] = CGTO(np.asarray(atom.coords), a, c, l, m, atom)
+							atom.primitives_list.append(CGTO(np.asarray(atom.coords), a, c, l, m, atom))
+							atom.primitives_valence[-1].append(CGTO(np.asarray(atom.coords), a, c, l, m, atom))
+						
+						except:
+							raise
+
+		self.primitives_valence = self.primitives_valence[-1]

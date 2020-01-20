@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import euclidean, sqeuclidean
 from math import cos, sin, pi, atan2, acos, exp
 import os, json
-import modules.basisset3 as bs
+import modules.basisset2 as bs
 import periodictable as pt
 
 
@@ -164,7 +164,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, molecule_file, position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=400, basis_set_type='STO-6G'):
+	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=400, basis_set_type='STO-6G'):
 		self._warning_level = warning_level
 
 		self.position = position	
@@ -184,6 +184,10 @@ class Molecule:
 			'S': 2,
 			'Na': 1,
 		}
+		if atoms is not None and molecule_file is None:
+			self.atoms = atoms
+			self.name = 'Molecule'
+			self._mol_load_finish()
 
 		#check if file ends with xyz and try to load it
 		if molecule_file is not None and molecule_file.endswith('.xyz'):
@@ -311,7 +315,9 @@ Coordinates (angstrom):
 
 
 	def _load_basis_set(self):
-		self.basis = bs.BasisSet(self.atoms, self.basis_set_type)
+		for atom in self.atoms:
+			atom.atomic_orbitals = bs.AtomicOrbitals(self.basis_set_type, atom)
+		# self.basis = bs.BasisSet(self.basis_set_type, self.atoms)
 
 
 	def get_orb_density(self, p):
