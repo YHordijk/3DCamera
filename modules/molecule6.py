@@ -196,8 +196,13 @@ class Molecule:
 		if molecule_file is not None and molecule_file.endswith('.xyz'):
 			self._load_xyz(molecule_file)
 
-		if molecule_file is not None and molecule_file.endswith('.pcp'):
+		elif molecule_file is not None and molecule_file.endswith('.pcp'):
 			self._load_from_pubchem(molecule_file[0:-4])
+
+		else:
+			self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
+
+
 
 
 	def __str__(self):

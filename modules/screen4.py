@@ -219,7 +219,7 @@ class Screen3D:
 	def pre_render_densities(self, orbitals, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
 		for i, orbital in enumerate(orbitals):
 			print(f'Rendering orbital {i+1}/{len(orbitals)}', end='\r')
-			samples = 20*points
+			samples = 10*points
 			ranges = orbital.ranges
 
 			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
@@ -237,18 +237,29 @@ class Screen3D:
 		print()
 		print(f'Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
 
-	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
+
+	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True), grid_mode=True):
 		if not orbital in self._dens_pos:
 			samples = 5*points
 			ranges = orbital.ranges
+			if grid_mode:
+				x, y, z = np.linspace(ranges[0], ranges[1], points//3), np.linspace(ranges[2], ranges[3], points//3), np.linspace(ranges[4], ranges[5], points//3)
+				x, y, z = np.meshgrid(x, y, z)
+				x, y, z = x.flatten(), y.flatten(), z.flatten()
 
-			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
-			d = orbital.evaluate(np.asarray((x, y, z))).flatten()
 
-			index = abs(d**2).argsort()[::-1]
-			colours = colour_map[d].T
+				d = orbital.evaluate(np.asarray((x, y, z))).flatten()
+				colours = colour_map[d].T
 
-			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
+			else:
+				x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
+			
+				d = orbital.evaluate(np.asarray((x, y, z))).flatten()
+
+				index = abs(d**2).argsort()[::-1]
+				colours = colour_map[d].T
+
+				x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
 			dens_pos = self.rotate(np.asarray((x, y, z)).T, orbital.molecule.rotation)
 
 			self._dens_pos[orbital], self._dens_colours[orbital] = dens_pos, colours

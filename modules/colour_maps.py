@@ -80,6 +80,14 @@ class BlueRed(ColourMap):
 	(255,0,0),
 	]
 
+
+class BlueBlackRed(ColourMap):
+	colours = [
+	(0,0,255),
+	(0,0,0),
+	(255,0,0),
+	]
+
 class BlackWhite(ColourMap):
 	colours = [
 	(0,0,0),
