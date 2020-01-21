@@ -199,7 +199,7 @@ class Basis:
 								self.atomic_orbitals.append(AtomicOrbital(atom.coords, n+1, a, c, self.get_cardinal_powers(l, m), atom))
 
 						except:
-							raise
+							pass
 
 
 class AtomicOrbital:

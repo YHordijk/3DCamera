@@ -214,10 +214,10 @@ class Screen3D:
 		return atom
 
 
-	def draw_density(self, orbital, points=50000, colour_map=cmap.CoolWarm(posneg_mode=True)):
+	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
 		if not orbital in self._dens_pos:
 			samples = 10*points
-			rang = 4
+			rang = 6
 
 			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
 			d = orbital.evaluate(np.asarray((x, y, z))).flatten()

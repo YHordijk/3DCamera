@@ -6,7 +6,7 @@ import pygame as pg
 import os
 from math import sin, pi, cos
 
-molecule = mol.Molecule('propane.pcp')
+molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\glucose.xyz')
 
 
 # atoms = [mol.Atom('H', (0,0,0)), mol.Atom('H', (1,0,0))]
@@ -43,14 +43,13 @@ while run:
 
 	screen.clear()
 
-	screen.camera_position = np.array([5*sin(pi * time/5), 2, 5*cos(pi * time/5)])
+	screen.camera_position = np.array([7*sin(pi * time/5), 2, 7*cos(pi * time/5)])
 	screen.camera_orientation = np.array([-.3, pi * time/5, 0])
 	
 
 	screen.draw_axes(1)
 	screen.draw_density(mos[11], points=20000)
 	screen.draw_shape(molecule, wireframe=True)
-
 
 
 	
