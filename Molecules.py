@@ -1,3 +1,4 @@
+import argparse
 import modules.screen4 as scr 
 import modules.molecule6 as mol 
 import modules.basisset6 as bs
@@ -7,32 +8,35 @@ from time import perf_counter
 import pubchempy as pcp
 import pygame as pg
 
+parser = argparse.ArgumentParser(description='Molecule visualizer and molecular orbital calculator.')
+parser.add_argument('--molecule', help='Path to molecule or name of molecule. If name ends with ".pcp" it will be searched for on pubchem, else it will look for ".xyz" files.')
+parser.add_argument('-bs', '--basis_set', metavar='', type=str, default='STO-6G', help='Flag specifying the basis-set to be used.')
+parser.add_argument('-p', '--pre_render_dens', metavar='', type=bool, default=False, help='Flag specifying whether the molecular orbitals should be pre-rendered.')
+parser.add_argument('-R', '--resolution', metavar='', type=tuple, default=(1200,720), help='Flag specifying the width and height of screen.')
+parser.add_argument('-bc', '--background_colour', metavar='', type=tuple, default=(0, 0, 0), help='Flag specifying the red, green and blue components of the background-colour,')
+
+args = parser.parse_args()
+
+
 pg.init()
 
-# mols = [mol.Molecule('ethene.pcp', basis_set_type='STO-6G')]
 
 
+#screen setup
+WIDTH, HEIGHT = SIZE = args.resolution
+screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=args.background_colour)
 
-mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\fullerene.xyz', basis_set_type='STO-2G')]
-
-samples = 200
-rang = 6
-x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
-
-p = np.asarray((x, y, z)).T
-
-
+mols = [mol.Molecule(args.molecule, basis_set_type=args.basis_set)]
 mol = mols[0]
+# mol.add_hydrogens()
+atoms = mol.atoms
+
 bs.extended_huckel(mol) 
 mos = mol.molecular_orbitals
 
+if args.pre_render_dens: screen.pre_render_densities(mos, points=10000)
 
-atoms = mol.atoms
-
-#screen setup
-WIDTH, HEIGHT = SIZE = (1200, 720)
-screen = scr.Screen3D(SIZE, camera_position=[0., 0, 20.], camera_orientation=(0,0,0), bkgr_colour=(100, 100, 190))
-screen.bkgr_colour = (0,0,0)
+# screen.bkgr_colour = (255,255,255)
 pg.display.set_caption(', '.join([m.name.capitalize() for m in mols]))
 clock = pg.time.Clock()
 FPS = 120
@@ -48,7 +52,6 @@ rot = np.array([0.,0.,0.])
 zoom = 0
 
 pg.key.set_repeat()
-draw_dens = False
 run = True
 
 mo_numb = 0
@@ -69,7 +72,7 @@ while run:
 	screen.draw_density(mos[mo_numb%len(mos)], 10000)
 	# screen.draw_electrostatic_potential(mol)
 
-	[screen.draw_shape(m, wireframe=True, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
+	[screen.draw_shape(m, wireframe=False, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
 
 	screen.draw_axes(1)

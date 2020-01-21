@@ -13,6 +13,7 @@ class Screen3D:
 		self.camera_orientation = np.asarray(camera_orientation)
 		self.project_type = project_type
 		self.bkgr_colour = bkgr_colour
+		
 		self.size = self.width, self.height = size
 		self.disp = pg.display.set_mode(self.size)
 		self.disp.fill(self.bkgr_colour)
@@ -131,7 +132,7 @@ class Screen3D:
 			w = self.width + 200
 			poss = [self.project(pos) for pos in poss]
 			if (-200 <= poss[0][1] <= h and -200 <= poss[0][0] <= w and -200 <= poss[1][1] <= h and -200 <= poss[1][0] <= w):
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], width+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0], poss[1], width+3)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], width)
 		except:
 			raise
@@ -149,8 +150,8 @@ class Screen3D:
 				perp = np.asarray([perp[0], (perp[1][1], -perp[1][0])])[1]
 				perp = d * perp / np.linalg.norm(perp)
 
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-perp, poss[1]-perp, d+3)
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+perp, poss[1]+perp, width+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0]-perp, poss[1]-perp, d+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0]+perp, poss[1]+perp, width+3)
 
 				pg.draw.line(self.disp, colour, poss[0]-perp, poss[1]-perp, d)
 				pg.draw.line(self.disp, colour, poss[0]+perp, poss[1]+perp, d)
@@ -169,9 +170,9 @@ class Screen3D:
 				perp = np.asarray([perp[0], (perp[1][1], -perp[1][0])])[1]
 				perp = 1.5 * d * perp / np.linalg.norm(perp)
 
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]-perp, poss[1]-perp, d+3)
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0], poss[1], d+3)
-				pg.draw.line(self.disp, self.bkgr_colour, poss[0]+perp, poss[1]+perp, width+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0]-perp, poss[1]-perp, d+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0], poss[1], d+3)
+				pg.draw.line(self.disp, self.contrast_colour, poss[0]+perp, poss[1]+perp, width+3)
 
 				pg.draw.line(self.disp, colour, poss[0]-perp, poss[1]-perp, d)
 				pg.draw.line(self.disp, colour, poss[0], poss[1], d)
@@ -215,21 +216,43 @@ class Screen3D:
 		return atom
 
 
-	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
-		if not orbital in self._dens_pos:
-			samples = 10*points
+	def pre_render_densities(self, orbitals, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
+		for i, orbital in enumerate(orbitals):
+			print(f'Rendering orbital {i+1}/{len(orbitals)}', end='\r')
+			samples = 5*points
 			ranges = orbital.ranges
 
 			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
 			d = orbital.evaluate(np.asarray((x, y, z))).flatten()
 
 			index = abs(d**2).argsort()[::-1]
-			# d = np.maximum(d, np.mean(d)*4)**2
 			colours = colour_map[d].T
 
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
-			self._dens_pos[orbital], self._dens_colours[orbital] = np.asarray((x, y, z)).T, colours
-			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = np.asarray((x, y, z)).T, colours
+			dens_pos = self.rotate(np.asarray((x, y, z)).T, orbital.molecule.rotation)
+
+			self._dens_pos[orbital], self._dens_colours[orbital] = dens_pos, colours
+			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = dens_pos, colours
+
+		print()
+		print(f'Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
+
+	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
+		if not orbital in self._dens_pos:
+			samples = 5*points
+			ranges = orbital.ranges
+
+			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
+			d = orbital.evaluate(np.asarray((x, y, z))).flatten()
+
+			index = abs(d**2).argsort()[::-1]
+			colours = colour_map[d].T
+
+			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
+			dens_pos = self.rotate(np.asarray((x, y, z)).T, orbital.molecule.rotation)
+
+			self._dens_pos[orbital], self._dens_colours[orbital] = dens_pos, colours
+			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = dens_pos, colours
 
 		self.draw_pixels(orbital.molecule._dens_pos[orbital], colour_array=orbital.molecule._dens_colours[orbital])
 
@@ -252,7 +275,7 @@ class Screen3D:
 		self.draw_pixels(molecule._elec_stat_pos, colour_array=molecule._elec_stat_colours)
 
 
-	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True, draw_hydrogens=True, wireframe=False):
+	def draw_shape(self, shape, colour=(255,255,255), double_sided=False, mode="fill", draw_atoms=True, draw_bonds=True, colour_bonds=True, draw_hydrogens=True, wireframe=False, high_contrast_mode=False):
 		if shape.type == 'flat':
 			if mode == "fill":
 				faces = shape.faces(double_sided=double_sided)
@@ -261,6 +284,11 @@ class Screen3D:
 				self.draw_lines(shape.points, colour, shape.closed)
 
 		elif shape.type == 'molecule':
+			if not high_contrast_mode:
+				self.contrast_colour = self.bkgr_colour
+			else:
+				self.contrast_colour = (255-self.bkgr_colour[0], 255-self.bkgr_colour[1], 255-self.bkgr_colour[2])
+
 			atom_draw_pos = {}
 			atom_draw_rad = {}
 			p = shape.position
@@ -305,7 +333,7 @@ class Screen3D:
 
 						if draw_atoms:
 							rad = int(a1.radius/dists[i] * shape.scale)
-							self.draw_circle(c1+p, rad+1, self.bkgr_colour)
+							self.draw_circle(c1+p, rad+1, self.contrast_colour)
 							self.draw_circle(c1+p, rad, a1.draw_colour)
 							atom_draw_pos[a1] = self.project(c1+p)
 							atom_draw_rad[a1] = rad*1.1
@@ -376,3 +404,28 @@ class Screen3D:
 		rotz = math.atan2( math.cos(rotx), math.sin(rotx) * math.sin(roty))
 		self.camera_orientation = np.array([roty, rotx, rotz])
 		return self.camera_orientation
+
+
+
+	def rotate(self, array, rotation):
+		'''
+		Method that rotates atom coordinates by rotation
+		'''
+
+		r = rotation[0]
+		Rx = np.array(([	  1, 	  0,	   0],
+					   [	  0, cos(r), -sin(r)],
+					   [      0, sin(r),  cos(r)]))
+
+		r = rotation[1]
+		Ry = np.array(([ cos(r),  	   0, sin(r)],
+					   [ 	  0, 	   1,	   0],
+					   [-sin(r), 	   0, cos(r)]))
+
+		r = rotation[2]
+		Rz = np.array(([ cos(r), -sin(r), 	   0],
+					   [ sin(r),  cos(r), 	   0],
+					   [ 	  0, 	   0, 	   1]))
+
+		return (Rx @ Ry @ Rz @ array.T).T
+			

@@ -164,7 +164,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=400, basis_set_type='STO-6G'):
+	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=200, basis_set_type='STO-6G'):
 		self._warning_level = warning_level
 
 		self.position = position	

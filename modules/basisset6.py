@@ -266,5 +266,5 @@ class MolecularOrbital:
 	def ranges(self):
 		centre = np.asarray([ao.centre for ao in self.aos])
 		x, y, z = np.vsplit(centre.T, 3)
-		return x.min()-3, x.max()+3, y.min()-3, y.max()+3, z.min()-3, z.max()+3
+		return x.min()-6, x.max()+6, y.min()-6, y.max()+6, z.min()-6, z.max()+6
 
