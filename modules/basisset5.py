@@ -105,7 +105,7 @@ def overlap_integral(ao1, ao2):
 			Sy = S(a, b, carda[1], cardb[1], coorda[1], coordb[1])
 			Sz = S(a, b, carda[2], cardb[2], coorda[2], coordb[2])
 
-			s += coorda[ia] * coordb[ib] * EAB * Sx * Sy * Sz
+			s += coeffa[ia] * coeffb[ib] * EAB * Sx * Sy * Sz
 
 	return s
 

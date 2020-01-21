@@ -1,5 +1,4 @@
 from modules.screen3 import *
-from modules.shape import *
 import modules.basisset as bs
 import modules.molecule4 as mol
 import modules.colour_maps as cmap
@@ -59,6 +58,7 @@ while run:
 	
 
 	screen.draw_axes(0.2)
+	print(colours)
 	screen.draw_pixels(pos, colour_array=colours)
 
 

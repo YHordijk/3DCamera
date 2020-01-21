@@ -1,51 +1,69 @@
 import numpy as np
 import math
 
+
 class ColourMap:
-	def __init__(self, strength=1, cycles=1):
+	def __init__(self, strength=1, cycles=1, posneg_mode=False):
 		self.strength = strength
 		self.cycles = cycles
+		self.posneg_mode = posneg_mode
 
 	def __getitem__(self, val):
 		if type(val) is np.ndarray:
 			return self.colour_array(val)
 
 		else:
-			cd = self.colours * self.cycles
-			t = val*(len(cd)-1)
-			i = math.floor(t)
-			d = t - i
-			if i < len(cd)-1:
-				c0 = np.asarray(cd[i])
-				c1 = np.asarray(cd[i+1])
+			if self.posneg_mode:
+				if val <= 0:
+					return self.colours[0]
+				else:
+					return self.colours[-1]
 
-				return np.round(c0 + (c1 - c0) * d).astype(int)
 			else:
-				return cd[i]
+				cd = self.colours * self.cycles
+				t = val*(len(cd)-1)
+				i = math.floor(t)
+				d = t - i
+				if i < len(cd)-1:
+					c0 = np.asarray(cd[i])
+					c1 = np.asarray(cd[i+1])
+
+					return np.round(c0 + (c1 - c0) * d).astype(int)
+				else:
+					return cd[i]
 
 	def colour_array(self, val):
-		val = (val - val.min())
-		val = val/val.max()
-		val = val
+		if self.posneg_mode:
+			r = np.where(val <= 0, self.colours[0][0], self.colours[-1][0])
+			g = np.where(val <= 0, self.colours[0][1], self.colours[-1][1])
+			b = np.where(val <= 0, self.colours[0][2], self.colours[-1][2])
 
-		p = np.empty(val.shape)
-		cd = self.colours * self.cycles
+			return np.array([r,g,b])
+		
+		else:
+			val = (val - val.min())
+			val = val/val.max()
+			
+			p = np.empty(val.shape)
 
-		r, g, b = zip(*cd)
-		r, g, b = np.asarray(r)*self.strength, np.asarray(g)*self.strength, np.asarray(b)*self.strength
+			cd = self.colours * self.cycles
 
-		l = len(cd)-1
+			r, g, b = zip(*cd)
+			r, g, b = np.asarray(r)*self.strength, np.asarray(g)*self.strength, np.asarray(b)*self.strength
 
-		t = val*l
-		i = np.floor(t).astype(int)
-		d = t - i
+			l = len(cd)-1
 
-		r = np.round(r[i] + (r[np.minimum(i+1, l)] - r[i]) * d)
-		g = np.round(g[i] + (g[np.minimum(i+1, l)] - g[i]) * d)
-		b = np.round(b[i] + (b[np.minimum(i+1, l)] - b[i]) * d)
+			t = val*l
+			i = np.floor(t).astype(int)
+			d = t - i
 
-		p = b + g * 256 + r * 256**2
-		return p.astype(int)
+			r = np.round(r[i] + (r[np.minimum(i+1, l)] - r[i]) * d)
+			g = np.round(g[i] + (g[np.minimum(i+1, l)] - g[i]) * d)
+			b = np.round(b[i] + (b[np.minimum(i+1, l)] - b[i]) * d)
+
+			return np.array([r,g,b])
+			p = b + g * 256 + r * 256**2
+			return p.astype(int)
 
 def get_cmap_names():
 	return [o.__name__ for o in ColourMap.__subclasses__()]

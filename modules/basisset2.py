@@ -77,7 +77,15 @@ def extended_huckel(molecule, K=1.75):
 	return mos
 
 
+
+
+
 def overlap_integral(ao1, ao2):
+	'''
+	Function that calculates the overlap between two gaussians
+	based on https://joshuagoings.com/2017/04/28/integrals/
+	'''
+
 	def dfac(n):
 		'''
 		calculate double factorials n!! = n * (n-2) * ... * (1 or 2)
@@ -90,69 +98,40 @@ def overlap_integral(ao1, ao2):
 		return f
 
 
-	def bin(n, k):
-		#calculates the binomial coefficient
-		return factorial(n)/(factorial(k) * factorial(n-k))
+	def E(i, j, t, Qx, a, b):
+		p = a + b
+		q = a*b/p
 
-	A, B = ao1.coords, ao2.coords
-	alpha, beta = ao1.exp
-	EAB = 
+		if t < 0 or t > i+j:
+			return 0
+		elif i == j == t == 0:
+			return exp(-q*Qx**2)
+		elif i == 0:
+			return 1/(2*p) * E(i, j-1, t-1, Qx, a, b) + q*Qx/b * E(i, j-1, t, Qx, a, b) + (t+1) * E(i, j-1, t+1, Qx, a, b)
+		else:
+			return 1/(2*p) * E(i-1, j, t-1, Qx, a, b) + q*Qx/b * E(i-1, j, t, Qx, a, b) + (t+1) * E(i-1, j, t+1, Qx, a, b)
 
+	def overlap(a, A, lmn1, b, B, lmn2):
+		l1, m1, n1 = lmn1
+		l2, m2, n2 = lmn2
 
+		S1 = E(l1, l2, 0, A[0]-B[0], a, b)
+		S2 = E(m1, m2, 0, A[1]-B[1], a, b)
+		S3 = E(n1, n2, 0, A[2]-B[2], a, b)
 
-
-# def overlap_integral(ao1, ao2):
-# 	'''
-# 	Function that calculates the overlap between two gaussians
-# 	based on https://joshuagoings.com/2017/04/28/integrals/
-# 	'''
-
-# 	def dfac(n):
-# 		'''
-# 		calculate double factorials n!! = n * (n-2) * ... * (1 or 2)
-# 		'''
-
-# 		f = 1
-# 		for x in range(n%2, n+1, 2):
-# 			if x != 0:
-# 				f *= x
-# 		return f
+		return S1 * S2 * S3 * (pi/(a+b))**1.5
 
 
-# 	def E(i, j, t, Qx, a, b):
-# 		p = a + b
-# 		q = a*b/p
-
-# 		if t < 0 or t > i+j:
-# 			return 0
-# 		elif i == j == t == 0:
-# 			return exp(-q*Qx**2)
-# 		elif i == 0:
-# 			return 1/(2*p) * E(i, j-1, t-1, Qx, a, b) + q*Qx/b * E(i, j-1, t, Qx, a, b) + (t+1) * E(i, j-1, t+1, Qx, a, b)
-# 		else:
-# 			return 1/(2*p) * E(i-1, j, t-1, Qx, a, b) + q*Qx/b * E(i-1, j, t, Qx, a, b) + (t+1) * E(i-1, j, t+1, Qx, a, b)
-
-# 	def overlap(a, A, lmn1, b, B, lmn2):
-# 		l1, m1, n1 = lmn1
-# 		l2, m2, n2 = lmn2
-
-# 		S1 = E(l1, l2, 0, A[0]-B[0], a, b)
-# 		S2 = E(m1, m2, 0, A[1]-B[1], a, b)
-# 		S3 = E(n1, n2, 0, A[2]-B[2], a, b)
-
-# 		return S1 * S2 * S3 * (pi/(a+b))**1.5
+	#calculate the integral:
+	s = 0
+	for ia, ca in enumerate(ao1.c):
+		for ib, cb in enumerate(ao2.c):
+			s += ao1.norms[ia] * ao2.norms[ib] * ca * cb * \
+				overlap(ao1.a[ia], ao1.centre, ao1.cardinal_powers,
+						ao2.a[ib], ao2.centre, ao2.cardinal_powers)
 
 
-# 	#calculate the integral:
-# 	s = 0
-# 	for ia, ca in enumerate(ao1.c):
-# 		for ib, cb in enumerate(ao2.c):
-# 			s += ao1.norms[ia] * ao2.norms[ib] * ca * cb * \
-# 				overlap(ao1.a[ia], ao1.centre, ao1.cardinal_powers,
-# 						ao2.a[ib], ao2.centre, ao2.cardinal_powers)
-
-
-# 	return s
+	return s
 
 
 class BasisSet:

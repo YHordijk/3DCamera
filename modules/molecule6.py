@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import euclidean, sqeuclidean
 from math import cos, sin, pi, atan2, acos, exp
 import os, json
-import modules.basisset2 as bs
+import modules.basisset6 as bs
 import periodictable as pt
 
 
@@ -315,9 +315,7 @@ Coordinates (angstrom):
 
 
 	def _load_basis_set(self):
-		for atom in self.atoms:
-			atom.atomic_orbitals = bs.AtomicOrbital(self.basis_set_type, atom)
-		# self.basis = bs.BasisSet(self.basis_set_type, self.atoms)
+		self.basis = bs.Basis(self, self.basis_set_type)
 
 
 	def get_orb_density(self, p):
