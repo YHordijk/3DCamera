@@ -201,6 +201,7 @@ while run:
 	if keys[pg.K_ESCAPE]:
 		run = False
 	for event in pg.event.get():
+		
 		if event.type == pg.QUIT:
 			run = False
 			break

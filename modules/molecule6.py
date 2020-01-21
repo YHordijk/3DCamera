@@ -173,6 +173,9 @@ class Molecule:
 		self.scale = scale
 		self.basis_set_type = basis_set_type
 
+		self._dens_pos = {}
+		self._dens_colours = {}
+
 		self.max_valence = {
 			'C': 4,
 			'H': 1,
@@ -899,6 +902,8 @@ Coordinates (angstrom):
 
 		if hasattr(self, '_elec_stat_pos'):
 			self._elec_stat_pos = (Rx @ Ry @ Rz @ self._elec_stat_pos.T).T
+
 		if hasattr(self, '_dens_pos'):
-			self._dens_pos = (Rx @ Ry @ Rz @ self._dens_pos.T).T
+			for key in self._dens_pos.keys():
+				self._dens_pos[key] = (Rx @ Ry @ Rz @ self._dens_pos[key].T).T
 

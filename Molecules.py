@@ -1,7 +1,6 @@
-import modules.screen3 as scr 
-import modules.molecule4 as mol 
-import modules.forcefields as ff
-import modules.basisset2 as bs
+import modules.screen4 as scr 
+import modules.molecule6 as mol 
+import modules.basisset6 as bs
 import math, os
 import numpy as np
 from time import perf_counter
@@ -14,7 +13,7 @@ pg.init()
 
 
 
-mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\methane.xyz', basis_set_type='STO-6G')]
+mols = [mol.Molecule(os.getcwd() + f'\\Molecules\\fullerene.xyz', basis_set_type='STO-2G')]
 
 samples = 200
 rang = 6
@@ -24,9 +23,8 @@ p = np.asarray((x, y, z)).T
 
 
 mol = mols[0]
-mo = bs.extended_huckel(mol) 
-print(len(mo))
-
+bs.extended_huckel(mol) 
+mos = mol.molecular_orbitals
 
 
 atoms = mol.atoms
@@ -52,6 +50,9 @@ zoom = 0
 pg.key.set_repeat()
 draw_dens = False
 run = True
+
+mo_numb = 0
+
 while run:
 	#tick prep
 	updt += 1
@@ -63,12 +64,10 @@ while run:
 
 	screen.clear()
 
-	# if keys[pg.K_SPACE]:
-	# 	screen.draw_electrostatic_potential(mols[0], 15000)
 
-	# if keys[pg.K_SPACE]:
-	# 	draw_dens += 1
-	screen.draw_density(mol, mo[0], 5000)
+
+	screen.draw_density(mos[mo_numb%len(mos)], 10000)
+	# screen.draw_electrostatic_potential(mol)
 
 	[screen.draw_shape(m, wireframe=True, draw_atoms=True, draw_bonds=True, draw_hydrogens=True) for m in mols]
 	[m.rotate(rot) for m in mols]
@@ -83,6 +82,12 @@ while run:
 	for e in ev:
 		if e.type == pg.QUIT:
 			run = False
+
+		if e.type == pg.KEYDOWN:
+			if e.key == pg.K_RIGHT:
+				mo_numb += 1
+			if e.key == pg.K_LEFT:
+				mo_numb -= 1
 
 		elif e.type == pg.MOUSEBUTTONDOWN:
 			if e.button == 1:
@@ -126,12 +131,9 @@ while run:
 		if pg.mouse.get_pressed()[0]:
 			rot = np.asarray([move[1]/150, -move[0]/150, 0])
 
-	                
-
 
 	screen.camera_position[2] += zoom
 	zoom *= 0.8
-
 
 
 	#tick end

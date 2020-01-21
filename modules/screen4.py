@@ -211,15 +211,16 @@ class Screen3D:
 						atom = a
 				except:
 					atom = a
+
 		return atom
 
 
 	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
 		if not orbital in self._dens_pos:
 			samples = 10*points
-			rang = 6
+			ranges = orbital.ranges
 
-			x, y, z = ((np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000), (np.random.randint(-rang*10000, rang*10000, size=samples)/10000))
+			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
 			d = orbital.evaluate(np.asarray((x, y, z))).flatten()
 
 			index = abs(d**2).argsort()[::-1]
@@ -228,8 +229,9 @@ class Screen3D:
 
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
 			self._dens_pos[orbital], self._dens_colours[orbital] = np.asarray((x, y, z)).T, colours
+			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = np.asarray((x, y, z)).T, colours
 
-		self.draw_pixels(self._dens_pos[orbital], colour_array=self._dens_colours[orbital])
+		self.draw_pixels(orbital.molecule._dens_pos[orbital], colour_array=orbital.molecule._dens_colours[orbital])
 
 
 	def draw_electrostatic_potential(self, molecule, points=50000, colour_map=cmap.ElectroStat()):
@@ -242,7 +244,6 @@ class Screen3D:
 			d = molecule.electrostatic_potential(np.asarray((x, y, z)).T).flatten()
 			index = abs(d).argsort()[::-1]
 			d = np.maximum(d, np.mean(d)*4)
-			print(d, np.amax(d), np.amin(d), np.mean(d))
 			colours = colour_map[d].T
 
 			x, y, z, colours = x[index][0:points], y[index][0:points], z[index][0:points], colours[index][0:points]
@@ -282,7 +283,7 @@ class Screen3D:
 
 			prev_indices = []
 			for i, a1 in enumerate(atoms):
-				width = int(50/dists[i])
+				width = max(1, int(50/dists[i]))
 				# if deltas[i][2] < 0:
 				if True:
 					if not wireframe:
@@ -340,62 +341,6 @@ class Screen3D:
 
 			self.atom_draw_pos = atom_draw_pos
 			self.atom_draw_rad = atom_draw_rad
-
-		elif shape.type == 'molecule':
-			cam_pos = self.camera_position
-			original_coords = shape.coords
-			dists = np.asarray([shape.distance(cam_pos, x) for x in shape.coords])
-			deltas = np.asarray(shape.coords - self.camera_position)
-			indices = np.argsort(dists)[::-1]
-			coords = shape.coords[indices]
-			original_atoms = shape.atom_types
-			atoms = shape.atom_types[indices]
-			dists = dists[indices]
-			deltas = deltas[indices]
-
-			radii = shape._atom_radii
-			orders = shape.bond_orders
-			shape_pos = shape.position
-			colours = shape._atom_colours
-
-			prev_indices = []
-			for i, a, c, d, delt in zip(indices, atoms, coords, dists, deltas):
-				prev_indices.append(i)
-				if delt[2] < 0:
-					bonds = shape.bonds[i].copy()
-					print(shape)
-					order = orders[i].copy()
-
-					connected_atoms = original_coords[bonds]
-
-					if draw_bonds:
-						if colour_bonds:
-							d2 = lambda x, y: (x - y)/2
-							for o, a2, c1 in zip(order, bonds, connected_atoms):
-								if not a2 in prev_indices:
-									if o != shape.bond_orders[i][bonds.index(a2)]: print(f'{i}: {o}, {a2}: {shape.bond_orders[i][bonds.index(a2)]}'); print(orders[i])
-									if o == 1:
-										self.draw_single_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])	
-										self.draw_single_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
-
-									if o == 2:
-										self.draw_double_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
-										self.draw_double_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
-
-									if o == 3:
-										self.draw_triple_bond((c1+shape_pos-d2(c1,c), c1+shape_pos), width=int(75/d), colour=colours[original_atoms[a2]])
-										self.draw_triple_bond((c+shape_pos, c+shape_pos+d2(c1,c)), width=int(75/d), colour=colours[a])
-						else:	
-							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)+3, colour=self.bkgr_colour) for c1 in connected_atoms]
-							[self.draw_line((c+shape_pos, c1+shape_pos), width=int(75/d)) for c1 in connected_atoms]
-
-					if draw_atoms:
-						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale)+1, self.bkgr_colour, width=2)
-						self.draw_circle(c+shape_pos, int(radii[a]/d * shape.scale), colours[a])
-
-
-	# def on_click(self, x, y):
-
 
 
 	def draw_axes(self, length=1):

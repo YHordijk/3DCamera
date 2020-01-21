@@ -29,8 +29,14 @@ def extended_huckel(molecule, K=1.75):
 	energies, weights = np.linalg.eigh(H)
 
 	molecule.molecular_orbitals = []
+	molecule.molecular_orbitals = sorted(molecule.molecular_orbitals, key=lambda x: x.energy)
+
 	for energy, weight in zip(energies, weights.T):
-		molecule.molecular_orbitals.append(MolecularOrbital(aos, weight, energy))
+		molecule.molecular_orbitals.append(MolecularOrbital(molecule, aos, weight, energy))
+
+	nelectrons = sum([a.atomic_number for a in molecule.atoms])
+	molecule.homo = molecule.molecular_orbitals[nelectrons//2]
+	molecule.lumo = molecule.molecular_orbitals[nelectrons//2+1]
 
 
 def overlap_matrix(molecule):
@@ -195,8 +201,7 @@ class Basis:
 							a = [float(a) for a in exponents]
 							c = [float(c) for c in coefficients]
 
-							if n == len(atom_params) -1:
-								self.atomic_orbitals.append(AtomicOrbital(atom.coords, n+1, a, c, self.get_cardinal_powers(l, m), atom))
+							self.atomic_orbitals.append(AtomicOrbital(atom.coords, n+1, a, c, self.get_cardinal_powers(l, m), atom))
 
 						except:
 							pass
@@ -244,7 +249,8 @@ class AtomicOrbital:
 
 
 class MolecularOrbital:
-	def __init__(self, aos, weights, energy):
+	def __init__(self, molecule, aos, weights, energy):
+		self.molecule = molecule
 		self.aos = aos 
 		self.weights = weights
 		self.energy = energy
@@ -255,4 +261,10 @@ class MolecularOrbital:
 			dens += w * ao.evaluate(p)
 
 		return dens
+
+	@property
+	def ranges(self):
+		centre = np.asarray([ao.centre for ao in self.aos])
+		x, y, z = np.vsplit(centre.T, 3)
+		return x.min()-3, x.max()+3, y.min()-3, y.max()+3, z.min()-3, z.max()+3
 
