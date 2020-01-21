@@ -219,7 +219,7 @@ class Screen3D:
 	def pre_render_densities(self, orbitals, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
 		for i, orbital in enumerate(orbitals):
 			print(f'Rendering orbital {i+1}/{len(orbitals)}', end='\r')
-			samples = 5*points
+			samples = 20*points
 			ranges = orbital.ranges
 
 			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
