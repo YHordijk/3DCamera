@@ -3,7 +3,10 @@ import numpy as np
 import os
 from math import pi, exp, sqrt, factorial
 from scipy.spatial.distance import euclidean
+import time
 
+def ts():
+	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 def extended_huckel(molecule, K=1.75):
@@ -13,13 +16,16 @@ def extended_huckel(molecule, K=1.75):
 	Returns energies and mo's
 	'''
 
+	print(f'{ts()} Performing Extended Huckel-Method for {molecule.name}.')
+
 	aos = molecule.basis.atomic_orbitals
 
 	dim = len(aos)
 	H = np.zeros((dim, dim))
+	print(H[2,2])
 
 	for i in range(dim):
-		H[i,i] = -aos[i].atom.ionisation_energy[sum(aos[i].cardinality)] * 0.036749405469679
+		H[i,i] = -aos[i].atom.ionisation_energy[sum(aos[i].cardinality)]
 
 	for i in range(dim):
 		for j in range(i+1, dim):
@@ -37,6 +43,9 @@ def extended_huckel(molecule, K=1.75):
 	nelectrons = sum([a.atomic_number for a in molecule.atoms])
 	molecule.homo = molecule.molecular_orbitals[nelectrons//2]
 	molecule.lumo = molecule.molecular_orbitals[nelectrons//2+1]
+
+	print(f'{ts()} {len(energies)} molecular orbitals found.')
+	print(f'{ts()} Highest and lowest energies: {max(energies)}, {min(energies)} eV')
 
 
 def overlap_matrix(molecule):
@@ -140,20 +149,23 @@ class Basis:
 		using their API
 		'''
 
-		bsf_path = os.getcwd()+rf'\Basis_Sets\{self.basis_type}.bsf'
+		basis_type = self.basis_type.replace('*', '@')
+
+		bsf_path = os.getcwd()+rf'\Basis_Sets\{basis_type}.bsf'
 		if not os.path.exists(bsf_path):
-			print(f'Error: Basis set {self.basis_type} not found, downloading ...')
+			print(f'{ts()} Error: Basis set {self.basis_type} not found, downloading ...')
 			import requests
 			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
 			if response:
-				print('Succesfully obtained basis set file')
+				print(f'symbol Succesfully obtained basis set file')
+
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
 				self.load_basis()
 			else:
-				print('Failed to obtain basis set file')
+				print(f'{ts()} Failed to obtain basis set file')
 		else:
-			print(f'Succesfully loaded {self.basis_type}')
+			print(f'{ts()} Succesfully loaded {self.basis_type}')
 			with open(bsf_path, 'r') as f:
 				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 				self.params = json.load(f)['elements']
@@ -227,7 +239,7 @@ class AtomicOrbital:
 	def __repr__(self):
 		l = sum(self.cardinality)
 		c = self.cardinality
-		return f'{self.atom.symbol}({self.principal}{("s", "p", "d", "f")[l]}{("x" + str(c[0])*(c[0]>1))*c[0]}{("y" + str(c[1])*(c[1]>1))*c[1]}{("z" + str(c[2])*(c[2]>1))*c[2]})'
+		return f'{self.atom.symbol}({self.principal}{("s", "p", "d", "f")[l]}{("x" + str(c[0])*(c[0]>1))*(c[0]>0)}{("y" + str(c[1])*(c[1]>1))*(c[1]>0)}{("z" + str(c[2])*(c[2]>1))*(c[2]>0)})'
 
 
 	def normalize(self):
@@ -243,8 +255,8 @@ class AtomicOrbital:
 		dens = np.zeros(p.size//3)
 
 		for a, c in zip(self.exponents, self.coefficients):
-			dens += c * (x-Ax)**ax * (y-Ay)**ay * (z-Az)**az * np.exp(-a*np.linalg.norm(p.T - self.centre, axis=1)**2) 
-		return dens* self.norm
+			dens += c * (x-Ax)**ax * (y-Ay)**ay * (z-Az)**az * np.exp(-a*np.linalg.norm(p.T - self.centre, axis=1)**2) * self.norm
+		return dens
 
 
 
@@ -252,10 +264,11 @@ class MolecularOrbital:
 	def __init__(self, molecule, aos, weights, energy):
 		self.molecule = molecule
 		self.aos = aos 
-		self.weights = weights
+		self.weights = weights/sum(weights)
 		self.energy = energy
 
 	def evaluate(self, p):
+		print(f'{ts()} Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
 		dens = np.zeros(p.size//3)
 		for ao, w in zip(self.aos, self.weights):
 			dens += w * ao.evaluate(p)

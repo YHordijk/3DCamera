@@ -1,10 +1,14 @@
 import pygame as pg
 import numpy as np
 from math import cos, sin, sqrt
-import math
+import math, time
 from scipy.spatial.distance import euclidean
 from time import perf_counter
 import modules.colour_maps as cmap
+
+
+def ts():
+	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 class Screen3D:
@@ -217,8 +221,9 @@ class Screen3D:
 
 
 	def pre_render_densities(self, orbitals, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
+		print(f'{ts()} Pre-rendering {len(orbitals)} orbitals ({points} points):')
 		for i, orbital in enumerate(orbitals):
-			print(f'Rendering orbital {i+1}/{len(orbitals)}', end='\r')
+			print(f'{ts()}     Progress: {i+1}/{len(orbitals)} = {round((i+1)/len(orbitals)*100,2)}%', end='\r')
 			samples = 10*points
 			ranges = orbital.ranges
 
@@ -234,13 +239,12 @@ class Screen3D:
 			self._dens_pos[orbital], self._dens_colours[orbital] = dens_pos, colours
 			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = dens_pos, colours
 
-		print()
-		print(f'Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
+		print(f'{ts()} Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
 
 
-	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True), grid_mode=True):
+	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True), grid_mode=False):
 		if not orbital in self._dens_pos:
-			samples = 5*points
+			samples = 50*points
 			ranges = orbital.ranges
 			if grid_mode:
 				x, y, z = np.linspace(ranges[0], ranges[1], points//3), np.linspace(ranges[2], ranges[3], points//3), np.linspace(ranges[4], ranges[5], points//3)
@@ -270,7 +274,7 @@ class Screen3D:
 
 	def draw_electrostatic_potential(self, molecule, points=50000, colour_map=cmap.ElectroStat()):
 		if not hasattr(molecule, '_elec_stat_pos'):
-			print(f'Calculating electrostatic potential of {molecule.name} ...')
+			print(f'{ts()} Calculating electrostatic potential of {molecule.name} ...')
 			samples = 50*points
 			rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
 

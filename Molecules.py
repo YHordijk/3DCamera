@@ -9,32 +9,33 @@ import pubchempy as pcp
 import pygame as pg
 
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
-
 
 
 
 ####### setup
-molecule = 'benzene'
-basis_set = 'STO-6G'
-pre_render_densities = False
-resolution = (1200, 720)
-background_colour = (0,0,0)
-points = 100
-colour_map = cmap.BlueBlackRed()
+molecule 				= 'ethylene.pcp'
+basis_set 				= 'STO-6G'
+pre_render_densities 	= True
+resolution 				= (1200, 720)
+background_colour 		= (0,0,0)
+points 					= 20000
+colour_map 				= cmap.BlueBlackRed(posneg_mode=False)
+draw_axes 				= False
+wireframe_mode			= True
 #######
 
 
 
 
 
-
-
+def ts():
+	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 if colour_map == None:
 	colour_map = cmap.BlueRed(posneg_mode=True)
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 #viewer setup
 pg.init()
@@ -47,9 +48,7 @@ selected_atoms = set()
 bs.extended_huckel(mol) 
 mos = mol.molecular_orbitals
 
-if pre_render_densities: screen.pre_render_densities(mos, points=10000, colour_map=colour_map)
-
-
+if pre_render_densities: screen.pre_render_densities(mos, points=points, colour_map=colour_map)
 
 clock = pg.time.Clock()
 FPS = 120
@@ -61,6 +60,10 @@ zoom = 0
 pg.key.set_repeat()
 run = True
 mo_numb = 0
+draw_dens = False
+camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 2 
+
+screen.camera_position = np.asarray((0,0,camera_range))
 
 
 while run:
@@ -75,10 +78,9 @@ while run:
 	screen.clear()
 
 
-
-	screen.draw_density(mos[mo_numb%len(mos)], points, colour_map=colour_map)
-	screen.draw_shape(mol, wireframe=False, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)	
-	screen.draw_axes(1)
+	if draw_dens: screen.draw_density(mos[mo_numb%len(mos)], points, colour_map=colour_map)
+	screen.draw_shape(mol, wireframe=wireframe_mode, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)	
+	if draw_axes: screen.draw_axes(1)
 
 	
 
@@ -94,6 +96,8 @@ while run:
 				mo_numb += 1
 			if e.key == pg.K_LEFT:
 				mo_numb -= 1
+			if e.key == pg.K_RETURN:
+				draw_dens = 1 - draw_dens
 
 		elif e.type == pg.MOUSEBUTTONDOWN:
 			if e.button == 1:

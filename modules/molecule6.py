@@ -1,10 +1,13 @@
 import numpy as np
 from scipy.spatial.distance import euclidean, sqeuclidean
 from math import cos, sin, pi, atan2, acos, exp
-import os, json
+import os, json, time
 import modules.basisset6 as bs
 import periodictable as pt
 
+
+def ts():
+	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 class Atom:
@@ -23,7 +26,7 @@ class Atom:
 				try:
 					el = pt.elements.name(element)
 				except:
-					print(f'Could not parse element {element}.')
+					print(f'{ts()} Could not parse element {element}.')
 
 		self.ionisation_energy = np.genfromtxt('modules\\ionisation_energies', usecols=(1,2), missing_values='', delimiter=';')[el.number]
 
@@ -48,7 +51,7 @@ class Atom:
 				'Na': (119, 0, 255),
 				}[self.symbol]
 		except:
-			print(f'No default colour found for {self.symbol}')
+			print(f'{ts()} No default colour found for {self.symbol}')
 			self.colour = (0,0,0)
 
 		try:
@@ -65,7 +68,7 @@ class Atom:
 				'Fe': 2,
 				}[self.symbol]
 		except:
-			print(f'No max_valence found for {self.symbol}')
+			print(f'{ts()} No max_valence found for {self.symbol}')
 			self.max_valence = 1
 
 
@@ -286,12 +289,12 @@ Coordinates (angstrom):
 		mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'Could not find 3d structure of {name}... Attempting to find 2d structure...')
+			print(f'{ts()} Could not find 3d structure of {name}... Attempting to find 2d structure...')
 			record_type = '2d'
 			mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'No structural data found for {name}')
+			print(f'{ts()} No structural data found for {name}')
 
 		else:
 			mol = mol[0]
@@ -315,7 +318,7 @@ Coordinates (angstrom):
 		'''
 
 
-		print(f'Succesfully loaded {self.name}')
+		print(f'{ts()} Succesfully loaded {self.name}')
 
 		self.set_bonds()
 
@@ -661,15 +664,15 @@ Coordinates (angstrom):
 		mbo = sum([a.is_saturated() for a in self.get_by_element('C')]) - len(self.get_by_element('C'))
 		if self._warning_level == 2:
 			if mbo < 0:
-				print(f'Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
+				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
 			else:
-				print(f'Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
 
 		elif self._warning_level == 1:
 			if mbo == 0:
-				print(f'Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
 			elif self.guess_bond_order_iters == self.natoms:
-				print(f'Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
+				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
 		
 		if mbo < 0 and self.guess_bond_order_iters < 5 * self.natoms:
 			self.guess_bond_order_iters += 1
