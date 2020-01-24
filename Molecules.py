@@ -13,16 +13,18 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'ethylene.pcp'
+molecule 				= 't.pcp'
 basis_set 				= 'STO-6G'
 pre_render_densities 	= True
 resolution 				= (1200, 720)
 background_colour 		= (0,0,0)
-points 					= 20000
-colour_map 				= cmap.BlueBlackRed(posneg_mode=False)
+points 					= 7000
+colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 draw_axes 				= False
 wireframe_mode			= True
 #######
+
+
 
 
 

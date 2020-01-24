@@ -19,10 +19,10 @@ def extended_huckel(molecule, K=1.75):
 	print(f'{ts()} Performing Extended Huckel-Method for {molecule.name}.')
 
 	aos = molecule.basis.atomic_orbitals
+	print(aos)
 
 	dim = len(aos)
 	H = np.zeros((dim, dim))
-	print(H[2,2])
 
 	for i in range(dim):
 		H[i,i] = -aos[i].atom.ionisation_energy[sum(aos[i].cardinality)]
@@ -212,8 +212,8 @@ class Basis:
 
 							a = [float(a) for a in exponents]
 							c = [float(c) for c in coefficients]
-
-							self.atomic_orbitals.append(AtomicOrbital(atom.coords, n+1, a, c, self.get_cardinal_powers(l, m), atom))
+							if n == len(atom_params) -1:
+								self.atomic_orbitals.append(AtomicOrbital(atom.coords, n+1, a, c, self.get_cardinal_powers(l, m), atom))
 
 						except:
 							pass
@@ -255,8 +255,8 @@ class AtomicOrbital:
 		dens = np.zeros(p.size//3)
 
 		for a, c in zip(self.exponents, self.coefficients):
-			dens += c * (x-Ax)**ax * (y-Ay)**ay * (z-Az)**az * np.exp(-a*np.linalg.norm(p.T - self.centre, axis=1)**2) * self.norm
-		return dens
+			dens += c * (x-Ax)**ax * (y-Ay)**ay * (z-Az)**az * np.exp(-a*np.linalg.norm(p.T - self.centre, axis=1)**2) 
+		return dens * self.norm
 
 
 
