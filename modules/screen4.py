@@ -186,7 +186,7 @@ class Screen3D:
 
 
 	def draw_circle(self, center, radius, colour=(255,255,255), width=0):
-		pos = self.project(center)
+		pos = self.project(np.asarray(center))
 		pg.draw.circle(self.disp, colour, pos, radius, width)
 
 
@@ -242,7 +242,7 @@ class Screen3D:
 		print(f'{ts()} Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
 
 
-	def draw_mesh(self, mesh, colour=(255,255,255, 200)):
+	def draw_mesh(self, mesh, colour=(255,255,255, 200), lighting=(1,0,0), fill=True, lighting_colour=(255,255,255)):
 		'''
 		Method that draws a mesh from a 3d matrix, where the rows represent the triangles,
 		the rows in the rows represent the verteces of the triangles. The elements are the coordinates
@@ -259,16 +259,25 @@ class Screen3D:
 
 
 		for triangle, _ in reversed(sorted(order, key=lambda x: x[1])):
-			tri = self.rotate(triangle, (0,0,1))
+			# tri = self.rotate(triangle, self.camera_orientation)
+			tri = triangle
 			p1, p2 = (tri[1]-tri[0]), (tri[2]-tri[0])
 			norm = np.cross(p1, p2)
+			norm /= np.linalg.norm(norm)
 
-			angle = (np.dot(norm, (0,0,1))/(np.linalg.norm(norm)) + 1)/2
+			light_direction = lighting - np.mean(triangle, axis=1)
+
+			angle = np.arccos(np.clip(np.dot(norm, -np.asarray(light_direction)), -0.95, 0.95))/math.pi
+			# print(angle)
 
 			triangle = project(triangle)
 			
-			colour = (angle * np.array([255,255,255])).astype(int)
-			draw_polygon(self.disp, colour, triangle)
+			colour = (angle * np.array([126,126,126])).astype(int)
+			colour += (angle * np.asarray(lighting_colour)/2).astype(int)
+			if fill:
+				draw_polygon(self.disp, colour, triangle)
+			else:
+				draw_polygon(self.disp, colour, triangle, 1)
 
 
 
