@@ -10,14 +10,16 @@ screen = scr.Screen3D((1200,720))
 
 
 # array = np.random.random((3,3,3))
-# triangles = np.asarray(mc.marching_cubes(array, 0.5, 1)) - 1
+# mesh = np.asarray(mc.marching_cubes(array, 0.5, 1)) - 1
 
 
 
-array = np.array([[[0,0,0],[0,0,0],[0,0,0]],
-				  [[0,0,0],[0,5,0],[0,0,0]],
-				  [[0,0,0],[0,0,0],[0,0,0]]])
-triangles = np.asarray(mc.marching_cubes(array, 0.5, 1)) -1
+array = np.array([[[0,0,0],[0,0.4,0],[0,0,0]],
+				  [[0,0.4,0],[0.4,1,0.4],[0,0.4,0]],
+				  [[0,0,0],[0,0.4,0],[0,0,0]]])
+
+mesh = mc.Mesh(array, 0.5, 1, -1)
+# mesh = np.asarray(mc.marching_cubes(array, 0.5, 1)) -1
 
 x = y = z = np.array([-1,0,1])
 x, y, z = np.meshgrid(x, y, z)
@@ -36,9 +38,9 @@ x, y, z = x.flatten(), y.flatten(), z.flatten()
 # array = func(x, y, z).reshape((points,points,points))
 # print(array.max())
 
-# triangles = np.asarray(mc.marching_cubes(array, 1, 1)) - rang/2
+# mesh = np.asarray(mc.marching_cubes(array, 1, 1)) - rang/2
 
-# print(len(triangles))
+# print(len(mesh))
 
 
 
@@ -50,7 +52,7 @@ updt = 0
 time = 0
 run = True
 
-camera_range = 5
+camera_range = 2
 
 
 while run:
@@ -73,22 +75,24 @@ while run:
 
 
 
-	light = (3*sin(pi * time/5)+4, 1, 3*cos(pi * time/5))
+	# light = (10*sin(pi * time/5), 10*cos(pi * time/5), 0)
 	# light = screen.camera_position
-	# light = (0,0,1)
+	light = (0,0,10)
 
 	# screen.camera_position = np.array([camera_range*sin(pi * time/5), camera_range/3, camera_range*cos(pi * time/5)])
 	# screen.camera_orientation = np.array([-.3, pi * time/5, 0])
 
-	screen.camera_position = np.array([camera_range*sin(pi * 0/5), camera_range/3, camera_range*cos(pi * 0/5)])
-	screen.camera_orientation = np.array([-.3, pi * 0/5, 0])
+	screen.camera_position = np.array([camera_range*sin(pi * 2/5), camera_range/3, camera_range*cos(pi * 2/5)])
+	screen.camera_orientation = np.array([-.3, pi * 2/5, 0])
 
 
 
 	# screen.draw_pixels(np.asarray((x,y,z)).T)
-	screen.draw_mesh(triangles, lighting=light, fill=True, lighting_colour=(50,200,50))
+	# screen.draw_axes(1)
+	mesh.rotate((0.0,0.003,0.))
+	screen.draw_mesh(mesh.mesh, lighting=light, fill=False, lighting_colour=(50,200,200))
 
-	screen.draw_line(np.asarray(((0,0,0), light)), (253, 184, 19))
+	# screen.draw_line(np.asarray(((0,0,0), light)), (253, 184, 19))
 
 
 

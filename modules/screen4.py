@@ -267,13 +267,13 @@ class Screen3D:
 
 			light_direction = lighting - np.mean(triangle, axis=1)
 
-			angle = np.arccos(np.clip(np.dot(norm, -np.asarray(light_direction)), -0.95, 0.95))/math.pi
+			angle = np.arccos(np.clip(np.dot(norm, -np.asarray(light_direction)), -0.9, 0.9))/math.pi
 			# print(angle)
 
 			triangle = project(triangle)
 			
-			colour = (angle * np.array([126,126,126])).astype(int)
-			colour += (angle * np.asarray(lighting_colour)/2).astype(int)
+			colour = (angle * np.array([255,255,255])).astype(int)
+			colour -= (angle * np.asarray(lighting_colour)/2).astype(int)
 			if fill:
 				draw_polygon(self.disp, colour, triangle)
 			else:
@@ -427,9 +427,9 @@ class Screen3D:
 
 
 	def draw_axes(self, length=1):
-		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
-		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((0,length,0))], colour=(0,255,0))
-		self.draw_single_bond([np.asarray((0,0,0)),np.asarray((0,0,length))], colour=(0,0,255))
+		self.draw_line([np.asarray((0,0,0)),np.asarray((length,0,0))], colour=(255,0,0))
+		self.draw_line([np.asarray((0,0,0)),np.asarray((0,length,0))], colour=(0,255,0))
+		self.draw_line([np.asarray((0,0,0)),np.asarray((0,0,length))], colour=(0,0,255))
 
 	def clear(self):
 		self.disp.fill(self.bkgr_colour)

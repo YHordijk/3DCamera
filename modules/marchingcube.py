@@ -1,4 +1,5 @@
 import numpy as np 
+from math import sin, cos, pi
 
 
 edge_index = [
@@ -284,73 +285,109 @@ edge_conn = np.asarray([
 	(3,7)])
 
 
-def marching_cubes(a, isovalue, spacing):
 
-	triangles = []
+class Mesh:
+	def __init__(self, grid=None, isovalue=0.5, spacing=1, offset=0):
+		self.isovalue = isovalue
+		self.spacing = spacing
+		self.offset = offset
 
-	if  not a.min() < isovalue < a.max():
-		return
-
-	for x in reversed(range(a.shape[0]-1)):
-		for y in reversed(range(a.shape[1]-1)):
-			for z in reversed(range(a.shape[2]-1)):
-				p = np.asarray((x,y,z)) * spacing
-
-				# vals = np.array([a[x, y, z],
-				# 				 a[x, y, z+1],
-				# 				 a[x, y+1, z],
-				# 				 a[x, y+1, z+1],
-				# 				 a[x+1, y, z], 
-				# 				 a[x+1, y, z+1], 
-				# 				 a[x+1, y+1, z],
-				# 				 a[x+1, y+1, z+1]])
-
-				vals = np.array([a[x, y, z],
-								 a[x+1, y, z],
-								 a[x+1, y+1, z],
-								 a[x, y+1, z],
-								 a[x, y, z+1],
-								 a[x+1, y, z+1],
-								 a[x+1, y+1, z+1],
-								 a[x, y+1, z+1],])
-
-				verteces = np.where(vals<=isovalue, 1, 0)
-				edges = get_edges_from_verteces(verteces)
-
-				for i in range(len(edges)//3):
-					i_edges = edges[3*i:3*i+3]
-					new_triangle = []
-					for i_edge in i_edges:
-						i_verteces = edge_conn[i_edge]
-						v1 = vals[i_verteces[0]]
-						v2 = vals[i_verteces[1]]
-
-						o1 = offsets[i_verteces[0]]
-						o2 = offsets[i_verteces[1]]
-
-						offset = o1 + (isovalue - v1) * (o2 - o1) / (v2 - v1) * spacing
-						new_triangle.append((p + offset))
-					triangles.append(new_triangle)
+		if type(grid) == np.ndarray:
+			self.mesh = self.load_mesh(grid)
+			
 
 
-	return triangles
+
+	def load_mesh(self, a):
+
+		triangles = []
+
+		if  not a.min() < self.isovalue < a.max():
+			return
+
+		for x in reversed(range(a.shape[0]-1)):
+			for y in reversed(range(a.shape[1]-1)):
+				for z in reversed(range(a.shape[2]-1)):
+					p = np.asarray((x,y,z)) * self.spacing
+
+					# vals = np.array([a[x, y, z],
+					# 				 a[x, y, z+1],
+					# 				 a[x, y+1, z],
+					# 				 a[x, y+1, z+1],
+					# 				 a[x+1, y, z], 
+					# 				 a[x+1, y, z+1], 
+					# 				 a[x+1, y+1, z],
+					# 				 a[x+1, y+1, z+1]])
+
+					vals = np.array([a[x, y, z],
+									 a[x+1, y, z],
+									 a[x+1, y+1, z],
+									 a[x, y+1, z],
+									 a[x, y, z+1],
+									 a[x+1, y, z+1],
+									 a[x+1, y+1, z+1],
+									 a[x, y+1, z+1],])
+
+					verteces = np.where(vals<=self.isovalue, 1, 0)
+					edges = self.get_edges_from_verteces(verteces)
+
+					for i in range(len(edges)//3):
+						i_edges = edges[3*i:3*i+3]
+						new_triangle = []
+						for i_edge in i_edges:
+							i_verteces = edge_conn[i_edge]
+							v1 = vals[i_verteces[0]]
+							v2 = vals[i_verteces[1]]
+
+							o1 = offsets[i_verteces[0]]
+							o2 = offsets[i_verteces[1]]
+
+							offset = o1 + (self.isovalue - v1) * (o2 - o1) / (v2 - v1) * self.spacing
+							new_triangle.append((p + offset))
+						triangles.append(new_triangle)
 
 
-def get_edges_from_verteces(verteces):
-	'''
-	Returns the intersected edges based on the binary repr of the verteces list.
-	Verteces is of the format [b1,...,bn] where b is either 1 or 0
-	We first convert verteces into a int and then return the edges corresponding
-	to the int
-	'''
+		return np.asarray(triangles) + self.offset
 
-	n = sum([n*2**i for i,n in enumerate(verteces)])
-	edges = np.asarray(edge_index[n])
-	edges += 1
-	edges = edges[np.nonzero(edges)] - 1
 
-	return edges
+	def get_edges_from_verteces(self, verteces):
+		'''
+		Returns the intersected edges based on the binary repr of the verteces list.
+		Verteces is of the format [b1,...,bn] where b is either 1 or 0
+		We first convert verteces into a int and then return the edges corresponding
+		to the int
+		'''
 
+		n = sum([n*2**i for i,n in enumerate(verteces)])
+		edges = np.asarray(edge_index[n])
+		edges += 1
+		edges = edges[np.nonzero(edges)] - 1
+
+		return edges
+
+
+	def rotate(self, rotation):
+		r = rotation[0]
+		Rx = np.array(([	  1, 	  0,	   0],
+					   [	  0, cos(r), -sin(r)],
+					   [      0, sin(r),  cos(r)]))
+
+		r = rotation[1]
+		Ry = np.array(([ cos(r),  	   0, sin(r)],
+					   [ 	  0, 	   1,	   0],
+					   [-sin(r), 	   0, cos(r)]))
+
+		r = rotation[2]
+		Rz = np.array(([ cos(r), -sin(r), 	   0],
+					   [ sin(r),  cos(r), 	   0],
+					   [ 	  0, 	   0, 	   1]))
+
+		R = Rx@Ry@Rz
+		new_mesh = []
+		for t in self.mesh:
+			new_mesh.append((R @ t.T).T)
+
+		self.mesh = np.asarray(new_mesh)
 
 
 
