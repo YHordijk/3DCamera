@@ -242,6 +242,37 @@ class Screen3D:
 		print(f'{ts()} Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
 
 
+	def draw_mesh(self, mesh, colour=(255,255,255, 200)):
+		'''
+		Method that draws a mesh from a 3d matrix, where the rows represent the triangles,
+		the rows in the rows represent the verteces of the triangles. The elements are the coordinates
+		'''
+
+		mesh = np.asarray(mesh)
+		project = self.project_array
+		draw_polygon = pg.draw.polygon
+
+		order = []
+
+		for t in mesh:
+			order.append((t, max(euclidean(t[0], self.camera_position), euclidean(t[1], self.camera_position), euclidean(t[2], self.camera_position))))
+
+
+		for triangle, _ in reversed(sorted(order, key=lambda x: x[1])):
+			tri = self.rotate(triangle, (0,0,1))
+			p1, p2 = (tri[1]-tri[0]), (tri[2]-tri[0])
+			norm = np.cross(p1, p2)
+
+			angle = (np.dot(norm, (0,0,1))/(np.linalg.norm(norm)) + 1)/2
+
+			triangle = project(triangle)
+			
+			colour = (angle * np.array([255,255,255])).astype(int)
+			draw_polygon(self.disp, colour, triangle)
+
+
+
+
 	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True), grid_mode=False):
 		if not orbital in self._dens_pos:
 			samples = 50*points

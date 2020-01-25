@@ -259,30 +259,29 @@ edge_index = [
 	( 8, 0, 3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1),
 	(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1) ]
 
-vertex_coords = [
+offsets = np.asarray([
 	(0,0,0),
-	(0,0,1),
-	(0,1,0),
-	(0,1,1),
 	(1,0,0),
-	(1,0,1),
 	(1,1,0),
+	(0,1,0),
+	(0,0,1),
 	(1,0,1),
-	(1,1,1)]
+	(1,1,1),
+	(0,1,1)])
 
-edge_conn = [
-	(1,5),
-	(5,7),
-	(3,7),
-	(1,3),
-	(0,4),
-	(5,6),
-	(2,6),
-	(0,2),
+edge_conn = np.asarray([
 	(0,1),
+	(1,2),
+	(3,2),
+	(0,3),
 	(4,5),
-	(6,7),
-	(2,3)]
+	(5,6),
+	(7,6),
+	(4,7),
+	(0,4),
+	(1,5),
+	(2,6),
+	(3,7)])
 
 
 def marching_cubes(a, isovalue, spacing):
@@ -295,34 +294,46 @@ def marching_cubes(a, isovalue, spacing):
 	for x in reversed(range(a.shape[0]-1)):
 		for y in reversed(range(a.shape[1]-1)):
 			for z in reversed(range(a.shape[2]-1)):
-				p = np.multiply(np.asarray((x,y,z)), spacing)
+				p = np.asarray((x,y,z)) * spacing
+
+				# vals = np.array([a[x, y, z],
+				# 				 a[x, y, z+1],
+				# 				 a[x, y+1, z],
+				# 				 a[x, y+1, z+1],
+				# 				 a[x+1, y, z], 
+				# 				 a[x+1, y, z+1], 
+				# 				 a[x+1, y+1, z],
+				# 				 a[x+1, y+1, z+1]])
 
 				vals = np.array([a[x, y, z],
-								 a[x, y, z+1],
-								 a[x, y+1, z],
-								 a[x, y+1, z+1],
-								 a[x+1, y, z], 
-								 a[x+1, y, z+1], 
+								 a[x+1, y, z],
 								 a[x+1, y+1, z],
-								 a[x+1, y+1, z+1]])
+								 a[x, y+1, z],
+								 a[x, y, z+1],
+								 a[x+1, y, z+1],
+								 a[x+1, y+1, z+1],
+								 a[x, y+1, z+1],])
 
-				verteces = np.where(vals>=isovalue, 1, 0)
-				print(verteces)
+				verteces = np.where(vals<=isovalue, 1, 0)
 				edges = get_edges_from_verteces(verteces)
 
-				print(edges)
 				for i in range(len(edges)//3):
 					i_edges = edges[3*i:3*i+3]
+					new_triangle = []
 					for i_edge in i_edges:
 						i_verteces = edge_conn[i_edge]
-						print(i_verteces)
-						# p1, p2, p3 = p+vertex_coords[i_verteces[0]], p+vertex_coords[i_verteces[1]], p+vertex_coords[i_verteces[2]]
+						v1 = vals[i_verteces[0]]
+						v2 = vals[i_verteces[1]]
+
+						o1 = offsets[i_verteces[0]]
+						o2 = offsets[i_verteces[1]]
+
+						offset = o1 + (isovalue - v1) * (o2 - o1) / (v2 - v1) * spacing
+						new_triangle.append((p + offset))
+					triangles.append(new_triangle)
 
 
-				
-
-def get_coord_from_vertex(v1, v2):
-	pass
+	return triangles
 
 
 def get_edges_from_verteces(verteces):
@@ -347,16 +358,18 @@ def get_edges_from_verteces(verteces):
 
 
 if __name__ == '__main__':
-	array = np.array([[[1, 0],[0, 0]],
-					  [[0, 0],[0, 0]]])
+	array = np.array([[[1,0,0],[0,0,0],[0,0,0]],
+					  [[0,0,0],[0,1,0],[0,0,0]],
+					  [[0,0,0],[0,0,0],[0,0,0]]])
 
-	print(array)
-	marching_cubes(array, 0.5, np.asarray((0.5,1,0.3)))
+	triangles = marching_cubes(array, 0.5, 1)
+	[print(t) for t in triangles]
 
-	ranges = (-1,1,-1,1,-1,1)
-	points = 10
-	x, y, z = np.linspace(ranges[0], ranges[1], points), np.linspace(ranges[2], ranges[3], points), np.linspace(ranges[4], ranges[5], points)
-	x, y, z = np.meshgrid(x, y, z)
-	x, y, z = x.flatten(), y.flatten(), z.flatten()
+	print(np.asarray(np.asarray(triangles)))
+	# ranges = (-1,1,-1,1,-1,1)
+	# points = 10
+	# x, y, z = np.linspace(ranges[0], ranges[1], points), np.linspace(ranges[2], ranges[3], points), np.linspace(ranges[4], ranges[5], points)
+	# x, y, z = np.meshgrid(x, y, z)
+	# x, y, z = x.flatten(), y.flatten(), z.flatten()
 
 
