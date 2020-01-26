@@ -1,8 +1,9 @@
+import math, os, sys, time
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import modules.screen4 as scr 
 import modules.molecule6 as mol 
 import modules.basisset6 as bs
 import modules.colour_maps as cmap
-import math, os, sys
 import numpy as np
 from time import perf_counter
 import pubchempy as pcp
@@ -13,19 +14,16 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 't.pcp'
+molecule 				= 'nitrobenzene'
 basis_set 				= 'STO-6G'
-pre_render_densities 	= True
+pre_render_densities 	= False
 resolution 				= (1200, 720)
 background_colour 		= (0,0,0)
 points 					= 7000
 colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 draw_axes 				= False
-wireframe_mode			= True
+wireframe_mode			= False
 #######
-
-
-
 
 
 
@@ -34,10 +32,30 @@ def ts():
 	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
+
+def MOTD():
+	features = ['Loading molecules from xyz files or alternatively download from pubchem.',
+				'Visualising molecules as a ball-and-stick model or as a wireframe model.',
+				'Algorithms for guessing atom types, bonds, and bond orders.',
+				'Support for STO-nG basis set for atomic/molecular orbital visualtions and calculations.',
+				'Crude extended-Hückel method for calculation of molecular orbitals.']
+	planned_features = ['Improvements to extended-Hückel and molecular integrals.',
+						'Marching cubes algorithm to visualise orbitals as iso-volumes instead of current random-dot style.']
+
+
+
+	print(f'Welcome, this project so far supports the following:')
+	[print(f'-- {f}') for f in features]
+	print(f'Planned features:')
+	[print(f'-- {f}') for f in planned_features]
+	print()
+
+
+MOTD()
+
 if colour_map == None:
 	colour_map = cmap.BlueRed(posneg_mode=True)
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 #viewer setup
 pg.init()
@@ -66,6 +84,7 @@ draw_dens = False
 camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 2 
 
 screen.camera_position = np.asarray((0,0,camera_range))
+
 
 
 while run:

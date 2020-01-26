@@ -16,10 +16,9 @@ def extended_huckel(molecule, K=1.75):
 	Returns energies and mo's
 	'''
 
-	print(f'{ts()} Performing Extended Huckel-Method for {molecule.name}.')
+	print(f'{ts()} [extended_huckel]: Performing Extended Huckel-Method for {molecule.name}.')
 
 	aos = molecule.basis.atomic_orbitals
-	print(aos)
 
 	dim = len(aos)
 	H = np.zeros((dim, dim))
@@ -44,8 +43,8 @@ def extended_huckel(molecule, K=1.75):
 	molecule.homo = molecule.molecular_orbitals[nelectrons//2]
 	molecule.lumo = molecule.molecular_orbitals[nelectrons//2+1]
 
-	print(f'{ts()} {len(energies)} molecular orbitals found.')
-	print(f'{ts()} Highest and lowest energies: {max(energies)}, {min(energies)} eV')
+	print(f'{ts()} [extended_huckel]: {len(energies)} molecular orbitals found.')
+	print(f'{ts()} [extended_huckel]: Highest and lowest energies: {max(energies)}, {min(energies)} eV')
 
 
 def overlap_matrix(molecule):
@@ -153,19 +152,19 @@ class Basis:
 
 		bsf_path = os.getcwd()+rf'\Basis_Sets\{basis_type}.bsf'
 		if not os.path.exists(bsf_path):
-			print(f'{ts()} Error: Basis set {self.basis_type} not found, downloading ...')
+			print(f'{ts()} [Basis.load_basis] Error: Basis set {self.basis_type} not found, downloading ...')
 			import requests
 			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
 			if response:
-				print(f'symbol Succesfully obtained basis set file')
+				print(f'{ts()} [Basis.load_basis] Succesfully obtained basis set file')
 
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
 				self.load_basis()
 			else:
-				print(f'{ts()} Failed to obtain basis set file')
+				print(f'{ts()} [Basis.load_basis] Error: Failed to obtain basis set file')
 		else:
-			print(f'{ts()} Succesfully loaded {self.basis_type}')
+			print(f'{ts()} [Basis.load_basis] Succesfully loaded {self.basis_type}')
 			with open(bsf_path, 'r') as f:
 				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 				self.params = json.load(f)['elements']
@@ -268,7 +267,7 @@ class MolecularOrbital:
 		self.energy = energy
 
 	def evaluate(self, p):
-		print(f'{ts()} Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
+		print(f'{ts()} [MolecularOrbital.evaluate]: Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
 		dens = np.zeros(p.size//3)
 		for ao, w in zip(self.aos, self.weights):
 			dens += w * ao.evaluate(p)

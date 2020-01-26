@@ -14,9 +14,9 @@ screen = scr.Screen3D((1200,720))
 
 
 
-array = np.array([[[0,0,0],[0,0.4,0],[0,0,0]],
-				  [[0,0.4,0],[0.4,1,0.4],[0,0.4,0]],
-				  [[0,0,0],[0,0.4,0],[0,0,0]]])
+array = np.array([[[0,0,0],[0,0,0],[0,0,0]],
+				  [[0,0,0],[0,1,0],[0,0,0]],
+				  [[0,0,0],[0,0,0],[0,0,0]]])
 
 mesh = mc.Mesh(array, 0.5, 1, -1)
 # mesh = np.asarray(mc.marching_cubes(array, 0.5, 1)) -1
@@ -88,8 +88,8 @@ while run:
 
 
 	# screen.draw_pixels(np.asarray((x,y,z)).T)
-	# screen.draw_axes(1)
-	mesh.rotate((0.0,0.003,0.))
+	screen.draw_axes(1)
+	mesh.rotate((0.003,0.,0.))
 	screen.draw_mesh(mesh.mesh, lighting=light, fill=False, lighting_colour=(50,200,200))
 
 	# screen.draw_line(np.asarray(((0,0,0), light)), (253, 184, 19))

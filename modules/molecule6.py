@@ -26,7 +26,7 @@ class Atom:
 				try:
 					el = pt.elements.name(element)
 				except:
-					print(f'{ts()} Could not parse element {element}.')
+					print(f'{ts()} [Atom.__init__]: Could not parse element {element}.')
 
 		self.ionisation_energy = np.genfromtxt('modules\\ionisation_energies', usecols=(1,2), missing_values='', delimiter=';')[el.number]
 
@@ -51,7 +51,7 @@ class Atom:
 				'Na': (119, 0, 255),
 				}[self.symbol]
 		except:
-			print(f'{ts()} No default colour found for {self.symbol}')
+			print(f'{ts()} [Atom.__init__]: No default colour found for {self.symbol}')
 			self.colour = (0,0,0)
 
 		try:
@@ -68,7 +68,7 @@ class Atom:
 				'Fe': 2,
 				}[self.symbol]
 		except:
-			print(f'{ts()} No max_valence found for {self.symbol}')
+			print(f'{ts()} [Atom.__init__]: No max_valence found for {self.symbol}')
 			self.max_valence = 1
 
 
@@ -199,8 +199,8 @@ class Molecule:
 		if molecule_file is not None and molecule_file.endswith('.xyz'):
 			self._load_xyz(molecule_file)
 
-		elif molecule_file is not None and molecule_file.endswith('.pcp'):
-			self._load_from_pubchem(molecule_file[0:-4])
+		# elif molecule_file is not None and molecule_file.endswith('.pcp'):
+		# 	self._load_from_pubchem(molecule_file[0:-4])
 
 		else:
 			self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
@@ -258,15 +258,18 @@ Coordinates (angstrom):
 
 		returns nothing, modifies self
 		'''
-
 		self.name = file.split('/')[-1].strip('.xyz').capitalize()
 		self.name = self.name.split('\\')[-1].strip('.xyz').capitalize()
-		coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
-		elements = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
+		if os.path.exists(file):
+			coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
+			elements = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
 
-		self.atoms = [Atom(e, c) for e, c in zip(elements, coords)]
+			self.atoms = [Atom(e, c) for e, c in zip(elements, coords)]
 
-		self._mol_load_finish()
+			self._mol_load_finish()
+		else:
+			print(f'{ts()} [Molecule._load_xyz]: No local file for {self.name} exists. Searching pubchem ...')
+			self._load_from_pubchem(self.name)
 
 
 	def _load_from_pubchem(self, name):
@@ -289,12 +292,12 @@ Coordinates (angstrom):
 		mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'{ts()} Could not find 3d structure of {name}... Attempting to find 2d structure...')
+			print(f'{ts()} [Molecule._load_from_pubchem]: Could not find 3d structure of {name}... Attempting to find 2d structure...')
 			record_type = '2d'
 			mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'{ts()} No structural data found for {name}')
+			print(f'{ts()} [Molecule._load_from_pubchem]: No structural data found for {name}')
 
 		else:
 			mol = mol[0]
@@ -318,7 +321,7 @@ Coordinates (angstrom):
 		'''
 
 
-		print(f'{ts()} Succesfully loaded {self.name}')
+		print(f'{ts()} [Molecule._mol_load_finish]: Succesfully loaded {self.name}')
 
 		self.set_bonds()
 
@@ -422,7 +425,7 @@ Coordinates (angstrom):
 		n2 = norm(np.cross(b2, b3))
 		m1 = n1 * b2
 
-		print(acos(np.dot(n1,n2)/(mag(n1) * mag(n2))))
+		# print(acos(np.dot(n1,n2)/(mag(n1) * mag(n2))))
 
 		return atan2(np.dot(m1, n2), np.dot(n1, n2)) * (1, 180/pi)[in_degrees]
 
@@ -664,15 +667,15 @@ Coordinates (angstrom):
 		mbo = sum([a.is_saturated() for a in self.get_by_element('C')]) - len(self.get_by_element('C'))
 		if self._warning_level == 2:
 			if mbo < 0:
-				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
+				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
 			else:
-				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
 
 		elif self._warning_level == 1:
 			if mbo == 0:
-				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
 			elif self.guess_bond_order_iters == self.natoms:
-				print(f'{ts()} Molecule.guess_bond_orders ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
+				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
 		
 		if mbo < 0 and self.guess_bond_order_iters < 5 * self.natoms:
 			self.guess_bond_order_iters += 1
