@@ -167,7 +167,8 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], warning_level=1, scale=200, basis_set_type='STO-6G'):
+	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], 
+					warning_level=1, scale=200, basis_set_type='STO-6G', repeat=1, repeat_vector=None):
 		self._warning_level = warning_level
 
 		self.position = position	
@@ -175,6 +176,8 @@ class Molecule:
 		self.rotation = rotation
 		self.scale = scale
 		self.basis_set_type = basis_set_type
+		self.repeat = repeat
+		self.repeat_vector = repeat_vector
 
 		self._dens_pos = {}
 		self._dens_colours = {}
@@ -261,10 +264,27 @@ Coordinates (angstrom):
 		self.name = file.split('/')[-1].strip('.xyz').capitalize()
 		self.name = self.name.split('\\')[-1].strip('.xyz').capitalize()
 		if os.path.exists(file):
-			coords = np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float)
-			elements = np.loadtxt(file, skiprows=2, usecols=0, dtype=str)
+			coords = list(np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float))
+			elements = list(np.loadtxt(file, skiprows=2, usecols=0, dtype=str))
 
-			self.atoms = [Atom(e, c) for e, c in zip(elements, coords)]
+			
+			if 'VEC1' in elements:
+				i = elements.index('VEC1')
+				self.repeat_vector = coords[i]
+				del(elements[i])
+				del(coords[i])
+
+			self.atoms = []
+			for r in range(self.repeat):
+				for e, c in zip(elements, coords):
+					if r == 0:
+						self.atoms.append(Atom(e, c))
+					else:
+						if not type(self.repeat_vector) is np.ndarray:
+							raise ValueError(f'[Molecule._load_xyz]: Please supply repeat vector.')
+						else:
+							self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
+
 
 			self._mol_load_finish()
 		else:
@@ -322,6 +342,8 @@ Coordinates (angstrom):
 
 
 		print(f'{ts()} [Molecule._mol_load_finish]: Succesfully loaded {self.name}')
+
+		self.center()
 
 		self.set_bonds()
 

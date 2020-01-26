@@ -14,8 +14,8 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'nitrobenzene'
-basis_set 				= 'STO-6G'
+molecule 				= 'Calixarene'
+basis_set 				= 'STO-2G'
 pre_render_densities 	= False
 resolution 				= (1200, 720)
 background_colour 		= (0,0,0)
@@ -23,6 +23,8 @@ points 					= 7000
 colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 draw_axes 				= False
 wireframe_mode			= False
+do_huckel				= False
+repeats 				= 1
 #######
 
 
@@ -60,7 +62,7 @@ if colour_map == None:
 #viewer setup
 pg.init()
 screen = scr.Screen3D(resolution, bkgr_colour=background_colour)
-mol = mol.Molecule(molecule, basis_set_type=basis_set)
+mol = mol.Molecule(molecule, basis_set_type=basis_set, repeat=repeats)
 atoms = mol.atoms
 pg.display.set_caption(mol.name)
 selected_atoms = set()
