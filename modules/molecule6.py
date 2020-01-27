@@ -3,11 +3,9 @@ from scipy.spatial.distance import euclidean, sqeuclidean
 from math import cos, sin, pi, atan2, acos, exp
 import os, json, time
 import modules.basisset6 as bs
+import modules.utils as utils
 import periodictable as pt
 
-
-def ts():
-	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 class Atom:
@@ -26,7 +24,7 @@ class Atom:
 				try:
 					el = pt.elements.name(element)
 				except:
-					print(f'{ts()} [Atom.__init__]: Could not parse element {element}.')
+					utils.message('Atom.__init__', 'Error: Could not parse element {element}.', 'red')
 
 		self.ionisation_energy = np.genfromtxt('modules\\ionisation_energies', usecols=(1,2), missing_values='', delimiter=';')[el.number]
 
@@ -51,7 +49,7 @@ class Atom:
 				'Na': (119, 0, 255),
 				}[self.symbol]
 		except:
-			print(f'{ts()} [Atom.__init__]: No default colour found for {self.symbol}')
+			utils.message('Atom.__init__', 'Error: No default colour found for {self.symbol}. Defaulting to (0,0,0).', 'red')
 			self.colour = (0,0,0)
 
 		try:
@@ -68,7 +66,7 @@ class Atom:
 				'Fe': 2,
 				}[self.symbol]
 		except:
-			print(f'{ts()} [Atom.__init__]: No max_valence found for {self.symbol}')
+			utils.message('Atom.__init__', 'Error: No max_valence found for {self.symbol}. Defaulting to 1.', 'red')
 			self.max_valence = 1
 
 
@@ -281,14 +279,14 @@ Coordinates (angstrom):
 						self.atoms.append(Atom(e, c))
 					else:
 						if not type(self.repeat_vector) is np.ndarray:
-							raise ValueError(f'[Molecule._load_xyz]: Please supply repeat vector.')
+							utils.message('Molecule._load_xyz', 'Error: Please supply repeat vector.', 'red')
 						else:
 							self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
 
 
 			self._mol_load_finish()
 		else:
-			print(f'{ts()} [Molecule._load_xyz]: No local file for {self.name} exists. Searching pubchem ...')
+			utils.message('Molecule._load_xyz', 'Error: No local file for {self.name} exists. Searching pubchem ...', 'red')
 			self._load_from_pubchem(self.name)
 
 
@@ -312,12 +310,12 @@ Coordinates (angstrom):
 		mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'{ts()} [Molecule._load_from_pubchem]: Could not find 3d structure of {name}... Attempting to find 2d structure...')
+			utils.message('Molecule._load_from_pubchem', 'Error: Could not find 3d structure of {name}... Attempting to find 2d structure...', 'red')
 			record_type = '2d'
 			mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			print(f'{ts()} [Molecule._load_from_pubchem]: No structural data found for {name}')
+			utils.message('Molecule._load_from_pubchem', 'Error: No structural data found for {name}.', 'red')
 
 		else:
 			mol = mol[0]
@@ -340,8 +338,7 @@ Coordinates (angstrom):
 		Method that is called by both xyz and pubchem loading of molecules
 		'''
 
-
-		print(f'{ts()} [Molecule._mol_load_finish]: Succesfully loaded {self.name}')
+		utils.message('Molecule._mol_load_finish', 'Succesfully loaded {self.name}.', 'green')
 
 		self.center()
 
@@ -689,15 +686,15 @@ Coordinates (angstrom):
 		mbo = sum([a.is_saturated() for a in self.get_by_element('C')]) - len(self.get_by_element('C'))
 		if self._warning_level == 2:
 			if mbo < 0:
-				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters})')
+				utils.message('Molecule.guess_bond_orders', f'Error: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters}).', 'red')
 			else:
-				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				utils.message('Molecule.guess_bond_orders', f'Bond order guessing succesful after {self.guess_bond_order_iters} iterations', 'green')
 
 		elif self._warning_level == 1:
 			if mbo == 0:
-				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing succesful after {self.guess_bond_order_iters} iterations.')
+				utils.message('Molecule.guess_bond_orders', f'Bond order guessing succesful after {self.guess_bond_order_iters} iterations.', 'green')
 			elif self.guess_bond_order_iters == self.natoms:
-				print(f'{ts()} [Molecule.guess_bond_orders]: ({self.name}): Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}')
+				utils.message('Molecule.guess_bond_orders', f'Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}.', 'red')
 		
 		if mbo < 0 and self.guess_bond_order_iters < 5 * self.natoms:
 			self.guess_bond_order_iters += 1

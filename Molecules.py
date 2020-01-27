@@ -4,19 +4,20 @@ import modules.screen4 as scr
 import modules.molecule6 as mol 
 import modules.basisset6 as bs
 import modules.colour_maps as cmap
+import modules.utils as utils
 import numpy as np
 from time import perf_counter
 import pubchempy as pcp
 import pygame as pg
 
 
-
+utils.suppress_source(True)
 
 
 ####### setup
-molecule 				= 'Calixarene'
-basis_set 				= 'STO-2G'
-pre_render_densities 	= False
+molecule 				= 'benzene'
+basis_set 				= 'STO-6G'
+pre_render_densities 	= True
 resolution 				= (1200, 720)
 background_colour 		= (0,0,0)
 points 					= 7000
@@ -30,12 +31,18 @@ repeats 				= 1
 
 
 
-def ts():
-	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
-
-
+class bcolors:
+	purple = '\033[95m'
+	blue = '\033[94m'
+	green = '\033[92m'
+	beige = '\033[93m'
+	red = '\033[91m'
+	end = '\033[0m'
+	white = '\033[1m'
+	under = '\033[4m'
 
 def MOTD():
+	os.system('color 07')
 	features = ['Loading molecules from xyz files or alternatively download from pubchem.',
 				'Visualising molecules as a ball-and-stick model or as a wireframe model.',
 				'Algorithms for guessing atom types, bonds, and bond orders.',
@@ -46,11 +53,12 @@ def MOTD():
 
 
 
-	print(f'Welcome, this project so far supports the following:')
-	[print(f'-- {f}') for f in features]
-	print(f'Planned features:')
-	[print(f'-- {f}') for f in planned_features]
+	print(f'{bcolors.blue} Welcome, this project so far supports the following: {bcolors.end}')
+	[print(f'{bcolors.blue} -- {f} {bcolors.end}') for f in features]
+	print(f'{bcolors.blue} Planned features: {bcolors.end}')
+	[print(f'{bcolors.blue} -- {f} {bcolors.end}') for f in planned_features]
 	print()
+	# os.system('color 70')
 
 
 MOTD()
@@ -87,7 +95,8 @@ camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a
 
 screen.camera_position = np.asarray((0,0,camera_range))
 
-
+utils.message('main', 'Please press ENTER to toggle orbital display. Use arrow-keys to switch between orbitals.')
+utils.message('main', 'Hold CTRL and use mouse to rotate and move molecule.')
 
 while run:
 	#tick prep

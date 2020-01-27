@@ -5,10 +5,7 @@ import math, time
 from scipy.spatial.distance import euclidean
 from time import perf_counter
 import modules.colour_maps as cmap
-
-
-def ts():
-	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
+import modules.utils as utils
 
 
 class Screen3D:
@@ -221,14 +218,15 @@ class Screen3D:
 
 
 	def pre_render_densities(self, orbitals, points=50000, colour_map=cmap.BlueRed(posneg_mode=True)):
-		print(f'{ts()} Pre-rendering {len(orbitals)} orbitals ({points} points):')
+		utils.message('Screen3D.pre_render_densities', f'Pre-rendering {len(orbitals)} orbitals ({points} points):')
 		for i, orbital in enumerate(orbitals):
-			print(f'{ts()}     Progress: {i+1}/{len(orbitals)} = {round((i+1)/len(orbitals)*100,2)}%', end='\r')
+
+			utils.message('Screen3D.pre_render_densities', f'	Progress: {i+1}/{len(orbitals)} = {round((i+1)/len(orbitals)*100,2)}%')
 			samples = 10*points
 			ranges = orbital.ranges
 
 			x, y, z = ((np.random.randint(ranges[0]*10000, ranges[1]*10000, size=samples)/10000), (np.random.randint(ranges[2]*10000, ranges[3]*10000, size=samples)/10000), (np.random.randint(ranges[4]*10000, ranges[5]*10000, size=samples)/10000))
-			d = orbital.evaluate(np.asarray((x, y, z))).flatten()
+			d = orbital.evaluate(np.asarray((x, y, z)), True).flatten()
 
 			index = abs(d**2).argsort()[::-1]
 			colours = colour_map[d].T
@@ -239,7 +237,7 @@ class Screen3D:
 			self._dens_pos[orbital], self._dens_colours[orbital] = dens_pos, colours
 			orbital.molecule._dens_pos[orbital], orbital.molecule._dens_colours[orbital] = dens_pos, colours
 
-		print(f'{ts()} Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
+		utils.message('Screen3D.pre_render_densities', f'Orbitals prepared. Please use Screen3D.draw_density() to display the orbitals.')
 
 
 	def draw_mesh(self, mesh, colour=(255,255,255, 200), lighting=(1,0,0), fill=True, lighting_colour=(255,255,255)):
@@ -314,7 +312,7 @@ class Screen3D:
 
 	def draw_electrostatic_potential(self, molecule, points=50000, colour_map=cmap.ElectroStat()):
 		if not hasattr(molecule, '_elec_stat_pos'):
-			print(f'{ts()} Calculating electrostatic potential of {molecule.name} ...')
+			utils.message('Screen3D.pre_render_densities', f'Calculating electrostatic potential of {molecule.name} ...')
 			samples = 50*points
 			rang = np.amax([np.abs(atom.coords) for atom in molecule.atoms]) + 4
 

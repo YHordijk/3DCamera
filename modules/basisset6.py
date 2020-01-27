@@ -4,9 +4,8 @@ import os
 from math import pi, exp, sqrt, factorial
 from scipy.spatial.distance import euclidean
 import time
+import modules.utils as utils
 
-def ts():
-	return f'[{time.strftime("%H:%M:%S", time.gmtime())}]:'
 
 
 def extended_huckel(molecule, K=1.75):
@@ -16,7 +15,7 @@ def extended_huckel(molecule, K=1.75):
 	Returns energies and mo's
 	'''
 
-	print(f'{ts()} [extended_huckel]: Performing Extended Huckel-Method for {molecule.name}.')
+	utils.message('extended_huckel', f'Performing Extended Huckel-Method for {molecule.name}.')
 
 	aos = molecule.basis.atomic_orbitals
 
@@ -39,12 +38,8 @@ def extended_huckel(molecule, K=1.75):
 	for energy, weight in zip(energies, weights.T):
 		molecule.molecular_orbitals.append(MolecularOrbital(molecule, aos, weight, energy))
 
-	nelectrons = sum([a.atomic_number for a in molecule.atoms])
-	molecule.homo = molecule.molecular_orbitals[nelectrons//2]
-	molecule.lumo = molecule.molecular_orbitals[nelectrons//2+1]
-
-	print(f'{ts()} [extended_huckel]: {len(energies)} molecular orbitals found.')
-	print(f'{ts()} [extended_huckel]: Highest and lowest energies: {max(energies)}, {min(energies)} eV')
+	utils.message('extended_huckel', f'{len(energies)} molecular orbitals found.')
+	utils.message('extended_huckel', f'Highest and lowest energies: {max(energies)}, {min(energies)} eV')
 
 
 def overlap_matrix(molecule):
@@ -152,19 +147,22 @@ class Basis:
 
 		bsf_path = os.getcwd()+rf'\Basis_Sets\{basis_type}.bsf'
 		if not os.path.exists(bsf_path):
-			print(f'{ts()} [Basis.load_basis] Error: Basis set {self.basis_type} not found, downloading ...')
+			utils.message('Basis.load_basis', f'Error: Basis set {self.basis_type} not found, downloading ...', 'red')
+
 			import requests
+
 			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
 			if response:
-				print(f'{ts()} [Basis.load_basis] Succesfully obtained basis set file')
+
+				utils.message('Basis.load_basis', f'Succesfully obtained basis set file', 'green')
 
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
 				self.load_basis()
 			else:
-				print(f'{ts()} [Basis.load_basis] Error: Failed to obtain basis set file')
+				utils.message('Basis.load_basis', f'Error: Failed to obtain basis set file', 'red')
 		else:
-			print(f'{ts()} [Basis.load_basis] Succesfully loaded {self.basis_type}')
+			utils.message('Basis.load_basis', f'Succesfully loaded {self.basis_type}', 'green')
 			with open(bsf_path, 'r') as f:
 				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 				self.params = json.load(f)['elements']
@@ -266,8 +264,8 @@ class MolecularOrbital:
 		self.weights = weights/sum(weights)
 		self.energy = energy
 
-	def evaluate(self, p):
-		print(f'{ts()} [MolecularOrbital.evaluate]: Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
+	def evaluate(self, p, silent=False):
+		if not silent: utils.message('MolecularOrbital.evaluate', f'Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
 		dens = np.zeros(p.size//3)
 		for ao, w in zip(self.aos, self.weights):
 			dens += w * ao.evaluate(p)
