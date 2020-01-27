@@ -11,12 +11,14 @@ import pubchempy as pcp
 import pygame as pg
 
 
-utils.suppress_source(True)
+
+
+
 
 
 ####### setup
-molecule 				= 'benzene'
-basis_set 				= 'STO-6G'
+molecule 				= 'water'
+basis_set 				= 'STO-4G'
 pre_render_densities 	= True
 resolution 				= (1200, 720)
 background_colour 		= (0,0,0)
@@ -26,22 +28,27 @@ draw_axes 				= False
 wireframe_mode			= False
 do_huckel				= False
 repeats 				= 1
+
+fancy_format_colours 	= False
+fancy_format_time		= True
+fancy_format_source		= False
+
 #######
 
 
 
 
-class bcolors:
-	purple = '\033[95m'
-	blue = '\033[94m'
-	green = '\033[92m'
-	beige = '\033[93m'
-	red = '\033[91m'
-	end = '\033[0m'
-	white = '\033[1m'
-	under = '\033[4m'
+
+
+
+
+
+
 
 def MOTD():
+	utils.ff_print_source(False)
+	utils.ff_use_colours(fancy_format_colours)
+	utils.ff_print_time(False)
 	os.system('color 07')
 	features = ['Loading molecules from xyz files or alternatively download from pubchem.',
 				'Visualising molecules as a ball-and-stick model or as a wireframe model.',
@@ -53,15 +60,19 @@ def MOTD():
 
 
 
-	print(f'{bcolors.blue} Welcome, this project so far supports the following: {bcolors.end}')
-	[print(f'{bcolors.blue} -- {f} {bcolors.end}') for f in features]
-	print(f'{bcolors.blue} Planned features: {bcolors.end}')
-	[print(f'{bcolors.blue} -- {f} {bcolors.end}') for f in planned_features]
+	utils.message(f'Welcome, this project so far supports the following:', 'blue')
+	[utils.message(f'-- {f}', 'blue') for f in features]
+	utils.message(f'Planned features:', 'blue')
+	[utils.message(f'-- {f}', 'blue') for f in planned_features]
 	print()
-	# os.system('color 70')
 
 
 MOTD()
+
+
+utils.ff_print_source(fancy_format_source)
+utils.ff_use_colours(fancy_format_colours)
+utils.ff_print_time(fancy_format_time)
 
 if colour_map == None:
 	colour_map = cmap.BlueRed(posneg_mode=True)
@@ -95,8 +106,8 @@ camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a
 
 screen.camera_position = np.asarray((0,0,camera_range))
 
-utils.message('main', 'Please press ENTER to toggle orbital display. Use arrow-keys to switch between orbitals.')
-utils.message('main', 'Hold CTRL and use mouse to rotate and move molecule.')
+utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to switch between orbitals.')
+utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
 while run:
 	#tick prep

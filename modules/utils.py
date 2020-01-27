@@ -1,28 +1,60 @@
 import os, time
+import inspect
 
 os.system('color 07')
 
 
-def suppress_source(val):
-	global ss 
-	ss = val
+def ff_print_source(val):
+	global ps 
+	ps = val
+
+def ff_use_colours(val):
+	global cm
+	cm = val
+
+def ff_print_time(val):
+	global pt
+	pt = val
+
 
 ####colours:
-purple = '\033[95m'
-blue = '\033[94m'
-green = '\033[92m'
-beige = '\033[93m'
-red = '\033[91m'
-end = '\033[0m'
-white = '\033[1m'
-under = '\033[4m'
 
+def c(val):
+	if cm:
+		if val == "purple": return '\033[95m'
+		if val == "blue": return '\033[94m'
+		if val == "green": return '\033[92m'
+		if val == "beige": return '\033[93m'
+		if val == "red": return '\033[91m'
+		if val == "end": return '\033[0m'
+		if val == "white": return '\033[1m'
+		if val == "under": return '\033[4m'
+	else: return ''
+
+		
 def ts():
-	return f'{purple}[{time.strftime("%H:%M:%S", time.localtime())}]{end}'
+	return f'{c("purple")}[{time.strftime("%H:%M:%S", time.localtime())}]{c("end")}'
 
-def message(source, text, colour='end'):
-	if not ss:
-		print(f'{ts()}{beige}({source}):{end} {globals()[colour]}{text}{end}')
+def message(text, colour='end'):
+	source = inspect.stack()
+	source_file = source[1][1].split('\\')[-1][:-3]
+	source_func = source[1][3]
+	
+	if source_func == '<module>':
+		source = source_file  + '.py'
+	elif source_func == '<listcomp>':
+		source = source_file
 	else:
-		print(f'{ts()} {globals()[colour]}{text}{end}')
+		source = source_file  + '.' + source_func
+
+	if pt:
+		if ps:
+			print(f'{ts()}{c("beige")}({source}):{c("end")} {c(colour)}{text}{c("end")}')
+		else:
+			print(f'{ts()} {c(colour)}{text}{c("end")}')
+	else:
+		if ps:
+			print(f'{c("beige")}({source}):{c("end")} {c(colour)}{text}{c("end")}')
+		else:
+			print(f'{c(colour)}{text}{c("end")}')
 

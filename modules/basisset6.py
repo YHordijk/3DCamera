@@ -15,7 +15,7 @@ def extended_huckel(molecule, K=1.75):
 	Returns energies and mo's
 	'''
 
-	utils.message('extended_huckel', f'Performing Extended Huckel-Method for {molecule.name}.')
+	utils.message(f'Performing Extended Huckel-Method for {molecule.name}.')
 
 	aos = molecule.basis.atomic_orbitals
 
@@ -38,8 +38,8 @@ def extended_huckel(molecule, K=1.75):
 	for energy, weight in zip(energies, weights.T):
 		molecule.molecular_orbitals.append(MolecularOrbital(molecule, aos, weight, energy))
 
-	utils.message('extended_huckel', f'{len(energies)} molecular orbitals found.')
-	utils.message('extended_huckel', f'Highest and lowest energies: {max(energies)}, {min(energies)} eV')
+	utils.message(f'{len(energies)} molecular orbitals found.')
+	utils.message(f'Highest and lowest energies: {max(energies)}, {min(energies)} eV')
 
 
 def overlap_matrix(molecule):
@@ -147,22 +147,22 @@ class Basis:
 
 		bsf_path = os.getcwd()+rf'\Basis_Sets\{basis_type}.bsf'
 		if not os.path.exists(bsf_path):
-			utils.message('Basis.load_basis', f'Error: Basis set {self.basis_type} not found, downloading ...', 'red')
+			utils.message(f'Error: Basis set {self.basis_type} not found, downloading ...', 'red')
 
 			import requests
 
 			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
 			if response:
 
-				utils.message('Basis.load_basis', f'Succesfully obtained basis set file', 'green')
+				utils.message(f'Succesfully obtained basis set file', 'green')
 
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
 				self.load_basis()
 			else:
-				utils.message('Basis.load_basis', f'Error: Failed to obtain basis set file', 'red')
+				utils.message(f'Error: Failed to obtain basis set file', 'red')
 		else:
-			utils.message('Basis.load_basis', f'Succesfully loaded {self.basis_type}', 'green')
+			utils.message(f'Succesfully loaded {self.basis_type}', 'green')
 			with open(bsf_path, 'r') as f:
 				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 				self.params = json.load(f)['elements']
@@ -265,7 +265,7 @@ class MolecularOrbital:
 		self.energy = energy
 
 	def evaluate(self, p, silent=False):
-		if not silent: utils.message('MolecularOrbital.evaluate', f'Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
+		if not silent: utils.message(f'Evaluating molecular orbital of {self.molecule.name} with energy {self.energy} eV')
 		dens = np.zeros(p.size//3)
 		for ao, w in zip(self.aos, self.weights):
 			dens += w * ao.evaluate(p)
