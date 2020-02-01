@@ -8,16 +8,17 @@ utils.ff_print_source(False)
 utils.ff_use_colours(False)
 utils.ff_print_time(True)
 
-molecule = mol.Molecule('ethane')
 
+molecule = mol.Molecule('propane')
+# coords = np.asarray([a.coords for a in molecule.atoms])
 
-coords = np.asarray([a.coords for a in molecule.atoms])
-coords -= 0.75600
-coords[0] += 0.512
-coords[2:5] += 0.512
-atoms = [mol.Atom('C', coords[0]), mol.Atom('C', coords[1])]
-atoms += [mol.Atom('H', c) for c in coords[2::]]
-molecule = mol.Molecule(atoms=atoms)
+# coords -= np.array([0.75600,0,0])
+# coords[0] += np.array([0.512,0,0])
+# coords[2:5] += np.array([0.512,0,0])
+# atoms = [mol.Atom('C', coords[0]), mol.Atom('C', coords[1])]
+# atoms += [mol.Atom('H', c) for c in coords[2::]]
+# molecule = mol.Molecule(atoms=atoms)
+
 
 print(molecule)
 

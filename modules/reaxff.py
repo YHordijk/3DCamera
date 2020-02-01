@@ -58,23 +58,27 @@ class ForceField:
 				if not a1.symbol == a2.symbol == 'C':
 					#we only need the params for the sigma bonds (index 0):
 					ra = (self.atom_params['bond radii'][a1.symbol][0] + self.atom_params['bond radii'][a2.symbol][0])/2
+
 					bo[i,j] = exp(p[3] * (dist/ra)**p[4])
 
 				if a1.symbol == a2.symbol == 'C':
-					ra = (self.atom_params['bond radii'][a1.symbol][0] + self.atom_params['bond radii'][a2.symbol][0])/2
-					rb = (self.atom_params['bond radii'][a1.symbol][1] + self.atom_params['bond radii'][a2.symbol][1])/2
-					rc = (self.atom_params['bond radii'][a1.symbol][2] + self.atom_params['bond radii'][a2.symbol][2])/2
+					ra = self.atom_params['bond radii'][a1.symbol][0]
+					rb = self.atom_params['bond radii'][a1.symbol][1]
+					rc = self.atom_params['bond radii'][a1.symbol][2]
 					bo[i,j] = exp(p[3]*(dist/ra)**p[4]) + exp(p[5]*(dist/rb)**p[6]) + exp(p[7]*(dist/rc)**p[8])
-
+				
 				if a1 == a2:
 					bo[i,j] = 0
 
 		#calculate the deviations between sum of valence and bond orders:
 		bo_sums = np.sum(bo, axis=0)
 		d = bo_sums - np.asarray([(1,4)[a.symbol == 'C'] for a in atoms])
-		print(bo_sums)
+		print(d)
+		print(np.round(bo,2))
 		#correcting bond orders...
 		l = self.general_params
+		corrected_bo = np.empty((len(atoms), len(atoms)))
+
 		for i, a1 in enumerate(atoms):
 			vali = (1,4)[a1.symbol == 'C']
 
@@ -86,7 +90,8 @@ class ForceField:
 				f3 = 1/l[1] * log(.5 * (exp(-l[1]*d[i]) + exp(-l[1]*d[j])))
 				f2 = exp(-l[0]*d[i]) + exp(-l[0]*d[j])
 				f1 = .5 * ((vali + f2)/(vali + f2 + f3) + (valj + f2)/(valj + f2 + f3))
-
-				bo[i,j] = bo[i,j] * f1 * f4 * f5
-		self.bond_orders = bo
-
+				corrected_bo[i,j] = bo[i,j] * f4 * f5
+				if a1.symbol == a2.symbol == 'C':
+					corrected_bo[i,j] *= f1
+				print(round(corrected_bo[i,j],2), round(f1,2),round(f2,2),round(f3,2),round(f4,2),round(f5,2))
+		self.bond_orders = corrected_bo
