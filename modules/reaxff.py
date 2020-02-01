@@ -56,7 +56,6 @@ class ForceField:
 
 				#case where a1 and a2 are both carbon
 				if not a1.symbol == a2.symbol == 'C':
-					print(a1.symbol, a2.symbol)
 					#we only need the params for the sigma bonds (index 0):
 					ra = (self.atom_params['bond radii'][a1.symbol][0] + self.atom_params['bond radii'][a2.symbol][0])/2
 					bo[i,j] = exp(p[3] * (dist/ra)**p[4])
