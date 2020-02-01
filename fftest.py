@@ -1,25 +1,30 @@
-import modules.molecule3 as mol 
-import modules.forcefields as forcefields
+import modules.molecule6 as mol 
+import modules.reaxff as reaxff
+import modules.utils as utils
 import os
+import numpy as np
 
-mols = [mol.Molecule(molecule_file='ethane.pcp', warning_level=0),
-		mol.Molecule(molecule_file=f'Molecules\\ethane eclipsed.xyz', warning_level=0),]
-		# mol.Molecule(molecule_file='ethane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='propane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='butane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='pentane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='hexane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='heptane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='octane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='isobutane.pcp', warning_level=0),
-		# mol.Molecule(molecule_file='isopentane.pcp', warning_level=0)]
+utils.ff_print_source(False)
+utils.ff_use_colours(False)
+utils.ff_print_time(True)
+
+molecule = mol.Molecule('ethane')
 
 
-# ff = forcefields.MM2()
+coords = np.asarray([a.coords for a in molecule.atoms])
+coords -= 0.75600
+coords[0] += 0.512
+coords[2:5] += 0.512
+atoms = [mol.Atom('C', coords[0]), mol.Atom('C', coords[1])]
+atoms += [mol.Atom('H', c) for c in coords[2::]]
+molecule = mol.Molecule(atoms=atoms)
 
-# energies = [ff.get_energy(mol) for mol in mols]
+print(molecule)
 
-# print(energies)
 
-for t in mols[0].get_unique_torsion_angles(in_degrees=True):
-	print(t)
+ff = reaxff.ForceField(molecule)
+
+print(np.round(ff.bond_orders, 2))
+
+
+	

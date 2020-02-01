@@ -3,7 +3,7 @@ import inspect
 
 os.system('color 07')
 
-
+ps = cm = pt = True
 def ff_print_source(val):
 	global ps 
 	ps = val

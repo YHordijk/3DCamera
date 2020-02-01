@@ -125,8 +125,6 @@ while run:
 	screen.draw_shape(mol, wireframe=wireframe_mode, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)	
 	if draw_axes: screen.draw_axes(1)
 
-	
-
 	if keys[pg.K_ESCAPE]:
 		run = False
 

@@ -222,7 +222,7 @@ Number of hydrogen atoms: {self._nelement("H")}
 
 Coordinates (angstrom):
 '''
-		coord_string = [f'\t{a: ^4} {c[0]: >10.5f} {c[1]: >10.5f} {c[2]: >10.5f}\n' for a, c in zip(self.atom_types, self.coords)]
+		coord_string = [f'\t{a.symbol: ^4} {a.coords[0]: >10.5f} {a.coords[1]: >10.5f} {a.coords[2]: >10.5f}\n' for a in self.atoms]
 		string += ''.join(coord_string)
 		string += f'\n\tCOM  {self.center_of_mass[0]: >10.5f} {self.center_of_mass[1]: >10.5f} {self.center_of_mass[2]: >10.5f}\t#Center of mass'
 
@@ -242,8 +242,9 @@ Coordinates (angstrom):
 
 
 	def center(self):
+		com = self.center_of_mass
 		for a in self.atoms:
-			a.coords -= self.center_of_mass
+			a.coords -= com
 
 
 	def reset_colours(self):
@@ -338,7 +339,7 @@ Coordinates (angstrom):
 		Method that is called by both xyz and pubchem loading of molecules
 		'''
 
-		utils.message('Succesfully loaded {self.name}.', 'green')
+		utils.message(f'Succesfully loaded {self.name}.', 'green')
 
 		self.center()
 

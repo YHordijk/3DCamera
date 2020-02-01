@@ -1,12 +1,17 @@
 import modules.basisset6 as bs 
 import modules.molecule6 as mol
 import modules.screen4 as scr
+import modules.utils as utils
 import numpy as np 
 import pygame as pg
 import os
 from math import sin, pi, cos
 
-molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\benzene.xyz')
+utils.ff_print_source(False)
+utils.ff_use_colours(False)
+utils.ff_print_time(True)
+
+molecule = mol.Molecule(os.getcwd() + f'\\Molecules\\water.xyz')
 
 
 # atoms = [mol.Atom('H', (0,0,0)), mol.Atom('H', (1,0,0))]
@@ -46,11 +51,11 @@ while run:
 	screen.clear()
 
 	screen.camera_position = np.array([camera_range*sin(pi * time/5), camera_range/3, camera_range*cos(pi * time/5)])
-	screen.camera_orientation = np.array([-.3, pi * time/5, 0])
-	
+	# screen.camera_orientation = np.array([-.3, pi * time/5, 0])
+	screen.look_at((0,0,0))
 
 	screen.draw_axes(1)
-	screen.draw_density(mos[mo_numb%len(mos)], points=20000)
+	screen.draw_density(mos[mo_numb%len(mos)], points=5000)
 	screen.draw_shape(molecule, wireframe=True)
 
 

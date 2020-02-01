@@ -447,15 +447,21 @@ class Screen3D:
 		if point is None:
 			point = obj.position
 
-		x, y, z = point
+		point = np.asarray(point)
 
-		rotx = math.atan2(y, z)
-		if z >= 0:
-			roty = -math.atan2(x * math.cos(rotx), z)
-		else:
-			roty = math.atan2(x * math.cos(rotx), -z)
-		rotz = math.atan2( math.cos(rotx), math.sin(rotx) * math.sin(roty))
-		self.camera_orientation = np.array([roty, rotx, rotz])
+		x, y, z = (point - self.camera_position)/np.linalg.norm(point - self.camera_position)
+		# print(y/z)
+		# rotx = math.asin(y/z)
+		# if z >= 0:
+		# 	roty = -math.atan2(x * math.cos(rotx), z)
+		# else:
+		# 	roty = math.atan2(x * math.cos(rotx), -z)
+
+		rotx = math.atan2( y, z )
+		roty = math.atan2( x * math.cos(rotx), z )
+		rotz = math.atan2( math.cos(rotx), math.sin(rotx) * math.sin(roty) )
+
+		self.camera_orientation = np.array([rotx, roty, 0])
 		return self.camera_orientation
 
 
@@ -480,5 +486,5 @@ class Screen3D:
 					   [ sin(r),  cos(r), 	   0],
 					   [ 	  0, 	   0, 	   1]))
 
-		return (Rx @ Ry @ Rz @ array.T).T
+		return (Rx @ Ry @ array.T).T
 			
