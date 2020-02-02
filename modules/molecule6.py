@@ -33,6 +33,141 @@ class Atom:
 		self.atomic_number = el.number
 		self.mass = el.mass
 		self.radius = el.covalent_radius
+		self.electro_negativity = {
+			1:2.2,
+			2:0,
+			3:0.98,
+			4:1.57,
+			5:2.04,
+			6:2.55,
+			7:3.04,
+			8:3.44,
+			9:3.98,
+			10:0,
+			11:0.93,
+			12:1.31,
+			13:1.61,
+			14:1.9,
+			15:2.19,
+			16:2.58,
+			17:3.16,
+			18:0,
+			19:0.82,
+			20:1,
+			21:1.36,
+			22:1.54,
+			23:1.63,
+			24:1.66,
+			25:1.55,
+			26:1.83,
+			27:1.88,
+			28:1.91,
+			29:1.9,
+			30:1.65,
+			31:1.81,
+			32:2.01,
+			33:2.18,
+			34:2.55,
+			35:2.96,
+			36:3,
+			37:0.82,
+			38:0.95,
+			39:1.22,
+			40:1.33,
+			41:1.6,
+			42:2.16,
+			43:1.9,
+			44:2.2,
+			45:2.28,
+			46:2.2,
+			47:1.93,
+			48:1.69,
+			49:1.78,
+			50:1.96,
+			51:2.05,
+			52:2.1,
+			53:2.66,
+			54:2.6,
+			55:0.79,
+			56:0.89,
+			57:1.1,
+			58:1.12,
+			59:1.13,
+			60:1.14,
+			61:1.13,
+			62:1.17,
+			63:1.2,
+			64:1.2,
+			65:1.22,
+			66:1.23,
+			67:1.24,
+			68:1.24,
+			69:1.25,
+			70:1.1,
+			71:1.27,
+			72:1.3,
+			73:1.5,
+			74:2.36,
+			75:1.9,
+			76:2.2,
+			77:2.2,
+			78:2.28,
+			79:2.54,
+			80:2,
+			81:1.62,
+			82:2.33,
+			83:2.02,
+			84:2,
+			85:2.2,
+			86:0,
+			87:0.7,
+			88:0.89,
+			89:1.1,
+			90:1.3,
+			91:1.5,
+			92:1.38,
+			93:1.36,
+			94:1.28,
+			95:1.3,
+			96:1.3,
+			97:1.3,
+			98:1.3,
+			99:1.3,
+			100:1.3,
+			101:1.3,
+			102:1.3,
+			103:00,
+			104:0,
+			105:0,
+			106:0,
+			107:0,
+			108:0,
+			109:0,
+			110:0,
+			111:0,
+			112:0,
+			113:0,
+			114:0,
+			115:0,
+			116:0,
+			117:0,
+			118:0,
+		}[self.atomic_number]
+
+		#get period of atom
+		if self.atomic_number in (1,2):
+			self.period = 1
+		if self.atomic_number in range(3,11):
+			self.period = 2
+		if self.atomic_number in range(11,19):
+			self.period = 3
+		if self.atomic_number in range(19, 37):
+			self.period = 4
+		if self.atomic_number in range(37, 55):
+			self.period = 5
+		if self.atomic_number in range(55, 87):
+			self.period = 6
+
 
 		try:
 			self.colour = self.draw_colour = {
@@ -434,20 +569,12 @@ Coordinates (angstrom):
 		returns float
 		'''
 
-		norm = lambda x: x / np.sqrt(x @ x)
-		mag = lambda x: np.sqrt(x @ x)
-
+		#using method provided on https://en.wikipedia.org/wiki/Dihedral_angle
 		b1 = a2.coords - a1.coords
 		b2 = a3.coords - a2.coords
 		b3 = a4.coords - a3.coords
 
-		n1 = norm(np.cross(b1, b2))
-		n2 = norm(np.cross(b2, b3))
-		m1 = n1 * b2
-
-		# print(acos(np.dot(n1,n2)/(mag(n1) * mag(n2))))
-
-		return atan2(np.dot(m1, n2), np.dot(n1, n2)) * (1, 180/pi)[in_degrees]
+		return atan2(np.dot(np.cross(np.cross(b1, b2), np.cross(b2, b3)), b2/np.linalg.norm(b2)), np.dot(np.cross(b1, b2), np.cross(b2, b3)))
 
 
 	def set_HA_valence(self):
@@ -457,53 +584,82 @@ Coordinates (angstrom):
 
 	def set_hybridisation(self):
 		for a in self.atoms:
-			a.hybridisation = 'sp3'
-
-			if a.max_valence == 4:
-				if a.HA_valence == 4:
-					a.hybridisation = 'sp3'
-
-				elif a.HA_valence == 3:
-					bonds = a.get_bonds_by_elements(['H'], blacklist=True)
-					bond_angles = self.bond_angle(bonds[0], a, bonds[1], in_degrees=True)
-					bond_angles += self.bond_angle(bonds[0], a, bonds[2], in_degrees=True)
-					bond_angles += self.bond_angle(bonds[1], a, bonds[2], in_degrees=True)
-					bond_angle = bond_angles/3
-					if bond_angle > 115.0:
-						a.hybridisation = 'sp2'
-					else:
-						a.hybridisation = 'sp3'
-
-				elif a.HA_valence == 2:
-					bonds = a.get_bonds_by_elements(['H'], blacklist=True)
-					bond_angle = self.bond_angle(bonds[0], a, bonds[1], in_degrees=True)
-					if bond_angle > 160.0:
-						a.hybridisation = 'sp'
-					elif bond_angle > 115.0:
-						a.hybridisation = 'sp2'
-					else:
-						a.hybridisation = 'sp3'
-
-				elif a.HA_valence == 1: 
-					a.hybridisation = 'sp3'
-
-
-			elif a.max_valence == 3:
-				if a.HA_valence == 3:
-					a.hybridisation = 'sp3'
-
-				elif a.HA_valence == 2:
-					a.hybridisation = 'sp2'
-
-				elif a.HA_valence == 1:
-					a.hybridisation = 'sp'
+			c = len(self.get_bonded_atoms(a))
+			if a.max_valence == 1:
+				a.hybridisation = 0
 
 			elif a.max_valence == 2:
-				if a.HA_valence == 2:
-					a.hybridisation = 'sp3'
+				if c == 2:
+					a.hybridisation = 3
+				elif c == 1:
+					a. hybridisation = 2
 
-				elif a.HA_valence == 1:
-					a.hybridisation = 'sp2'
+			elif a.max_valence == 3:
+				if c == 3:
+					a.hybridisation = 3
+				elif c == 2:
+					a.hybridisation = 2
+				elif c == 1:
+					a.hybridisation = 1
+
+			elif a.max_valence == 4:
+				if c == 4:
+					a.hybridisation = 3
+				elif c == 3:
+					a.hybridisation = 2
+				elif c == 2:
+					a.hybridisation = 1
+
+
+	# def set_hybridisation(self):
+	# 	for a in self.atoms:
+	# 		a.hybridisation = 3
+
+	# 		if a.max_valence == 4:
+	# 			if a.HA_valence == 4:
+	# 				a.hybridisation = 3
+
+	# 			elif a.HA_valence == 3:
+	# 				bonds = a.get_bonds_by_elements(['H'], blacklist=True)
+	# 				bond_angles = self.bond_angle(bonds[0], a, bonds[1], in_degrees=True)
+	# 				bond_angles += self.bond_angle(bonds[0], a, bonds[2], in_degrees=True)
+	# 				bond_angles += self.bond_angle(bonds[1], a, bonds[2], in_degrees=True)
+	# 				bond_angle = bond_angles/3
+	# 				if bond_angle > 115.0:
+	# 					a.hybridisation = 2
+	# 				else:
+	# 					a.hybridisation = 3
+
+	# 			elif a.HA_valence == 2:
+	# 				bonds = a.get_bonds_by_elements(['H'], blacklist=True)
+	# 				bond_angle = self.bond_angle(bonds[0], a, bonds[1], in_degrees=True)
+	# 				if bond_angle > 160.0:
+	# 					a.hybridisation = 1
+	# 				elif bond_angle > 115.0:
+	# 					a.hybridisation = 2
+	# 				else:
+	# 					a.hybridisation = 3
+
+	# 			elif a.HA_valence == 1: 
+	# 				a.hybridisation = 3
+
+
+	# 		elif a.max_valence == 3:
+	# 			if a.HA_valence == 3:
+	# 				a.hybridisation = 3
+
+	# 			elif a.HA_valence == 2:
+	# 				a.hybridisation = 2
+
+	# 			elif a.HA_valence == 1:
+	# 				a.hybridisation = 1
+
+	# 		elif a.max_valence == 2:
+	# 			if a.HA_valence == 2:
+	# 				a.hybridisation = 3
+
+	# 			elif a.HA_valence == 1:
+	# 				a.hybridisation = 2
 
 
 	def distance(self, a1, a2):

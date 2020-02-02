@@ -17,7 +17,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'water'
+molecule 				= 'kopsinine'
 basis_set 				= 'STO-2G'
 pre_render_densities 	= False
 resolution 				= (1200, 720)
@@ -32,7 +32,6 @@ repeats 				= 1
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= False
-
 #######
 
 
@@ -200,7 +199,7 @@ while run:
 			else:
 				index = mol.atoms.index(atom)
 
-			screen.display_text(f'  {atom.symbol}{index}  ', (10,10))
+			screen.display_text(f'  {atom.symbol}{index+1} {atom.hybridisation}  ', (10,10))
 
 		elif l == 2:
 			atoms = list(selected_atoms)
@@ -211,7 +210,7 @@ while run:
 				else:
 					index.append(mol.atoms.index(atom))
 
-			screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
+			screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
 
 		elif l == 3:
 			atoms = list(selected_atoms)
@@ -224,13 +223,13 @@ while run:
 
 			a1, a2, a3 = atoms
 			if a2 in a1.bonds and a3 in a1.bonds:
-				screen.display_text(f'  {atoms[1].symbol}{index[1]}, {atoms[0].symbol}{index[0]}, {atoms[2].symbol}{index[2]}: {round(mol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[1].symbol}{index[1]+1}, {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}: {round(mol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a2.bonds and a3 in a2.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}, {atoms[2].symbol}{index[2]}: {round(mol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}: {round(mol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a3.bonds and a2 in a3.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[2].symbol}{index[2]}, {atoms[1].symbol}{index[1]}: {round(mol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}, {atoms[1].symbol}{index[1]+1}: {round(mol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
 			else:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]}, {atoms[1].symbol}{index[1]}, {atoms[2].symbol}{index[2]}  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}  ', (10,10))
 
 
 	screen.update()
