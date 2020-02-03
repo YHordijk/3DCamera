@@ -17,7 +17,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'kopsinine'
+molecule 				= 'aspirin'
 basis_set 				= 'STO-2G'
 pre_render_densities 	= False
 resolution 				= (1200, 720)
@@ -103,7 +103,7 @@ pg.key.set_repeat()
 run = True
 mo_numb = 0
 draw_dens = False
-camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 2 
+camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 3 
 
 screen.camera_position = np.asarray((0,0,camera_range))
 

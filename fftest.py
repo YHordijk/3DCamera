@@ -29,7 +29,8 @@ utils.ff_print_time(True)
 
 # print(np.round(ff.bond_orders, 2))
 
-molecule = mol.Molecule('glycine')
+molecule = mol.Molecule('basketane')
+
 ff = uff.ForceField()
 
 print(ff.get_energy(molecule))

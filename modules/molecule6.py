@@ -154,6 +154,87 @@ class Atom:
 			118:0,
 		}[self.atomic_number]
 
+		try:
+			self.GMP_electro_negativity = {
+				1: 0.89,
+				3: 0.97,
+				4: 1.47,
+				5: 1.6,
+				6: 2,
+				7: 2.61,
+				8: 3.15,
+				9: 3.98,
+				11: 1.01,
+				12: 1.23,
+				13: 1.47,
+				14: 1.58,
+				15: 1.96,
+				16: 2.35,
+				17: 2.74,
+				19: 0.91,
+				20: 1.04,
+				21: 1.2,
+				22: 1.32,
+				23: 1.45,
+				24: 1.56,
+				25: 1.6,
+				26: 1.64,
+				27: 1.7,
+				28: 1.75,
+				29: 1.75,
+				30: 1.66,
+				31: 1.82,
+				32: 1.51,
+				33: 2.23,
+				34: 2.51,
+				35: 2.58,
+				37: 0.89,
+				38: 0.99,
+				39: 1.11,
+				40: 1.22,
+				41: 1.23,
+				42: 1.3,
+				44: 1.42,
+				45: 1.54,
+				46: 1.35,
+				47: 1.42,
+				48: 1.46,
+				49: 1.49,
+				50: 1.72,
+				51: 1.72,
+				52: 2.72,
+				53: 2.38,
+				55: 0.86,
+				56: 0.97,
+				57: 1.08,
+				58: 1.08,
+				59: 1.07,
+				60: 1.07,
+				62: 1.07,
+				63: 1.01,
+				64: 1.11,
+				65: 1.1,
+				66: 1.1,
+				67: 1.1,
+				68: 1.11,
+				69: 1.11,
+				70: 1.06,
+				71: 1.14,
+				72: 1.23,
+				73: 1.33,
+				74: 1.4,
+				75: 1.46,
+				77: 1.55,
+				80: 1.44,
+				81: 1.44,
+				82: 1.55,
+				83: 1.67,
+				90: 1.11,
+				92: 1.22,
+			}[self.atomic_number]
+		except:
+			self.GMP_electro_negativity = 0
+
 		#get period of atom
 		if self.atomic_number in (1,2):
 			self.period = 1
@@ -204,6 +285,22 @@ class Atom:
 			utils.message('Error: No max_valence found for {self.symbol}. Defaulting to 1.', 'red')
 			self.max_valence = 1
 
+
+	def bond_dist_to(self, a):
+		'''
+		Method that returns the number of bonds to atom a.
+		'''
+
+		bdist = 0
+		atoms = [self]
+		while a not in atoms:
+			bdist += 1
+			new_atoms = []
+			for atom in atoms:
+				new_atoms += atom.bonds
+			atoms = new_atoms
+
+		return bdist
 
 	def distance_to(self, p):
 		'''
@@ -724,14 +821,34 @@ Coordinates (angstrom):
 		self.guess_bond_orders()
 
 
+	def get_chiral_centres(self):
+		for a in self.atoms:
+			...
+
+
 	def get_unique_atom_pairs(self):
 		'''
 		Generator method that yields all unique pairs of atoms in the molecule
 		'''
 
-		for a1 in self.atoms:
-			for a2 in self.atoms:
-				if a1 is not a2:
+		atoms = self.atoms
+		for i in range(len(atoms)):
+			a1 = atoms[i]
+			for j in range(i+1, len(atoms)):
+				a2 = atoms[j]
+				yield sorted((a1,a2), key=lambda x: id(x))
+
+	def get_unique_nonbonded_atom_pairs(self):
+		'''
+		Generator method that yields all unique pairs of atoms in the molecule
+		'''
+
+		atoms = self.atoms
+		for i in range(len(atoms)):
+			a1 = atoms[i]
+			for j in range(i+1, len(atoms)):
+				a2 = atoms[j]
+				if not a2 in a1.bonds:
 					yield sorted((a1,a2), key=lambda x: id(x))
 
 
@@ -845,11 +962,11 @@ Coordinates (angstrom):
 			if mbo < 0:
 				utils.message(f'Error: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters}).', 'red')
 			else:
-				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters} iterations', 'green')
+				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iterations', 'green')
 
 		elif self._warning_level == 1:
 			if mbo == 0:
-				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters} iterations.', 'green')
+				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iteration{"s"*(self.guess_bond_order_iters>0)}.', 'green')
 			elif self.guess_bond_order_iters == self.natoms:
 				utils.message(f'Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}.', 'red')
 		
