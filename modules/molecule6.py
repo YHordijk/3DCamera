@@ -299,6 +299,8 @@ class Atom:
 			for atom in atoms:
 				new_atoms += atom.bonds
 			atoms = new_atoms
+			if bdist > 10:
+				break
 
 		return bdist
 
@@ -427,16 +429,17 @@ class Molecule:
 			self.atoms = atoms
 			self.name = 'Molecule'
 			self._mol_load_finish()
-
-		#check if file ends with xyz and try to load it
-		if molecule_file is not None and molecule_file.endswith('.xyz'):
-			self._load_xyz(molecule_file)
-
-		# elif molecule_file is not None and molecule_file.endswith('.pcp'):
-		# 	self._load_from_pubchem(molecule_file[0:-4])
-
 		else:
-			self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
+
+			#check if file ends with xyz and try to load it
+			if molecule_file is not None and molecule_file.endswith('.xyz'):
+				self._load_xyz(molecule_file)
+
+			# elif molecule_file is not None and molecule_file.endswith('.pcp'):
+			# 	self._load_from_pubchem(molecule_file[0:-4])
+
+			else:
+				self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
 
 
 
@@ -1166,18 +1169,25 @@ Coordinates (angstrom):
 		self.atoms.append(Atom(element, coords.flatten()))
 
 
-	def save_to_xyz(self, file):
+	def save_to_xyz(self, file='', comment='generated via python\n'):
 		'''
 		Method that saves the molecule to a file
 
 		file - string path to new file
 		'''
+		if file == '':
+			file = os.getcwd() + rf'\Molecules\{self.name.lower()}.xyz'
+
+		if not comment.endswith('\n'):
+			comment += '\n'
 
 		with open(file, 'w+') as f:
 			f.write(f'{self.natoms}\n')
-			f.write('generated via python\n')
+			f.write(comment)
 			for a in self.atoms:
 				f.write(f'{a.symbol} {a.coords[0]:.5f} {a.coords[1]:.5f} {a.coords[2]:.5f}\n')
+
+		utils.message(f'Saved molecule to {file}')
 
 
 	def rotate(self, rotation):

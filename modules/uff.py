@@ -1,6 +1,7 @@
 import numpy as np
 from math import exp, log, sqrt, cos, sin, pi
 import os
+import modules.utils as utils
 
 class ForceField:
 	def __init__(self):
@@ -44,7 +45,7 @@ class ForceField:
 			el += str(atom.hybridisation)
 		return el
 
-	def get_energy(self, molecule, morse_potential=True):
+	def get_energy(self, molecule, morse_potential=True, verbose=False):
 		atoms = molecule.atoms
 
 		#### E = E_r + E_theta + E_phi + E_ohm + E_vdm + E_el
@@ -86,6 +87,7 @@ class ForceField:
 			# E_r += .5 * k12 * (r - r12)**2 # harmonic oscillator
 			E_r += D12*(exp(-alpha*(r-r12)) - 1)**2 #Morse potential
 			# print(e1,e2,round(r-r12,3), round(r12,3), D12*(exp(-alpha*(r-r12)) - 1)**2*4.2)
+
 		## E_theta:
 		E_theta = 0
 		for a1, a2, a3, theta in molecule.get_unique_bond_angles():
@@ -162,10 +164,10 @@ class ForceField:
 
 
 
-
-		print(f'TOTAL BOND STRETCHING ENERGY = {round(E_r*4.2,3)} kJ/mol')
-		print(f'TOTAL ANGLE BENDING ENERGY = {round(E_theta*4.2,3)} kJ/mol')
-		print(f'TOTAL TORSIONAL ENERGY = {round(E_phi*4.2,3)} kJ/mol')
-		print(f'TOTAL VAN DER WAAL\'S ENERGY = {round(E_vdw*4.2,3)} kJ/mol')
-		print(f'TOTAL ENERGY = {round((E_r + E_theta + E_phi + E_vdw)*4.2,3)} kJ/mol')
+		if verbose:
+			utils.message(f'TOTAL BOND STRETCHING ENERGY = {round(E_r*4.2,3)} kJ/mol')
+			utils.message(f'TOTAL ANGLE BENDING ENERGY = {round(E_theta*4.2,3)} kJ/mol')
+			utils.message(f'TOTAL TORSIONAL ENERGY = {round(E_phi*4.2,3)} kJ/mol')
+			utils.message(f'TOTAL VAN DER WAAL\'S ENERGY = {round(E_vdw*4.2,3)} kJ/mol')
+		utils.message(f'TOTAL ENERGY = {round((E_r + E_theta + E_phi + E_vdw)*4.2,3)} kJ/mol')
 		return E_r + E_theta + E_phi + E_vdw

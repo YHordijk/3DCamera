@@ -1,4 +1,5 @@
 import pygame as pg
+import pygame.locals as pglc
 import numpy as np
 from math import cos, sin, sqrt
 import math, time
@@ -8,6 +9,8 @@ import modules.colour_maps as cmap
 import modules.utils as utils
 
 
+
+
 class Screen3D:
 	def __init__(self, size, camera_position=np.array([0.,0.,30.]), camera_orientation=(0.,0.,0.), project_type="perspective", bkgr_colour=(0,0,0)):
 		self.camera_position = np.asarray(camera_position)
@@ -15,12 +18,22 @@ class Screen3D:
 		self.project_type = project_type
 		self.bkgr_colour = bkgr_colour
 		
-		self.size = self.width, self.height = size
-		self.disp = pg.display.set_mode(self.size)
+		self._size = self.width, self.height = size
+		self.disp = pg.display.set_mode(self.size, pglc.HWSURFACE|pglc.DOUBLEBUF|pglc.RESIZABLE)
 		self.disp.fill(self.bkgr_colour)
 
 		self._dens_pos = {}
 		self._dens_colours = {}
+
+
+	@property
+	def size(self):
+		return self._size
+
+	@size.setter
+	def size(self, val):
+		self._size = val
+		self.disp = pg.display.set_mode(val, pglc.HWSURFACE|pglc.DOUBLEBUF|pglc.RESIZABLE)
 
 
 	def follow(self, target, offset=0):
@@ -49,6 +62,7 @@ class Screen3D:
 
 		f = np.array([[1, 0, e[0]/e[2]], [0, 1, e[1]/e[2]], [0, 0, 1/e[2]]]) @ d
 		return int(round(f[0]/f[2])), int(round(f[1]/f[2]))
+
 
 	def project_array(self, array):
 		#accepts array in the form:
@@ -276,8 +290,6 @@ class Screen3D:
 				draw_polygon(self.disp, colour, triangle)
 			else:
 				draw_polygon(self.disp, colour, triangle, 1)
-
-
 
 
 	def draw_density(self, orbital, points=50000, colour_map=cmap.BlueRed(posneg_mode=True), grid_mode=False):

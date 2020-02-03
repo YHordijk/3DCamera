@@ -20,15 +20,19 @@ class Renderer:
 		self.colour_map = colour_map
 		self.pixel_array = np.zeros(resolution)
 
+
 	def clear(self):
 		self.pixel_array = np.zeros(resolution)
+
 
 	def map_rgb_to_surface(self, array):
 		return cmap.Ocean[array]
 
+
 	@property
 	def resolution(self):
 		return self._resolution
+
 
 	@resolution.setter
 	def resolution(self, val):
@@ -100,13 +104,16 @@ class Renderer:
 
 		return resize
 
+
 	def save(self, path):
 		self.blit_array(self.pixel_array)
 		pg.image.save(self.disp, path)
 
+
 	def input_array(self, array):
 		self.pixel_array = array
 		self.resolution = array.shape
+
 
 	def input_pos(self, poss, auto_size=True):
 		x, y = np.hsplit(poss, 2)
@@ -125,6 +132,7 @@ class Renderer:
 
 		return pa
 
+
 	def transform_to_disp(self, pos):
 		if type(pos) is tuple:
 			x, y = pos
@@ -137,6 +145,9 @@ class Renderer:
 		return x.astype(int), y.astype(int)
 
 
+
+
+
 def draw_cmap_sample(colour_map):
 	res = (600,200)
 	array = np.empty(res)
@@ -147,35 +158,3 @@ def draw_cmap_sample(colour_map):
 	s.input_array(array)
 	s.show(clickable=False)
 
-
-# def mandelbrott(x, y, res, rangex, rangey, max=400):
-# 	c = complex(x/res[0]*(rangex[1]-rangex[0])+rangex[0], y/res[1]*(rangey[1]-rangey[0])+rangey[0])
-# 	i = z = 0
-# 	while i < max and abs(z) <= 2:
-# 		z = z**2 + c
-# 		i += 1
-
-# 	return i
-
-
-
-# res = (600,200)
-
-# rangex=(-0.5997039466666666, -0.5992148133333333)
-# rangey=(0.663875215, 0.6645834983333333)
-
-# array = np.empty(res)
-
-# s = Renderer(res, rangex=rangex, rangey=rangey, colour_map=cmap.Hot(cycles=1))
-
-# # for y in range(res[0]):
-# # 	for x in range(res[1]):
-# # 		array[x,y] = mandelbrott(x, y, res, rangex, rangey)
-
-
-# for y in range(res[1]):
-# 	for x in range(res[0]):
-# 		array[x,y] = x
-
-# s.input_array(array)
-# s.show()

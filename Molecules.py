@@ -16,8 +16,10 @@ import pygame as pg
 
 
 
+
+
 ####### setup
-molecule 				= 'aspirin'
+molecule 				= 'ethane 1.5'
 basis_set 				= 'STO-2G'
 pre_render_densities 	= False
 resolution 				= (1200, 720)
@@ -130,6 +132,9 @@ while run:
 		run = False
 
 	for e in ev:
+		if e.type == pg.VIDEORESIZE:
+			screen.size = e.dict['size']
+
 		if e.type == pg.QUIT:
 			run = False
 
