@@ -15,11 +15,15 @@ pg.init()
 
 class PlotDrawer:
 	#utility metods
-	def __init__(self, size, plot_obj, axis_margin=(80, 80)):
+	def __init__(self, size, plot_obj, axis_margin=(60, 100, 130, 100), title='', tick_length=15, **kwargs):
 		self.plot_obj = plot_obj
 		self._size = size
 		self.axis_margin = axis_margin
 		self.plotsurf = pg.surface.Surface(size)
+		self.title = title
+		self.tick_length = tick_length
+		self.y_label = ''
+		self.x_label = ''
 		
 
 	@property
@@ -54,11 +58,12 @@ class PlotDrawer:
 			pg.draw.circle(surf, colour, (int(p[0]), int(p[1])), int(size))
 
 
-	def _draw_text(self, surf, text, pos=(0,0), align='center', font='arial', size=20):
+	def _draw_text(self, surf, text, pos=(0,0), align='center', font='arial', size=20, rotation=0):
 		text = str(text)
 
 		f = pg.font.Font(pg.font.match_font(font), size)
 		text_surf = f.render(text, True, (255,255,255))
+		text_surf = pg.transform.rotate(text_surf, rotation)
 
 		pos = np.asarray(pos)
 		if align == 'center':
@@ -74,7 +79,7 @@ class PlotDrawer:
 		surf.blit(text_surf, pos)
 
 
-	def _draw_plot(self, title='bitch u gay', tick_length=15):
+	def _draw_plot(self):
 		'''
 		Method that draws a plot.
 		'''
@@ -82,7 +87,7 @@ class PlotDrawer:
 		#get the offset in the left upper corner
 		s = self.size
 		offset = o = np.array([s[0]-self.axis_margin[0], s[1]-self.axis_margin[1]])
-		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[0], s[1] - s[1]+self.axis_margin[1]])
+		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[2], s[1] - s[1]+self.axis_margin[3]])
 
 		#draw the square surrounding the plot
 		self._draw_line(self.plotsurf, o, (p[0], o[1]))
@@ -114,26 +119,31 @@ class PlotDrawer:
 
 		#draw title
 		title_pos = (s[0]/2, self.axis_margin[1]/2)
-		self._draw_text(self.plotsurf, title, pos=title_pos)
+		self._draw_text(self.plotsurf, self.title, pos=title_pos)
 
 		#draw_axis ticks
-		p1, p2 = (trans_x(x_ran[0]), o[1]), (trans_x(x_ran[0]), o[1] + tick_length)
+		p1, p2 = (trans_x(x_ran[0]), o[1]), (trans_x(x_ran[0]), o[1] + self.tick_length)
 		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(x_ran[0], 1), size=15, pos=(p1[0], p1[1] + 2*tick_length))
+		self._draw_text(self.plotsurf, round(x_ran[0], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
 
-		p1, p2 = (trans_x(x_ran[1]), o[1]), (trans_x(x_ran[1]), o[1] + tick_length)
+		p1, p2 = (trans_x(x_ran[1]), o[1]), (trans_x(x_ran[1]), o[1] + self.tick_length)
 		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(x_ran[1], 1), size=15, pos=(p1[0], p1[1] + 2*tick_length))
+		self._draw_text(self.plotsurf, round(x_ran[1], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
 
-		p1, p2 = (p[0], trans_y(y_ran[0])), (p[0] - tick_length, trans_y(y_ran[0]))
+		p1, p2 = (p[0], trans_y(y_ran[0])), (p[0] - self.tick_length, trans_y(y_ran[0]))
 		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(y_ran[0], 1), size=15, pos=(p1[0] - 2*tick_length, p1[1]), align='left center')
+		self._draw_text(self.plotsurf, round(y_ran[0], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
 
-		p1, p2 =  (p[0], trans_y(y_ran[1])), (p[0] - tick_length, trans_y(y_ran[1]))
+		p1, p2 =  (p[0], trans_y(y_ran[1])), (p[0] - self.tick_length, trans_y(y_ran[1]))
 		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(y_ran[1], 1), size=15, pos=(p1[0] - 2*tick_length, p1[1]), align='left center')
+		self._draw_text(self.plotsurf, round(y_ran[1], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
 
+		#draw axis labels
+		p = ((p[0]-o[0])/2+o[0], s[1] - self.axis_margin[1]/2)
+		self._draw_text(self.plotsurf, self.x_label, p)
 
+		p = (self.axis_margin[1]/2, s[1]/2)
+		self._draw_text(self.plotsurf, self.y_label, p, rotation=90)
 
 	#show methods:
 	def blit(self, surf_from, surf_to=None, origin=(0,0)):
@@ -175,7 +185,7 @@ class Plot:
 	Class that handles and contains data series.
 	'''
 
-	def __init__(self, colour_map=cmap.Rainbow()):
+	def __init__(self, colour_map=cmap.Rainbow(), size=(400,400)):
 		self.x = []
 		self.y = []
 		self.label = []
@@ -183,6 +193,7 @@ class Plot:
 		self.id = []
 		self.colour_map = colour_map
 		self.plot_styles = []
+		self.drawer = PlotDrawer(size, self)
 
 
 	def plot(self, x, y, label=None, colour=None, style='line'):
@@ -213,7 +224,7 @@ class Plot:
 		self.axes = self._get_axes()
 
 
-	def show(self, size):
+	def show(self):
 		'''
 		Draws and displays the plot using Renderer
 
@@ -227,9 +238,9 @@ class Plot:
 			if not i in self.colours.keys():
 				self.colours[i] = self.colour_map[i/(l-c)]
 
-		drawer = PlotDrawer(size, self)
-		drawer._draw_plot()
-		drawer.show()
+		
+		self.drawer._draw_plot()
+		self.drawer.show()
 
 
 	def save(self, file):

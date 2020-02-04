@@ -86,7 +86,7 @@ class ForceField:
 			#energy
 			# E_r += .5 * k12 * (r - r12)**2 # harmonic oscillator
 			E_r += D12*(exp(-alpha*(r-r12)) - 1)**2 #Morse potential
-			# print(e1,e2,round(r-r12,3), round(r12,3), D12*(exp(-alpha*(r-r12)) - 1)**2*4.2)
+			# print(e1,e2,round(r-r12,3), round(r12,3), D12*(exp(-alpha*(r-r12)) - 1)**2*4.184)
 
 		## E_theta:
 		E_theta = 0
