@@ -8,16 +8,20 @@ class ColourMap:
 		self.cycles = cycles
 		self.posneg_mode = posneg_mode
 
+
 	def __getitem__(self, val):
+		return self.get_colour(val, True)
+
+	def get_colour(self, val, convert_to_pg=False):
 		if type(val) is np.ndarray:
-			return self.colour_array(val)
+			return self.colour_array(val, convert_to_pg)
 
 		else:
 			if self.posneg_mode:
 				if val <= 0:
-					return self.colours[0]
+					colours = self.colours[0]
 				else:
-					return self.colours[-1]
+					colours = self.colours[-1]
 
 			else:
 				cd = self.colours * self.cycles
@@ -28,11 +32,22 @@ class ColourMap:
 					c0 = np.asarray(cd[i])
 					c1 = np.asarray(cd[i+1])
 
-					return np.round(c0 + (c1 - c0) * d).astype(int)
-				else:
-					return cd[i]
+					colour = np.round(c0 + (c1 - c0) * d).astype(int)
 
-	def colour_array(self, val):
+				else:
+					colour = cd[i]
+
+
+			r, g, b = colour
+			if convert_to_pg: 
+				p = b + g * 256 + r * 256**2
+				return p.astype(int)
+			else:
+				return np.array([r,g,b])
+
+
+
+	def colour_array(self, val, convert_to_pg=False):
 		if self.posneg_mode:
 			r = np.where(val <= 0, self.colours[0][0], self.colours[-1][0])
 			g = np.where(val <= 0, self.colours[0][1], self.colours[-1][1])
@@ -61,9 +76,12 @@ class ColourMap:
 			g = np.round(g[i] + (g[np.minimum(i+1, l)] - g[i]) * d)
 			b = np.round(b[i] + (b[np.minimum(i+1, l)] - b[i]) * d)
 
-			return np.array([r,g,b])
-			p = b + g * 256 + r * 256**2
-			return p.astype(int)
+			if convert_to_pg: 
+				p = b + g * 256 + r * 256**2
+				return p.astype(int)
+			else:
+				return np.array([r,g,b])
+			
 
 def get_cmap_names():
 	return [o.__name__ for o in ColourMap.__subclasses__()]

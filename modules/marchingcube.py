@@ -296,8 +296,6 @@ class Mesh:
 			self.mesh = self.load_mesh(grid)
 			
 
-
-
 	def load_mesh(self, a):
 
 		triangles = []
@@ -358,7 +356,7 @@ class Mesh:
 		to the int
 		'''
 
-		n = sum([n*2**i for i,n in enumerate(verteces)])
+		n = sum([n*2**i for i,n in enumerate(verteces[::-1])])
 		edges = np.asarray(edge_index[n])
 		edges += 1
 		edges = edges[np.nonzero(edges)] - 1

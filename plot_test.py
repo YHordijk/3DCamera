@@ -1,5 +1,6 @@
 import numpy as np
 import modules.plot as plot
+import modules.colour_maps as cmap
 
 
 p = plot.Plot()
@@ -8,11 +9,24 @@ p = plot.Plot()
 
 
 
+f = lambda x,y: x-y
 
-for i in range(10):
-	x = np.arange(-1,1.05,0.05)
-	y = i*x**4
-	p.plot(x,y, style='line')
+x = np.array([np.arange(-5,7.5, 2.5)],)
+y = np.array([np.arange(-5,7.5, 2.5)],)
+z = f(x.T, y)
 
 
-p.show((400,400))
+
+
+
+colour = cmap.Viridis()
+p.plot_3d(x,y,z, colour_map=colour, style='contour')
+
+
+# for i in range(5):
+# 	x = np.arange(-1,1.1,0.1)
+# 	y = 2*i*x**2
+# 	p.plot(x,y, style='scatter')
+
+p.title = f'Voorbeeld heatmap met kleurenschema {colour}'
+p.show()

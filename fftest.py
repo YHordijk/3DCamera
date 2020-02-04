@@ -2,7 +2,7 @@ import modules.molecule6 as mol
 import modules.reaxff as reaxff
 import modules.uff as uff
 import modules.utils as utils
-import modules.plot as plot
+import modules.plot2 as plot
 import os
 import numpy as np
 
@@ -32,7 +32,7 @@ for r in np.arange(1, 2, 0.1):
 
 
 p.plot(x,y, style='scatter')
-p.drawer.y_label = 'Energy (kJ/mol)'
-p.drawer.x_label = 'r (angstrom)'
-p.drawer.title = 'Energy as function of length of H3C-CH3 bond'
+p.y_label = 'Energy (kJ/mol)'
+p.x_label = 'r (angstrom)'
+p.title = 'Energy as function of length of H3C-CH3 bond'
 p.show()
