@@ -35,7 +35,7 @@ def c(val):
 def ts():
 	return f'{c("purple")}[{time.strftime("%H:%M:%S", time.localtime())}]{c("end")}'
 
-def message(text, colour='end'):
+def message(text='', colour='end'):
 	source = inspect.stack()
 	source_file = source[1][1].split('\\')[-1][:-3]
 	source_func = source[1][3]

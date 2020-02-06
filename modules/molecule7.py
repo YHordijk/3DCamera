@@ -5,8 +5,25 @@ import os, json, time
 import modules.basisset6 as bs
 import modules.utils as utils
 import periodictable as pt
-import networkx as nx
 
+
+
+
+class Bond:
+	def __init__(self, a1, a2):
+		self.a1 = a1
+		self.a2 = a2
+		self.length = a1.distance_to(a2)
+		self.vector = a1.coords - a2.coords
+
+
+	def __getitem__(self, val):
+		if val == 0:
+			return self.a1
+		elif val == 1:
+			return self.a2
+		else:
+			raise IndexError('index must be 0 or 1')
 
 
 
@@ -581,10 +598,8 @@ Coordinates (angstrom):
 		self.center()
 
 		self.set_bonds()
-		self.detect_rings()
 
 		self._load_basis_set()
-
 
 
 	def _load_basis_set(self):
@@ -714,10 +729,16 @@ Coordinates (angstrom):
 				elif c == 2:
 					a.hybridisation = 1
 
-		for a in self.atoms:
-			if a.symbol == 'O' or a.symbol == 'N' and a.hybridisation == 3:
-				if any([a2.hybridisation == 2 for a2 in a.bonds]):
-					a.hybridisation = 2
+
+	# def solve_rings(self):
+	# 	'''
+
+	# 	'''
+
+	# 	#get non deadend atoms first (nda)
+	# 	temp_nda = [a for a in self.atoms if len(a.bonds) > 1]
+
+	# 	for a in temp_nda:
 
 
 
@@ -736,49 +757,6 @@ Coordinates (angstrom):
 			a2 = a2.coords
 
 		return euclidean(a1, a2)
-
-
-	def detect_rings(self):
-		'''
-		Method that detects the rings in the molecule using
-		networkx module. It also detects the type of ring
-		(aliphatic (AL), aromatic (AR))
-		'''
-
-		#create a graph first
-		g = nx.Graph()
-		g.add_nodes_from(self.atoms)
-		g.add_edges_from(list(self.get_unique_bonds()))
-		#get the cycles
-		cycles = nx.algorithms.cycles.minimum_cycle_basis(g)
-
-		self.rings = []
-		for cycle in cycles:
-			#get some data on the atoms
-			atom_sym = [a.symbol for a in cycle]
-			carbon_hybrids = [a.hybridisation for a in cycle if a.symbol == 'C']
-			nitrogen_bonds = [len(a.bonds) for a in cycle if a.symbol == 'N']
-
-			#carbon contributes 1 electron, oxygen 2, nitrogen with 3 bonds 2, nitrogens with 2 bonds 1
-			ne = carbon_hybrids.count(2) + atom_sym.count('O')*2 + nitrogen_bonds.count(3)*2 + nitrogen_bonds.count(2)
-
-			#apply kekule rule and check if all carbons are sp2
-			if all([h == 2 for h in carbon_hybrids]) and ne%4==2:
-				self.rings.append((cycle, 'AR'))
-			else:
-				self.rings.append((cycle, 'AL'))
-
-		#give the atoms ring properties
-		for atom in self.atoms:
-			atom.ring = None
-			for cycle, typ in self.rings:
-				if not atom.ring == 'AR':
-					if atom in cycle:
-						atom.ring = typ
-					else:
-						atom.ring = 'NO'
-
-
 
 
 	def isbonded(self, a1, a2):

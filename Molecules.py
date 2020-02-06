@@ -4,6 +4,7 @@ import modules.screen4 as scr
 import modules.molecule6 as mol6 
 import modules.basisset6 as bs
 import modules.colour_maps as cmap
+import modules.uff as uff
 import modules.utils as utils
 import numpy as np
 from time import perf_counter
@@ -19,21 +20,27 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'ethane 1.5'
+molecule 				= 'glyoxal bis(guanylhydrazone)'
 basis_set 				= 'STO-2G'
-pre_render_densities 	= False
+repeats 				= 1
+add_hydrogens			= False
+
 resolution 				= (1200, 720)
-background_colour 		= (0,0,0)
-points 					= 7000
-colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
+background_colour 		= (100, 100, 190)
 draw_axes 				= True
 wireframe_mode			= False
+
 do_huckel				= False
-repeats 				= 1
+pre_render_densities 	= False
+points 					= 7000
+colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 
 fancy_format_colours 	= False
 fancy_format_time		= True
-fancy_format_source		= False
+fancy_format_source		= True
+
+calculate_uff_energy 	= True
+uff_verbosity			= 3
 #######
 
 
@@ -84,6 +91,12 @@ pg.init()
 screen = scr.Screen3D(resolution, bkgr_colour=background_colour)
 mol = mol6.Molecule(molecule, basis_set_type=basis_set, repeat=repeats)
 
+if calculate_uff_energy:
+	ff = uff.ForceField()
+	ff.get_energy(mol, verbosity=uff_verbosity)
+
+if add_hydrogens:
+	mol.add_hydrogens()
 
 atoms = mol.atoms
 pg.display.set_caption(mol.name)

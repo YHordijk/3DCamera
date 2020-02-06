@@ -51,7 +51,7 @@ class Series:
 	Class holding data for data series
 	'''
 
-	def __init__(self, x, y, label='', style='line', z=None, colour=None, colour_map=None):
+	def __init__(self, x, y, label='', style='line', z=None, colour=None, colour_map=None, width=None):
 		self.x = x
 		self.y = y
 		self.label = label
@@ -62,13 +62,14 @@ class Series:
 			self.colour_map = colour_map
 		else:
 			self.colour = colour
+			self.width = width
 
 class Plot:
 	'''
 	Class that handles and contains data series.
 	'''
 
-	def __init__(self, size=(400,400), colour_map=cmap.Rainbow(), axis_margin=(60, 100, 130, 100), title='', tick_length=15, axes=None):
+	def __init__(self, size=(400,400), colour_map=cmap.Rainbow(), axis_margin=(60, 100, 130, 100), title='', tick_length=15, axes=None, plot_margin=0.05):
 		self._size = size
 		self.colour_map = colour_map
 		self.axis_margin = axis_margin
@@ -77,6 +78,7 @@ class Plot:
 		self.y_label = ''
 		self.x_label = ''
 		self.custom_axes = axes
+		self.plot_margin = plot_margin
 
 		self.plotsurf = pg.surface.Surface(size)
 		self.series = []
@@ -105,7 +107,7 @@ class Plot:
 		self.series.append(Series(x, y, z=z, label=label, colour_map=colour_map, style=style))
 
 
-	def plot(self, x, y, label=None, colour=None, style='line'):
+	def plot(self, x, y, label=None, colour=None, style='line', width=1):
 		'''
 		Method used to add data to the object.
 
@@ -120,7 +122,7 @@ class Plot:
 		assert(x.size == y.size)
 		assert(style in ['line', 'scatter'])
 
-		self.series.append(Series(x, y, label=label, colour=colour, style=style))
+		self.series.append(Series(x, y, label=label, colour=colour, style=style, width=width))
 
 
 	def save(self, file, resolution=None):
@@ -133,10 +135,13 @@ class Plot:
 		...
 
 
-	def _get_axes(self, margin=0.05):
+	def _get_axes(self):
 		'''
 		Method that determines the ranges of the axes and the tick marks.
 		'''
+
+		if 'heatmap' in [s.style for s in self.series] or 'contour' in [s.style for s in self.series]: margin = 0
+		else: margin = self.plot_margin
 
 		#x-axis
 		x_max = max([max(s.x) for s in self.series])
@@ -170,28 +175,31 @@ class Plot:
 		self.plotsurf = pg.surface.Surface(val)
 		self._draw_plot()
 
-	def _transform_to_plot_range(self, pos):
+	def _transform_to_plot_range(self, surf, pos):
 		if self.custom_axes == None: 
 			axes = self._get_axes()
 		else: 
 			axes = self.custom_axes
 
-		s = self.size
-		offset = o = np.array([s[0]-self.axis_margin[0], s[1]-self.axis_margin[1]])
-		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[2], s[1] - s[1]+self.axis_margin[3]])
+		s = surf.get_size()
+		o = np.array([0,0])
+		p = np.array(s)
 
-		x_ran, x_ran_marg = (axes[0][1], axes[0][0]), (axes[2][1], axes[2][0])
-		y_ran, y_ran_marg = axes[1], axes[3]
+		x_ran = axes[0]
+		y_ran = axes[1]
 
 		x, y = pos
 
 		y *= -1
 
-		return ((x - x_ran_marg[0])*(p[0]-o[0])/(x_ran_marg[1]-x_ran_marg[0])) + o[0], ((y - y_ran_marg[0])*(p[1]-o[1])/(y_ran_marg[1]-y_ran_marg[0])) + o[1]
+		x = ((x - x_ran[0])*(s[0])/(x_ran[1]-x_ran[0]))
+		y = ((y - y_ran[0])*(s[1])/(y_ran[1]-y_ran[0]))
+
+		return x, y
 
 
 	#drawing methods:
-	def _draw_contours(self, ser, thresh):
+	def _draw_contours(self, surf, ser, thresh):
 		'''
 		Method that draws the contour lines of a heatmap or other 3d plot
 		'''
@@ -244,10 +252,10 @@ class Plot:
 					p1 += np.array([x[i], y[j]])
 					p2 += np.array([x[i], y[j]])
 
-					p1 = self._transform_to_plot_range(p1)
-					p2 = self._transform_to_plot_range(p2)
+					p1 = self._transform_to_plot_range(surf, p1)
+					p2 = self._transform_to_plot_range(surf, p2)
 					
-					self._draw_line(self.plotsurf, p1, p2)
+					self._draw_line(surf, p1, p2)
 
 					if not -1 in c2:
 						c1a = c2[0]
@@ -260,20 +268,19 @@ class Plot:
 						p1 += np.array([x[i], y[i]])
 						p2 += np.array([x[i], y[i]])
 
-						p1 = self._transform_to_plot_range(p1)
-						p2 = self._transform_to_plot_range(p2)
+						p1 = self._transform_to_plot_range(surf, p1)
+						p2 = self._transform_to_plot_range(surf, p2)
 
 						
-						self._draw_line(self.plotsurf, p1, p2)
+						self._draw_line(surf, p1, p2)
 
-		print()
 
-	def _draw_line(self, surf, p1, p2, width=1, colour=(255,255,255), aa=True):
+	def _draw_line(self, surf, p1, p2, width=1, colour=(255,255,255), aa=False):
 		if aa: pg.draw.aaline(surf, colour, p1, p2)
 		else: pg.draw.line(surf, colour, p1, p2, width)
 
 
-	def _draw_lines(self, surf, p, width=1, colour=(255,255,255), aa=True):
+	def _draw_lines(self, surf, p, width=1, colour=(255,255,255), aa=False):
 		if aa: pg.draw.aalines(surf, colour, False, p)
 		else: pg.draw.lines(surf, colour, False, p, width)
 
@@ -310,11 +317,13 @@ class Plot:
 		surf.blit(text_surf, pos)
 
 
-
-	def _draw_plot(self):
+	def _get_ui_surf(self):
 		'''
 		Method that draws a plot.
 		'''
+
+		ui_surf = pg.surface.Surface(self.size)
+
 
 		if self.custom_axes == None: 
 			axes = self._get_axes()
@@ -326,77 +335,100 @@ class Plot:
 		offset = o = np.array([s[0]-self.axis_margin[0], s[1]-self.axis_margin[1]])
 		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[2], s[1] - s[1]+self.axis_margin[3]])
 
-		#draw the square surrounding the plot
-		self._draw_line(self.plotsurf, o, (p[0], o[1]))
-		self._draw_line(self.plotsurf, o, (o[0], p[1]))
-		self._draw_line(self.plotsurf, (p[0], o[1]), p)
-		self._draw_line(self.plotsurf, (o[0], p[1]), p)
-
 		#plot the data
 		x_ran, x_ran_marg = (axes[0][1], axes[0][0]), (axes[2][1], axes[2][0])
 		y_ran, y_ran_marg = axes[1], axes[3]
 
 		#transform range function
 		trans_x = lambda x: ((x - x_ran_marg[0])*(p[0]-o[0])/(x_ran_marg[1]-x_ran_marg[0])) + o[0]
-		trans_y = lambda y: ((y - y_ran_marg[0])*(p[1]-o[1])/(y_ran_marg[1]-y_ran_marg[0])) + o[1]
+		trans_y = lambda y: ((y - y_ran_marg[0])*(p[1]-o[1])/(y_ran_marg[1]-y_ran_marg[0])) + o[1]	
+	
+		#draw the square surrounding the plot
+		self._draw_line(ui_surf, o, (p[0], o[1]))
+		self._draw_line(ui_surf, o, (o[0], p[1]))
+		self._draw_line(ui_surf, (p[0], o[1]), p)
+		self._draw_line(ui_surf, (o[0], p[1]), p)			
+
+		#draw title
+		title_pos = (s[0]/2, self.axis_margin[1]/2)
+		self._draw_text(ui_surf, self.title, pos=title_pos)
+
+		#draw_axis ticks
+		p1, p2 = (trans_x(x_ran[0]), o[1]), (trans_x(x_ran[0]), o[1] + self.tick_length)
+		self._draw_line(ui_surf, p1, p2)
+		self._draw_text(ui_surf, round(x_ran[0], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
+
+		p1, p2 = (trans_x(x_ran[1]), o[1]), (trans_x(x_ran[1]), o[1] + self.tick_length)
+		self._draw_line(ui_surf, p1, p2)
+		self._draw_text(ui_surf, round(x_ran[1], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
+
+		p1, p2 = (p[0], trans_y(y_ran[0])), (p[0] - self.tick_length, trans_y(y_ran[0]))
+		self._draw_line(ui_surf, p1, p2)
+		self._draw_text(ui_surf, round(y_ran[0], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
+
+		p1, p2 =  (p[0], trans_y(y_ran[1])), (p[0] - self.tick_length, trans_y(y_ran[1]))
+		self._draw_line(ui_surf, p1, p2)
+		self._draw_text(ui_surf, round(y_ran[1], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
+
+		#draw axis labels
+		pos = ((p[0]-o[0])/2+o[0], s[1] - self.axis_margin[1]/2)
+		self._draw_text(ui_surf, self.x_label, pos)
+
+		pos = (self.axis_margin[1]/2, s[1]/2)
+		self._draw_text(ui_surf, self.y_label, pos, rotation=90)
+
+		#draw transparency rect with colour (0,255,0)
+		pg.draw.rect(ui_surf, (0,255,0), pg.Rect(p+1, o-p-1))
+		ui_surf.set_colorkey((0,255,0))
+
+		return ui_surf
+
+
+	def _get_plot_surf(self, size):
+		p_surf = pg.surface.Surface(size)
 
 		for ser in self.series:
 			x = ser.x.copy()
 			y = ser.y.copy()
 
-			x = trans_x(x)
-			y = trans_y(y)
-
+			x, y = self._transform_to_plot_range(p_surf, (x,y))
 			if ser.style in ['line', 'scatter']:
-				self._draw_lines(self.plotsurf, list(zip(x, y)), colour=ser.colour)
+				self._draw_lines(p_surf, list(zip(x, y)), colour=ser.colour, width=ser.width)
 				if ser.style == 'scatter':
-					self._draw_symbols(self.plotsurf, list(zip(x, y)), colour=ser.colour)
+					self._draw_symbols(p_surf, list(zip(x, y)), colour=ser.colour)
 
 			elif ser.style in ['heatmap', 'contour']:
-
-
 				z = ser.z.copy()
 
 				hm_surf = pg.surface.Surface(z.shape)
 				pg.surfarray.blit_array(hm_surf, ser.colour_map[z])
 
-				res = (int(max(x) - min(x)), int(max(y) - min(y)))
-				pos = (min(x), min(y))
-				hm_surf = pg.transform.scale(hm_surf,res)
-				self.plotsurf.blit(hm_surf, pos)
+				hm_surf = pg.transform.scale(hm_surf, size)
+				p_surf.blit(hm_surf, (0,0))
 
 				if ser.style == 'contour':
-					self._draw_contours(ser, 0)
-				
-				
+					self._draw_contours(p_surf, ser, 0)
 
-		#draw title
-		title_pos = (s[0]/2, self.axis_margin[1]/2)
-		self._draw_text(self.plotsurf, self.title, pos=title_pos)
+		return p_surf
 
-		#draw_axis ticks
-		p1, p2 = (trans_x(x_ran[0]), o[1]), (trans_x(x_ran[0]), o[1] + self.tick_length)
-		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(x_ran[0], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
 
-		p1, p2 = (trans_x(x_ran[1]), o[1]), (trans_x(x_ran[1]), o[1] + self.tick_length)
-		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(x_ran[1], 1), size=15, pos=(p1[0], p1[1] + 2*self.tick_length))
 
-		p1, p2 = (p[0], trans_y(y_ran[0])), (p[0] - self.tick_length, trans_y(y_ran[0]))
-		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(y_ran[0], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
+	def _draw_plot(self):
+		s = self.size
+		offset = o = np.array([s[0]-self.axis_margin[0], s[1]-self.axis_margin[1]])
+		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[2], s[1] - s[1]+self.axis_margin[3]])
 
-		p1, p2 =  (p[0], trans_y(y_ran[1])), (p[0] - self.tick_length, trans_y(y_ran[1]))
-		self._draw_line(self.plotsurf, p1, p2)
-		self._draw_text(self.plotsurf, round(y_ran[1], 1), size=15, pos=(p1[0] - 2*self.tick_length, p1[1]), align='left center')
+		p_surf = self._get_plot_surf((o-p))
 
-		#draw axis labels
-		p = ((p[0]-o[0])/2+o[0], s[1] - self.axis_margin[1]/2)
-		self._draw_text(self.plotsurf, self.x_label, p)
+		ui_surf = self._get_ui_surf()
 
-		p = (self.axis_margin[1]/2, s[1]/2)
-		self._draw_text(self.plotsurf, self.y_label, p, rotation=90)
+		p_surf = pg.transform.scale(p_surf, (o-p))
+
+		self.plotsurf.blit(p_surf, p)
+		self.plotsurf.blit(ui_surf, (0,0))
+
+		# self.plotsurf = p_surf
+
 
 
 	#show methods:
@@ -409,7 +441,7 @@ class Plot:
 
 	def show(self):
 		# data series part
-		colourable_series = [s for s in self.series if s.style in ['lines', 'scatter']]
+		colourable_series = [s for s in self.series if s.style in ['line', 'scatter']]
 		c = sum([s.colour is not None for s in colourable_series])
 		l = len(self.series)
 		for i, s in enumerate(colourable_series):

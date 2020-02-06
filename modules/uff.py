@@ -41,15 +41,31 @@ class ForceField:
 	def get_atom_type(self, atom):
 		el = atom.symbol 
 		el += '_'*(len(el)==1)
-		if atom.hybridisation != 0:
+		if atom.ring == 'AR':
+			el += 'R'
+		elif atom.hybridisation != 0:
 			el += str(atom.hybridisation)
+
 		return el
 
-	def get_energy(self, molecule, morse_potential=True, verbose=False):
+
+	def get_energy(self, molecule, morse_potential=True, verbosity=1):
 		atoms = molecule.atoms
+
+		if verbosity > 1:
+			utils.message('ATOM TYPES')
+			utils.message(f'IDX | TYPE  | RING')
+			for i, a in enumerate(atoms):
+				utils.message(f'{i: <3} | {self.get_atom_type(a): <5} | {a.ring}')
+				
+
 
 		#### E = E_r + E_theta + E_phi + E_ohm + E_vdm + E_el
 		## E_r:
+		if verbosity > 2:
+			utils.message('BOND STRETCH ENERGY')
+			utils.message('ATOM 1 | ATOM 2 | BO  | BOND LEN | IDEAL LEN | ENERGY')
+
 		E_r = 0
 		for a1, a2 in molecule.get_unique_bonds():
 			#some parameters for a1
@@ -68,27 +84,32 @@ class ForceField:
 			r = a1.distance_to(a2)
 			#bo between a1 and a2
 			n = a1.bond_orders[a2]
+			if a1.ring == a2.ring == 'AR':
+				n = 1.5
 
-			#components of eq dist
 			if morse_potential:
-				r12 = r1 + r2 - (r1*r2*(sqrt(chi1) - sqrt(chi2))**2)/(chi1*r1 + chi2*r2)
+				# r12 = r1 + r2 - (r1*r2*(sqrt(chi1) - sqrt(chi2))**2)/(chi1*r1 + chi2*r2)
+				r12 = r1 + r2 - 0.1332 * (r1 + r2) * log(n) + r1*r2*(sqrt(chi1)-sqrt(chi2))**2/(chi1*r1+chi2*r2)
+				k12 = 664.12 * Z1 * Z2 / r12**3 
+				D12 = 70*n
+				alpha = sqrt(k12/(2*D12))
+				E_ri = D12*(exp(-alpha*(r-r12)) - 1)**2
 			else:
 				rBO = -0.1332 * (r1+r2) * log(n)
 				rEN = r1 * r2 * (sqrt(chi1)-sqrt(chi2))**2/(chi1*r1+chi2*r2)
 				r12 = r1 + r2 + rBO + rEN
+				k12 = 664.12 * Z1 * Z2 / r12**3 
+				E_ri = .5 * k12 * (r - r12)**2
 
-			
-			#force constants
-			k12 = 664.12 * Z1 * Z2 / r12**3 
-			D12 = 70*n
-			alpha = sqrt(k12/(2*D12))
+			E_r += E_ri
 
-			#energy
-			# E_r += .5 * k12 * (r - r12)**2 # harmonic oscillator
-			E_r += D12*(exp(-alpha*(r-r12)) - 1)**2 #Morse potential
-			# print(e1,e2,round(r-r12,3), round(r12,3), D12*(exp(-alpha*(r-r12)) - 1)**2*4.184)
+			if verbosity > 2:
+				utils.message(f'{e1: <6} | {e2: <6} | {n: <3.1f} | {r: <8.3f} | {r12: <8.3f} | {E_ri: <.3f}')
+
 
 		## E_theta:
+		
+
 		E_theta = 0
 		for a1, a2, a3, theta in molecule.get_unique_bond_angles():
 			e1 = self.get_atom_type(a1)
@@ -106,13 +127,16 @@ class ForceField:
 			C2 = 1/(4*sin(t0)**2)
 			C1 = -4*C2*cos(t0)
 			C0 = C2*(2*cos(t0)**2+1)
-			E_theta += K123 * (C0 + C1*cos(theta) + C2*cos(2*theta))
+			E_theta_i = K123 * (C0 + C1*cos(theta) + C2*cos(2*theta))
+			E_theta += E_theta_i
 
-			p = pi/(pi-t0)
-			psi = pi - p * t0
-			# E_theta += K123 * (1 + cos(p*theta + psi))
+			
 
 		#E_phi:
+		if verbosity > 2:
+			utils.message('BOND STRETCH ENERGY')
+			utils.message('ATOM 1 | ATOM 2 | ATOM 3 | ATOM 4 | TORSION | IDEAL TORS | ENERGY')
+
 		E_phi = 0
 		for a1, a2, a3, a4, phi in molecule.get_unique_torsion_angles():
 			e1 = self.get_atom_type(a1)
@@ -137,12 +161,17 @@ class ForceField:
 				U3 = self.sp2_torsional_barrier_params[e3]
 				Vbarr = 5*sqrt(U2*U3)*(1+4.18*log(a2.bond_orders[a3]))
 				n = 2
-				phi0 = pi, pi/3
+				phi0 = pi, 1.047198
 
 			#since two differen phi0 are possible, calculate both and return highest energy
 			E_phi1 = 0.5*Vbarr * (1-cos(n*phi0[0])*cos(n*phi))
 			E_phi2 = 0.5*Vbarr * (1-cos(n*phi0[1])*cos(n*phi))
-			E_phi += min(E_phi1, E_phi2)
+			E_phi_i = min(E_phi1, E_phi2)
+			E_phi += E_phi_i
+
+			if verbosity > 2:
+				torsion = divmod(phi, phi0[0])[1] if phi0[0] is not 0 else 0
+				utils.message(f'{e1: <6} | {e2: <6} | {e3: <6} | {e4: <6} | {torsion: <7.3f} | {phi0[0]: <10.3f} | {E_phi_i: <.3f}')
 
 		#E_vdw:
 		E_vdw = 0
@@ -164,10 +193,11 @@ class ForceField:
 
 
 
-		if verbose:
+		if verbosity>0:
 			utils.message(f'TOTAL BOND STRETCHING ENERGY = {round(E_r*4.2,3)} kJ/mol')
 			utils.message(f'TOTAL ANGLE BENDING ENERGY = {round(E_theta*4.2,3)} kJ/mol')
 			utils.message(f'TOTAL TORSIONAL ENERGY = {round(E_phi*4.2,3)} kJ/mol')
 			utils.message(f'TOTAL VAN DER WAAL\'S ENERGY = {round(E_vdw*4.2,3)} kJ/mol')
-		utils.message(f'TOTAL ENERGY = {round((E_r + E_theta + E_phi + E_vdw)*4.2,3)} kJ/mol')
+			utils.message(f'TOTAL ENERGY = {round((E_r + E_theta + E_phi + E_vdw)*4.2,3)} kJ/mol')
+
 		return E_r + E_theta + E_phi + E_vdw
