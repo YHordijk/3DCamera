@@ -43,7 +43,7 @@ vertex_lt = [(-1, -1, -1, -1),
 side_offset_lt = np.array([(0,0), (1,0), (0,1), (0,0)])
 
 
-pg.init()
+
 
 
 class Series:
@@ -163,6 +163,9 @@ class Plot:
 		return (x_min, x_max), (y_min, y_max), (x_min_marg, x_max_marg), (y_min_marg, y_max_marg)
 
 
+	def clear(self):
+		self.series = []
+
 	##### DRAWING PORTION
 	@property
 	def size(self):
@@ -189,8 +192,6 @@ class Plot:
 		y_ran = axes[1]
 
 		x, y = pos
-
-		y *= -1
 
 		x = ((x - x_ran[0])*(s[0])/(x_ran[1]-x_ran[0]))
 		y = ((y - y_ran[0])*(s[1])/(y_ran[1]-y_ran[0]))
@@ -412,19 +413,23 @@ class Plot:
 		return p_surf
 
 
-
 	def _draw_plot(self):
 		s = self.size
 		offset = o = np.array([s[0]-self.axis_margin[0], s[1]-self.axis_margin[1]])
 		opposite_offset = p = np.array([s[0] - s[0]+self.axis_margin[2], s[1] - s[1]+self.axis_margin[3]])
 
-		p_surf = self._get_plot_surf((o-p))
+		plot_offset = ((o-p)*self.plot_margin).astype(int)
+		plot_size = (o-p) - plot_offset*2
+		plot_size = int(plot_size[0]), int(plot_size[1])
 
+		p_surf = self._get_plot_surf(plot_size)
 		ui_surf = self._get_ui_surf()
 
-		p_surf = pg.transform.scale(p_surf, (o-p))
 
-		self.plotsurf.blit(p_surf, p)
+		p_surf = pg.transform.scale(p_surf, plot_size)
+		p_surf = pg.transform.flip(p_surf, False, True)
+
+		self.plotsurf.blit(p_surf, p+plot_offset)
 		self.plotsurf.blit(ui_surf, (0,0))
 
 		# self.plotsurf = p_surf
@@ -440,6 +445,8 @@ class Plot:
 
 
 	def show(self):
+		pg.init()
+
 		# data series part
 		colourable_series = [s for s in self.series if s.style in ['line', 'scatter']]
 		c = sum([s.colour is not None for s in colourable_series])

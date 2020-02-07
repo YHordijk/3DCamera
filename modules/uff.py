@@ -49,9 +49,9 @@ class ForceField:
 		return el
 
 
-	def get_energy(self, molecule, morse_potential=True, verbosity=1):
+	def get_energy(self, molecule, morse_potential=True, verbosity=0):
 		atoms = molecule.atoms
-
+		
 		if verbosity > 1:
 			utils.message('ATOM TYPES')
 			utils.message(f'IDX | TYPE  | RING')

@@ -20,13 +20,13 @@ z = f(x.T, y)
 
 
 colour = cmap.CoolWarm()
-p.plot_3d(x,y,z, colour_map=colour, style='contour')
+# p.plot_3d(x,y,z, colour_map=colour, style='contour')
 
 
-# for i in range(7):
-# 	x = np.arange(-i+1,i+1+.1,0.1)
-# 	y = x**3
-# 	p.plot(x,y, style='line', width=2)
+for i in range(7):
+	x = np.arange(-i+1,i+1+.1,0.1)
+	y = x**3
+	p.plot(x,y, style='line', width=2)
 
 p.x_label = 'x'
 p.y_label = 'y'

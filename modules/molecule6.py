@@ -237,20 +237,6 @@ class Atom:
 		except:
 			self.GMP_electro_negativity = 0
 
-		#get period of atom
-		if self.atomic_number in (1,2):
-			self.period = 1
-		if self.atomic_number in range(3,11):
-			self.period = 2
-		if self.atomic_number in range(11,19):
-			self.period = 3
-		if self.atomic_number in range(19, 37):
-			self.period = 4
-		if self.atomic_number in range(37, 55):
-			self.period = 5
-		if self.atomic_number in range(55, 87):
-			self.period = 6
-
 
 		try:
 			self.colour = self.draw_colour = {
@@ -401,7 +387,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.,0.], 
+	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.], 
 					warning_level=1, scale=200, basis_set_type='STO-6G', repeat=1, repeat_vector=None):
 		self._warning_level = warning_level
 
@@ -478,10 +464,16 @@ Coordinates (angstrom):
 		return p
 
 
-	def center(self):
-		com = self.center_of_mass
+	def center(self, c=None):
+		if c is None:
+			c = self.center_of_mass.copy()
+		if type(c) is Atom:
+			c = c.coords.copy()
+
 		for a in self.atoms:
-			a.coords -= com
+			a.coords -= c
+
+		self.position = c
 
 
 	def reset_colours(self):
@@ -720,7 +712,6 @@ Coordinates (angstrom):
 					a.hybridisation = 2
 
 
-
 	def distance(self, a1, a2):
 		'''
 		Method that returns the euclidean distance between two atoms
@@ -779,6 +770,120 @@ Coordinates (angstrom):
 						atom.ring = 'NO'
 
 
+	def shake(self, intens=0.003):
+		for a in self.atoms:
+			a.coords += np.random.normal(size=3) * intens
+			
+
+	def rotate_bond(self, a1, a2, r):
+		'''
+		Method that rotates a bond between atoms a1 and a2 to r radians.
+
+		a1, a2 - atom objects
+		r - rotation in radians
+		'''
+
+		#get fragments
+		frag1, frag2 = self.separate_on_bond(a1, a2)
+
+		#get bond vector
+		b = a1.coords - a2.coords
+
+		Rx = np.array(([	  1, 	  0,	   0],
+					   [	  0, cos(r), -sin(r)],
+					   [      0, sin(r),  cos(r)]))
+
+		self.align_bond_to_vector(a1,a2,(1,0,0))
+		self.center(a1)
+
+		for a in frag1:
+			a.coords = Rx @ a.coords
+
+		self.align_bond_to_vector(a1, a2, b)
+		self.center()
+
+
+	def align_bond_to_vector(self, a1, a2, b):
+		'''
+		Method that aligns a bond along a1 and a2 to the x-axis
+		https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+		'''
+		#get the bond vector
+		a = a1.coords - a2.coords
+
+		a = a/np.linalg.norm(a)
+		b = b/np.linalg.norm(b)
+		v = np.cross(a, b)
+		c = np.dot(a, b)
+
+		if not c == -1.0:
+			skew = np.array([[0, -v[2], v[1]],
+							 [v[2], 0, -v[0]],
+							 [-v[1], v[0], 0]])
+
+			R = np.eye(3) + skew + skew@skew * (1/(1+c))
+			for a in self.atoms:
+				a.coords = R @ a.coords
+
+
+	def stretch_bond(self, a1, a2, r):
+		'''
+		Method that stretches a bond between atoms a1 and a2 to length r
+
+		a1, a2 - atom objects
+		r - desired bond length
+		'''
+
+		#get molecule fragments
+		frag1, frag2 = self.separate_on_bond(a1, a2)
+
+		#get the bond direction
+		b = a1.coords - a2.coords
+		b_norm = b/np.linalg.norm(b)
+
+		#we only have to transpose one of the fragments
+		for a in frag1:
+			a.coords += - b + b_norm * r
+
+
+
+	def separate_on_bond(self, a1, a2):
+		'''
+		Method that separates molecule on the specified bond. Will return
+		the atoms that make up the two fragments. Fails if a1 and a2 are 
+		part of the same ring or when a1 is not bonded to a2.
+
+		a1, a2 - atom objects
+
+		returns tuple of two lists
+		'''
+
+		#check if a1 and a2 are part of the same ring
+		for ring, _ in self.rings:
+			if a1 in ring and a2 in ring:
+				return [], []
+
+		#check if they are bonded:
+		if not self.isbonded(a1, a2):
+			return [], []
+
+		#get atoms attached to a1:
+		atoms1 = [a1]
+		for a in atoms1:
+			for b in a.bonds:
+				if not b == a2:
+					if not b in atoms1:
+						atoms1.append(b)
+
+		#get atoms attached to a2:
+		atoms2 = [a2]
+		for a in atoms2:
+			for b in a.bonds:
+				if not b == a1:
+					if not b in atoms2:
+						atoms2.append(b)
+
+		return atoms1, atoms2
 
 
 	def isbonded(self, a1, a2):
@@ -1208,13 +1313,9 @@ Coordinates (angstrom):
 					   [ 	  0, 	   1,	   0],
 					   [-sin(r), 	   0, cos(r)]))
 
-		r = rotation[2]
-		Rz = np.array(([ cos(r), -sin(r), 	   0],
-					   [ sin(r),  cos(r), 	   0],
-					   [ 	  0, 	   0, 	   1]))
 
 		for a in self.atoms:
-			a.coords = Rx @ Ry @ Rz @ a.coords
+			a.coords = Rx @ Ry @ a.coords
 
 		if hasattr(self, '_elec_stat_pos'):
 			self._elec_stat_pos = (Rx @ Ry @ Rz @ self._elec_stat_pos.T).T
@@ -1222,4 +1323,3 @@ Coordinates (angstrom):
 		if hasattr(self, '_dens_pos'):
 			for key in self._dens_pos.keys():
 				self._dens_pos[key] = (Rx @ Ry @ Rz @ self._dens_pos[key].T).T
-

@@ -20,7 +20,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'glyoxal bis(guanylhydrazone)'
+molecule 				= 'butane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -40,7 +40,7 @@ fancy_format_time		= True
 fancy_format_source		= True
 
 calculate_uff_energy 	= True
-uff_verbosity			= 3
+uff_verbosity			= 0
 #######
 
 
@@ -112,7 +112,7 @@ FPS = 120
 tick = clock.tick_busy_loop
 updt = 0
 time = 0
-rot = np.array([0.,0.,0.])
+rot = np.array([0.,0.])
 zoom = 0
 pg.key.set_repeat()
 run = True
@@ -135,6 +135,15 @@ while run:
 	ev = pg.event.get()
 
 	screen.clear()
+
+
+	################ 
+
+	
+	mol.center()
+	# mol.align_bond_to_vector(mol.atoms[1], mol.atoms[0], (math.sin(time),math.cos(time),0))
+
+	################
 
 
 	if draw_dens: screen.draw_density(mos[mo_numb%len(mos)], points, colour_map=colour_map)
@@ -198,7 +207,7 @@ while run:
 				screen.camera_position[1] += move[1]/50
 
 		if pg.mouse.get_pressed()[0]:
-			rot = np.asarray([move[1]/150, -move[0]/150, 0])
+			rot = np.asarray([move[1]/150, -move[0]/150])
 
 
 	screen.camera_position[2] += zoom
@@ -217,14 +226,14 @@ while run:
 			else:
 				index = mol.atoms.index(atom)
 
-			screen.display_text(f'  {atom.symbol}{index+1} {atom.hybridisation}  ', (10,10))
+			screen.display_text(f'  {atom.symbol}{index+1} {atom.coords} ', (10,10))
 
 		elif l == 2:
 			atoms = list(selected_atoms)
 			index = []
 			for atom in atoms:
 				if atom in mol.atoms:
-					index.append(atoms.index(atom))
+					index.append(mol.atoms.index(atom))
 				else:
 					index.append(mol.atoms.index(atom))
 
@@ -235,7 +244,7 @@ while run:
 			index = []
 			for atom in atoms:
 				if atom in mol.atoms:
-					index.append(atoms.index(atom))
+					index.append(mol.atoms.index(atom))
 				else:
 					index.append(mol.atoms.index(atom))
 
