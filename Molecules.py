@@ -20,15 +20,15 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'butane'
+molecule 				= 'cyclohexane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
 
 resolution 				= (1200, 720)
 background_colour 		= (100, 100, 190)
-draw_axes 				= True
-wireframe_mode			= False
+draw_axes 				= False
+wireframe_mode			= True
 
 do_huckel				= False
 pre_render_densities 	= False
@@ -102,6 +102,9 @@ atoms = mol.atoms
 pg.display.set_caption(mol.name)
 selected_atoms = set()
 
+
+
+
 bs.extended_huckel(mol) 
 mos = mol.molecular_orbitals
 
@@ -125,6 +128,20 @@ screen.camera_position = np.asarray((0,0,camera_range))
 utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to switch between orbitals.')
 utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
+##############
+
+
+b = []
+for bond in mol.get_unique_bonds():
+	b.append([*bond, bond[0].distance_to(bond[1]), np.random.normal(0,math.pi)])
+
+angles = []
+for a1, a2, a3, a4, phi in mol.get_unique_torsion_angles():
+	angles.append([a1,a2,a3,a4,phi,np.random.normal(-math.pi,math.pi)/1000])
+
+##############
+
+
 while run:
 	#tick prep
 	updt += 1
@@ -139,7 +156,13 @@ while run:
 
 	################ 
 
-	
+
+	for a1, a2, r, o in b:
+		mol.stretch_bond(a1, a2, r + math.sin(10*time + o)/10)
+	for a1, a2, a3, a4, phi, o in angles:
+		# mol.rotate_bond(a2, a3, o/2)
+		mol.rotate_bond(a3, a2, o*2)
+
 	mol.center()
 	# mol.align_bond_to_vector(mol.atoms[1], mol.atoms[0], (math.sin(time),math.cos(time),0))
 
