@@ -175,20 +175,21 @@ class ForceField:
 
 		#E_vdw:
 		E_vdw = 0
-		for a1, a2 in molecule.get_unique_nonbonded_atom_pairs():
-			if a1.bond_dist_to(a2) > 2:
-				e1 = self.get_atom_type(a1)
-				e2 = self.get_atom_type(a2)
+		for a1, a2 in molecule.get_unique_atom_pairs(): #cutoff is at 2 angstrom
 
-				D1 = self.nonbond_energy[e1]
-				D2 = self.nonbond_energy[e2]
-				D12 = sqrt(D1*D2)
-				
-				x = a1.distance_to(a2)
-				x1 = self.nonbond_distance[e1]
-				x2 = self.nonbond_distance[e2]
-				x12 = .5*(x1+x2)
+			e1 = self.get_atom_type(a1)
+			e2 = self.get_atom_type(a2)
 
+			D1 = self.nonbond_energy[e1]
+			D2 = self.nonbond_energy[e2]
+			D12 = sqrt(D1*D2)
+			
+			x = a1.distance_to(a2)
+			x1 = self.nonbond_distance[e1]
+			x2 = self.nonbond_distance[e2]
+			x12 = .5*(x1+x2)
+
+			if a1.distance_to(a2) >= x12:
 				E_vdw += D12 * (-2*(x12/x)**6 + (x12/x)**12)
 
 

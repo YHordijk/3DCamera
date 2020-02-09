@@ -1296,6 +1296,8 @@ Coordinates (angstrom):
 
 		utils.message(f'Saved molecule to {file}')
 
+		return file
+
 
 	def rotate(self, rotation):
 		'''
