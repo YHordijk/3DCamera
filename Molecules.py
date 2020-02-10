@@ -21,7 +21,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'benzene'
+molecule 				= 'ethane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -69,10 +69,10 @@ def MOTD():
 
 
 
-	utils.message(f'Welcome, this project so far supports the following:', 'blue')
-	[utils.message(f'-- {f}', 'blue') for f in features]
-	utils.message(f'Planned features:', 'blue')
-	[utils.message(f'-- {f}', 'blue') for f in planned_features]
+	utils.message(f'Welcome, this project so far supports the following:', colour='blue')
+	[utils.message(f'-- {f}', colour='blue') for f in features]
+	utils.message(f'Planned features:', colour='blue')
+	[utils.message(f'-- {f}', colour='blue') for f in planned_features]
 	print()
 
 
@@ -115,6 +115,7 @@ clock = pg.time.Clock()
 FPS = 120
 tick = clock.tick_busy_loop
 updt = 0
+updt_delta = 0
 time = 0
 rot = np.array([0.,0.])
 zoom = 0
@@ -122,7 +123,7 @@ pg.key.set_repeat()
 run = True
 mo_numb = 0
 draw_dens = False
-camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 3 
+camera_range = max(max([a.coords[0] for a in mol.atoms]), max([a.coords[1] for a in mol.atoms]), max([a.coords[2] for a in mol.atoms])) + 10 
 
 screen.camera_position = np.asarray((0,0,camera_range))
 
@@ -130,12 +131,23 @@ utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to s
 utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
 #####################
-# mol = minimizer.minimize(mol, steps=10)
+[mol.shake(15) for _ in range(200)]
+mol.center()
+mols = [mol]
+
+for _ in range(50):
+	mols.append(minimizer.minimize(mols[-1], ff, steps=20, copy_mol=True))
+	mols[-1].center()
+	
+drawmol = mols[0]
+
+
 #####################
 
 while run:
 	#tick prep
 	updt += 1
+	updt_delta += 1
 	dT = tick(FPS)/1000
 	time += dT
 
@@ -145,18 +157,22 @@ while run:
 	screen.clear()
 
 
-	# ################ 
-	# mol.rotate_bond(atoms[0], atoms[1],dT)
-	# mol.rotate_bond(atoms[1], atoms[0],dT)
-	# ################
+	######################
+
+	if updt_delta == 10:
+		drawmol = mols[(mols.index(drawmol)+1)%len(mols)]
+		updt_delta = 0
+
+	######################
 
 
 	if draw_dens: screen.draw_density(mos[mo_numb%len(mos)], points, colour_map=colour_map)
-	screen.draw_shape(mol, wireframe=wireframe_mode, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)	
+	screen.draw_shape(drawmol, wireframe=wireframe_mode, draw_atoms=True, draw_bonds=True, draw_hydrogens=True)	
 	if draw_axes: screen.draw_axes(1)
 
 	if keys[pg.K_ESCAPE]:
 		run = False
+
 
 	for e in ev:
 		if e.type == pg.VIDEORESIZE:
@@ -172,6 +188,7 @@ while run:
 				mo_numb -= 1
 			if e.key == pg.K_RETURN:
 				draw_dens = 1 - draw_dens
+				
 
 		elif e.type == pg.MOUSEBUTTONDOWN:
 			if e.button == 1:
@@ -189,8 +206,8 @@ while run:
 							selected_atom.draw_colour = (247,240,111)
 					else:
 						selected_atoms = set()
-						mol.reset_colours()
-						for a in mol.atoms:
+						drawmol.reset_colours()
+						for a in drawmol.atoms:
 							a.selected = False
 			elif e.button == 4:
 				if screen.camera_position[2] > 3:
@@ -203,7 +220,7 @@ while run:
 				else:
 					screen.camera_position[2] = 40
 					
-	mol.rotate(rot)
+	[m.rotate(rot) for m in mols]
 	rot *= 0.8
 	move = pg.mouse.get_rel()
 	if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
@@ -226,10 +243,10 @@ while run:
 		if l == 1:
 			atom = list(selected_atoms)[0]
 
-			if atom in mol.atoms:
-				index = mol.atoms.index(atom)
+			if atom in drawmol.atoms:
+				index = drawmol.atoms.index(atom)
 			else:
-				index = mol.atoms.index(atom)
+				index = drawmol.atoms.index(atom)
 
 			screen.display_text(f'  {atom.symbol}{index+1} {atom.coords} ', (10,10))
 
@@ -237,10 +254,10 @@ while run:
 			atoms = list(selected_atoms)
 			index = []
 			for atom in atoms:
-				if atom in mol.atoms:
-					index.append(mol.atoms.index(atom))
+				if atom in drawmol.atoms:
+					index.append(drawmol.atoms.index(atom))
 				else:
-					index.append(mol.atoms.index(atom))
+					index.append(drawmol.atoms.index(atom))
 
 			screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
 
@@ -248,18 +265,18 @@ while run:
 			atoms = list(selected_atoms)
 			index = []
 			for atom in atoms:
-				if atom in mol.atoms:
-					index.append(mol.atoms.index(atom))
+				if atom in drawmol.atoms:
+					index.append(drawmol.atoms.index(atom))
 				else:
-					index.append(mol.atoms.index(atom))
+					index.append(drawmol.atoms.index(atom))
 
 			a1, a2, a3 = atoms
 			if a2 in a1.bonds and a3 in a1.bonds:
-				screen.display_text(f'  {atoms[1].symbol}{index[1]+1}, {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}: {round(mol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[1].symbol}{index[1]+1}, {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a2.bonds and a3 in a2.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}: {round(mol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
 			elif a1 in a3.bonds and a2 in a3.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}, {atoms[1].symbol}{index[1]+1}: {round(mol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}, {atoms[1].symbol}{index[1]+1}: {round(drawmol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
 			else:
 				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}  ', (10,10))
 

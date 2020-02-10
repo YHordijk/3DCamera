@@ -26,7 +26,7 @@ class Atom:
 				try:
 					el = pt.elements.name(element)
 				except:
-					utils.message('Error: Could not parse element {element}.', 'red')
+					utils.message('Error: Could not parse element {element}.', colour='red')
 
 		self.ionisation_energy = np.genfromtxt('modules\\ionisation_energies', usecols=(1,2), missing_values='', delimiter=';')[el.number]
 
@@ -253,7 +253,7 @@ class Atom:
 				'Na': (119, 0, 255),
 				}[self.symbol]
 		except:
-			utils.message('Error: No default colour found for {self.symbol}. Defaulting to (0,0,0).', 'red')
+			utils.message('Error: No default colour found for {self.symbol}. Defaulting to (0,0,0).', colour='red')
 			self.colour = (0,0,0)
 
 		try:
@@ -270,7 +270,7 @@ class Atom:
 				'Fe': 2,
 				}[self.symbol]
 		except:
-			utils.message('Error: No max_valence found for {self.symbol}. Defaulting to 1.', 'red')
+			utils.message('Error: No max_valence found for {self.symbol}. Defaulting to 1.', colour='red')
 			self.max_valence = 1
 
 
@@ -473,7 +473,7 @@ Coordinates (angstrom):
 		for a in self.atoms:
 			a.coords -= c
 
-		self.position = c
+		self.position = (0,0,0)
 
 
 	def reset_colours(self):
@@ -509,14 +509,14 @@ Coordinates (angstrom):
 						self.atoms.append(Atom(e, c))
 					else:
 						if not type(self.repeat_vector) is np.ndarray:
-							utils.message('Error: Please supply repeat vector.', 'red')
+							utils.message('Error: Please supply repeat vector.', colour='red')
 						else:
 							self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
 
 
 			self._mol_load_finish()
 		else:
-			utils.message('Error: No local file for {self.name} exists. Searching pubchem ...', 'red')
+			utils.message('Error: No local file for {self.name} exists. Searching pubchem ...', colour='red')
 			self._load_from_pubchem(self.name)
 
 
@@ -540,12 +540,12 @@ Coordinates (angstrom):
 		mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			utils.message('Error: Could not find 3d structure of {name}... Attempting to find 2d structure...', 'red')
+			utils.message('Error: Could not find 3d structure of {name}... Attempting to find 2d structure...', colour='red')
 			record_type = '2d'
 			mol = pcp.get_compounds(name, ('name', 'cid')[type(name) is int], record_type=record_type)
 
 		if len(mol) == 0:
-			utils.message('Error: No structural data found for {name}.', 'red')
+			utils.message('Error: No structural data found for {name}.', colour='red')
 
 		else:
 			mol = mol[0]
@@ -568,7 +568,7 @@ Coordinates (angstrom):
 		Method that is called by both xyz and pubchem loading of molecules
 		'''
 
-		utils.message(f'Succesfully loaded {self.name}.', 'green')
+		utils.message(f'Succesfully loaded {self.name}.', colour='green')
 
 		self.center()
 
@@ -770,7 +770,8 @@ Coordinates (angstrom):
 						atom.ring = 'NO'
 
 
-	def shake(self, intens=0.003):
+	def shake(self, intens=1):
+		intens *= 0.003
 		for a in self.atoms:
 			a.coords += np.random.normal(size=3) * intens
 			
@@ -1070,15 +1071,15 @@ Coordinates (angstrom):
 		mbo = sum([a.is_saturated() for a in self.get_by_element('C')]) - len(self.get_by_element('C'))
 		if self._warning_level == 2:
 			if mbo < 0:
-				utils.message(f'Error: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters}).', 'red')
+				utils.message(f'Error: Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)} (iteration {self.guess_bond_order_iters}).', colour='red')
 			else:
-				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iterations', 'green')
+				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iterations', colour='green')
 
 		elif self._warning_level == 1:
 			if mbo == 0:
-				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iteration{"s"*(self.guess_bond_order_iters>0)}.', 'green')
+				utils.message(f'Bond order guessing succesful after {self.guess_bond_order_iters+1} iteration{"s"*(self.guess_bond_order_iters>0)}.', colour='green')
 			elif self.guess_bond_order_iters == self.natoms:
-				utils.message(f'Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}.', 'red')
+				utils.message(f'Bond order guessing was not succesful. Unsaturated atoms: {abs(mbo)}.', colour='red')
 		
 		if mbo < 0 and self.guess_bond_order_iters < 5 * self.natoms:
 			self.guess_bond_order_iters += 1

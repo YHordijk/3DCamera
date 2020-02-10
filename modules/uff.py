@@ -6,6 +6,7 @@ import modules.utils as utils
 class ForceField:
 	def __init__(self):
 		self.load_params()
+		self.name = 'Universal Force Field (UFF)'
 
 
 	def load_params(self):

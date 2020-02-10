@@ -35,11 +35,12 @@ p = plot.Plot()
 # e2 = ff.get_energy(ethane2,verbosity=1)*4.18
 # print((e2-e1)/0.001)
 # print((44.67307-44.64240)/0.001)
+
 ethane.stretch_bond(a[0], a[1], 3)
-newmol = mini.minimize(ethane, ff, steps=1500)
-printer(ethane)
+newmol = mini.minimize(ethane, ff, steps=3000)
+# printer(ethane)
 # newmol.center()
-printer(newmol)
+# printer(newmol)
 
 # x = []
 # y = []

@@ -147,22 +147,22 @@ class Basis:
 
 		bsf_path = os.getcwd()+rf'\Basis_Sets\{basis_type}.bsf'
 		if not os.path.exists(bsf_path):
-			utils.message(f'Error: Basis set {self.basis_type} not found, downloading ...', 'red')
+			utils.message(f'Error: Basis set {self.basis_type} not found, downloading ...', colour='red')
 
 			import requests
 
 			response = requests.get("http://basissetexchange.org" + f'/api/basis/{self.basis_type}/format/json')
 			if response:
 
-				utils.message(f'Succesfully obtained basis set file', 'green')
+				utils.message(f'Succesfully obtained basis set file', colour='green')
 
 				with open(bsf_path, 'w+') as f:
 					f.write(response.text)
 				self.load_basis()
 			else:
-				utils.message(f'Error: Failed to obtain basis set file', 'red')
+				utils.message(f'Error: Failed to obtain basis set file', colour='red')
 		else:
-			utils.message(f'Succesfully loaded {self.basis_type}', 'green')
+			utils.message(f'Succesfully loaded {self.basis_type}', colour='green')
 			with open(bsf_path, 'r') as f:
 				# self.params = json.load(f)['elements'][str(self.atom.atomic_number)]['electron_shells']
 				self.params = json.load(f)['elements']
