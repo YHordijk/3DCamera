@@ -29,11 +29,10 @@ def get_forces(mol, d=1e-7, ff=uff.ForceField()):
 
 
 def minimize(mol, ff=uff.ForceField(), steps=100, converge=1e-3, step_factor=1e-3):
+	mol = copy.deepcopy(mol)
 	for i in range(steps):
 		forces = get_forces(mol, 1e-7, ff)
 		for j, a in enumerate(mol.atoms):
 			a.coords += forces[j] * step_factor
-		print(i/steps*100)
-		print(a.coords)
 
 	return mol

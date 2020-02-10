@@ -9,21 +9,37 @@ import numpy as np
 
 from subprocess import check_output
 
+
+def printer(m):
+	for a1, a2 in m.get_unique_bonds():
+		print(a1, a2, a1.distance_to(a2))
+
+	for a1, a2, a3, angle in m.get_unique_bond_angles():
+		print(a1,a2,a3,angle)
+
+
 utils.ff_print_source(False)
 utils.ff_use_colours(False)
 utils.ff_print_time(False)
 
 
 ff = uff.ForceField()
-ethane = mol.Molecule('ethane eclipsed')
-
+ethane = mol.Molecule('water')
+a = ethane.atoms
+# ethane2 = mol.Molecule('benzene2')
 
 p = plot.Plot()
 
 
-minimizer = mini.Minimizer(ff, ethane)
-print(minimizer.get_jacobian())
-
+# e1 = ff.get_energy(ethane,verbosity=1)*4.18
+# e2 = ff.get_energy(ethane2,verbosity=1)*4.18
+# print((e2-e1)/0.001)
+# print((44.67307-44.64240)/0.001)
+ethane.stretch_bond(a[0], a[1], 3)
+newmol = mini.minimize(ethane, ff, steps=1500)
+printer(ethane)
+# newmol.center()
+printer(newmol)
 
 # x = []
 # y = []

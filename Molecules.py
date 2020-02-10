@@ -21,7 +21,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'ethane'
+molecule 				= 'benzene'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -146,8 +146,8 @@ while run:
 
 
 	# ################ 
-	mol.rotate_bond(atoms[0], atoms[1],dT)
-	mol.rotate_bond(atoms[1], atoms[0],dT)
+	# mol.rotate_bond(atoms[0], atoms[1],dT)
+	# mol.rotate_bond(atoms[1], atoms[0],dT)
 	# ################
 
 
