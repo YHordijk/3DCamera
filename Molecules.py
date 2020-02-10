@@ -21,7 +21,8 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'chloromethane'
+# molecule 				= os.getcwd() + r'\molecules\cyclopropane.xyz'
+molecule 				= '1,2-dichloroethane.pcp'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -131,18 +132,31 @@ utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to s
 utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
 #####################
-[mol.shake(14) for _ in range(200)]
+[mol.shake(12) for _ in range(100)]
+# mol.rotate_bond(atoms[2], atoms[3], np.random.normal(1.6, 3.2))
 mol.center()
 mols = [mol]
-
-for _ in range(50):
-	mols.append(minimizer.minimize(mols[-1], ff, steps=20, copy_mol=True))
+# mol.save(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\0.xyzb")
+for i in range(59):
+	mols.append(minimizer.minimize(mols[-1], ff, steps=10, copy_mol=True))
 	mols[-1].center()
+	# mols[-1].save(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\\" + str(i+1) + '.xyzb')
 	
-drawmol = mols[0]
+
+# def load_anim(folder):
+# 	mols = []
+# 	for f in os.listdir(folder):
+# 		mols.append(mol6.Molecule(folder+f, basis_set_type=basis_set, repeat=repeats))
+
+# 	return mols
+
+# mols = load_anim(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\\")
+# drawmol = mols[0]
 
 
 #####################
+
+drawmol = mol
 
 while run:
 	#tick prep
@@ -188,7 +202,7 @@ while run:
 				mo_numb -= 1
 			if e.key == pg.K_RETURN:
 				draw_dens = 1 - draw_dens
-				
+
 
 		elif e.type == pg.MOUSEBUTTONDOWN:
 			if e.button == 1:
@@ -237,48 +251,50 @@ while run:
 
 
 	#tick end
-	l = len(selected_atoms)
-	if l > 0:
-		sa = list(selected_atoms)
-		if l == 1:
-			atom = list(selected_atoms)[0]
+	try:
+		l = len(selected_atoms)
+		if l > 0:
+			sa = list(selected_atoms)
+			if l == 1:
+				atom = list(selected_atoms)[0]
 
-			if atom in drawmol.atoms:
-				index = drawmol.atoms.index(atom)
-			else:
-				index = drawmol.atoms.index(atom)
-
-			screen.display_text(f'  {atom.symbol}{index+1} {atom.coords} ', (10,10))
-
-		elif l == 2:
-			atoms = list(selected_atoms)
-			index = []
-			for atom in atoms:
 				if atom in drawmol.atoms:
-					index.append(drawmol.atoms.index(atom))
+					index = drawmol.atoms.index(atom)
 				else:
-					index.append(drawmol.atoms.index(atom))
+					index = drawmol.atoms.index(atom)
 
-			screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
+				screen.display_text(f'  {atom.symbol}{index+1} {atom.coords} ', (10,10))
 
-		elif l == 3:
-			atoms = list(selected_atoms)
-			index = []
-			for atom in atoms:
-				if atom in drawmol.atoms:
-					index.append(drawmol.atoms.index(atom))
+			elif l == 2:
+				atoms = list(selected_atoms)
+				index = []
+				for atom in atoms:
+					if atom in drawmol.atoms:
+						index.append(drawmol.atoms.index(atom))
+					else:
+						index.append(drawmol.atoms.index(atom))
+
+				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}: {round(atoms[0].distance_to(atoms[1]), 3)} (A)  ', (10,10))
+
+			elif l == 3:
+				atoms = list(selected_atoms)
+				index = []
+				for atom in atoms:
+					if atom in drawmol.atoms:
+						index.append(drawmol.atoms.index(atom))
+					else:
+						index.append(drawmol.atoms.index(atom))
+
+				a1, a2, a3 = atoms
+				if a2 in a1.bonds and a3 in a1.bonds:
+					screen.display_text(f'  {atoms[1].symbol}{index[1]+1}, {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				elif a1 in a2.bonds and a3 in a2.bonds:
+					screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
+				elif a1 in a3.bonds and a2 in a3.bonds:
+					screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}, {atoms[1].symbol}{index[1]+1}: {round(drawmol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
 				else:
-					index.append(drawmol.atoms.index(atom))
-
-			a1, a2, a3 = atoms
-			if a2 in a1.bonds and a3 in a1.bonds:
-				screen.display_text(f'  {atoms[1].symbol}{index[1]+1}, {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a2, a1, a3, in_degrees=True), 1)} (deg)  ', (10,10))
-			elif a1 in a2.bonds and a3 in a2.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}: {round(drawmol.bond_angle(a1, a2, a3, in_degrees=True), 1)} (deg)  ', (10,10))
-			elif a1 in a3.bonds and a2 in a3.bonds:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[2].symbol}{index[2]+1}, {atoms[1].symbol}{index[1]+1}: {round(drawmol.bond_angle(a1, a3, a2, in_degrees=True), 1)} (deg)  ', (10,10))
-			else:
-				screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}  ', (10,10))
-
+					screen.display_text(f'  {atoms[0].symbol}{index[0]+1}, {atoms[1].symbol}{index[1]+1}, {atoms[2].symbol}{index[2]+1}  ', (10,10))
+	except:
+		pass
 
 	screen.update()

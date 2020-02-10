@@ -387,7 +387,7 @@ class Molecule:
 	Class representation of a molecule
 	'''
 
-	def __init__(self, molecule_file=None, atoms=[], position=[0.,0.,0.], rotation=[0.,0.], 
+	def __init__(self, molecule_file=None, atoms=None, position=[0.,0.,0.], rotation=[0.,0.], 
 					warning_level=1, scale=200, basis_set_type='STO-6G', repeat=1, repeat_vector=None):
 		self._warning_level = warning_level
 
@@ -413,22 +413,41 @@ class Molecule:
 			'S': 2,
 			'Na': 1,
 		}
-		if atoms is not None and molecule_file is None:
+
+		if atoms is not None:
 			self.atoms = atoms
 			self.name = 'Molecule'
 			self._mol_load_finish()
+
 		else:
-
-			#check if file ends with xyz and try to load it
-			if molecule_file is not None and molecule_file.endswith('.xyz'):
-				self._load_xyz(molecule_file)
-
-			# elif molecule_file is not None and molecule_file.endswith('.pcp'):
-			# 	self._load_from_pubchem(molecule_file[0:-4])
+			#get the file extension:
+			name, filetype = molecule_file.split('.')
+			if filetype == 'pcp':
+				utils.message(f'Searching pubchem for {name}...')
+				self._load_from_pubchem(name)
 
 			else:
-				self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
+				#check if file exists:
+				if not os.path.exists(molecule_file):
+					utils.message(f'Error: File {molecule_file} does not exist. Searching pubchem ...', colour='red')
+					self._load_from_pubchem(molecule_file)
+				else:
+					if filetype == 'xyz':
+						self._load_xyz(molecule_file)
+					if filetype == 'xyzb':
+						self._load_xyzb(molecule_file)
 
+
+			# self._load_from_file()
+			# #check if file ends with xyz and try to load it
+			# if molecule_file is not None and molecule_file.endswith('.xyz'):
+				
+
+			# # elif molecule_file is not None and molecule_file.endswith('.pcp'):
+			# # 	self._load_from_pubchem(molecule_file[0:-4])
+
+			# else:
+			# 	self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
 
 
 
@@ -491,33 +510,66 @@ Coordinates (angstrom):
 		'''
 		self.name = file.split('/')[-1].strip('.xyz').capitalize()
 		self.name = self.name.split('\\')[-1].strip('.xyz').capitalize()
-		if os.path.exists(file):
-			coords = list(np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float))
-			elements = list(np.loadtxt(file, skiprows=2, usecols=0, dtype=str))
 
-			
-			if 'VEC1' in elements:
-				i = elements.index('VEC1')
-				self.repeat_vector = coords[i]
-				del(elements[i])
-				del(coords[i])
+		coords = list(np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float))
+		elements = list(np.loadtxt(file, skiprows=2, usecols=0, dtype=str))
 
-			self.atoms = []
-			for r in range(self.repeat):
-				for e, c in zip(elements, coords):
-					if r == 0:
-						self.atoms.append(Atom(e, c))
+		if 'VEC1' in elements:
+			i = elements.index('VEC1')
+			self.repeat_vector = coords[i]
+			del(elements[i])
+			del(coords[i])
+
+		self.atoms = []
+		for r in range(self.repeat):
+			for e, c in zip(elements, coords):
+				if r == 0:
+					self.atoms.append(Atom(e, c))
+				else:
+					if not type(self.repeat_vector) is np.ndarray:
+						utils.message('Error: Please supply repeat vector.', colour='red')
 					else:
-						if not type(self.repeat_vector) is np.ndarray:
-							utils.message('Error: Please supply repeat vector.', colour='red')
-						else:
-							self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
+						self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
 
 
-			self._mol_load_finish()
-		else:
-			utils.message('Error: No local file for {self.name} exists. Searching pubchem ...', colour='red')
-			self._load_from_pubchem(self.name)
+		self._mol_load_finish()
+
+
+	def _load_xyzb(self, file):
+		'''
+		Method used to load xyz files
+
+		file - string representing the path to the xyz file
+
+		returns nothing, modifies self
+		'''
+		self.name = file.split('/')[-1].strip('.xyzb').capitalize()
+		self.name = self.name.split('\\')[-1].strip('.xyzb').capitalize()
+
+		coords = list(np.loadtxt(file, skiprows=2, usecols=(1,2,3), dtype=float))
+		elements = list(np.loadtxt(file, skiprows=2, usecols=0, dtype=str))
+
+		if 'VEC1' in elements:
+			i = elements.index('VEC1')
+			self.repeat_vector = coords[i]
+			del(elements[i])
+			del(coords[i])
+
+		self.atoms = []
+		for r in range(self.repeat):
+			for e, c in zip(elements, coords):
+				if r == 0:
+					self.atoms.append(Atom(e, c))
+				else:
+					if not type(self.repeat_vector) is np.ndarray:
+						utils.message('Error: Please supply repeat vector.', colour='red')
+					else:
+						self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
+
+
+
+
+		self._mol_load_finish()
 
 
 	def _load_from_pubchem(self, name):
@@ -558,7 +610,7 @@ Coordinates (angstrom):
 			self.atoms = []
 			[self.atoms.append(Atom(elements[i], coords[i])) for i in range(len(coords))]
 			if record_type == '3d':
-				self.save_to_xyz(os.getcwd() + rf'\Molecules\{name.lower()}.xyz')
+				self.save(os.getcwd() + rf'\Molecules\{name.lower()}.xyz')
 
 			self._mol_load_finish()
 
@@ -568,14 +620,14 @@ Coordinates (angstrom):
 		Method that is called by both xyz and pubchem loading of molecules
 		'''
 
-		utils.message(f'Succesfully loaded {self.name}.', colour='green')
-
 		self.center()
 
 		self.set_bonds()
 		self.detect_rings()
 
 		self._load_basis_set()
+
+		utils.message(f'Succesfully loaded {self.name}.', colour='green')
 
 
 
@@ -929,6 +981,7 @@ Coordinates (angstrom):
 		self.fix_overbonding()
 		self.set_HA_valence()
 		self.set_hybridisation()
+
 		self.guess_bond_orders()
 
 
@@ -1277,27 +1330,47 @@ Coordinates (angstrom):
 		self.atoms.append(Atom(element, coords.flatten()))
 
 
-	def save_to_xyz(self, file='', comment='generated via python\n'):
+	def save(self, file=None, comment='generated via python\n', filetype='xyz'):
 		'''
 		Method that saves the molecule to a file
 
 		file - string path to new file
 		'''
-		if file == '':
-			file = os.getcwd() + rf'\Molecules\{self.name.lower()}.xyz'
+
+		if file == None:
+			file = os.getcwd() + rf'\Molecules\{self.name.lower()}.{filetype}'
+		else:
+			filetype = file.split('.')[-1]
+
+		if not file.endswith('.' + filetype):
+			file += '.' + filetype
 
 		if not comment.endswith('\n'):
 			comment += '\n'
 
-		with open(file, 'w+') as f:
-			f.write(f'{self.natoms}\n')
-			f.write(comment)
-			for a in self.atoms:
-				f.write(f'{a.symbol} {a.coords[0]:.5f} {a.coords[1]:.5f} {a.coords[2]:.5f}\n')
+
+		if filetype == 'xyz': #standard xyz format
+			with open(file, 'w+') as f:
+				f.write(f'{self.natoms}\n')
+				f.write(comment)
+				for a in self.atoms:
+					f.write(f'{a.symbol: <2} \t {a.coords[0]: >8.5f} \t {a.coords[1]: >8.5f} \t {a.coords[2]: >8.5f}\n')
+
+		elif filetype == 'xyzb': #xyz format plus bond information
+			with open(file, 'w+') as f:
+				f.write(f'{self.natoms}\n')
+				f.write(comment)
+				for a in self.atoms:
+					f.write(f'{a.symbol: <2} \t {a.coords[0]: >8.5f} \t {a.coords[1]: >8.5f} \t {a.coords[2]: >8.5f}\n')
+
+				f.write('\n')
+				for a1, a2 in self.get_unique_bonds():
+					f.write(f'{self.atoms.index(a1)} \t {self.atoms.index(a2)} \t {a1.bond_orders[a2]}\n')
+
 
 		utils.message(f'Saved molecule to {file}')
 
-		return file
+		return file	
 
 
 	def rotate(self, rotation):
