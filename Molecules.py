@@ -21,7 +21,7 @@ import pygame as pg
 
 
 ####### setup
-molecule 				= 'ethane'
+molecule 				= 'chloromethane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -131,7 +131,7 @@ utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to s
 utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
 #####################
-[mol.shake(15) for _ in range(200)]
+[mol.shake(14) for _ in range(200)]
 mol.center()
 mols = [mol]
 
