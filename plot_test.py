@@ -23,10 +23,15 @@ colour = cmap.CoolWarm()
 # p.plot_3d(x,y,z, colour_map=colour, style='contour')
 
 
-for i in range(7):
-	x = np.arange(-i+1,i+1+.1,0.1)
-	y = x**3
-	p.plot(x,y, style='line', width=2)
+# for i in range(7):
+# 	x = np.arange(-i+1,i+1+.1,0.1)
+# 	y = x**3
+# 	p.plot(x,y, style='line', width=2)
+
+x = np.linspace(0.01,1,100)
+y = np.log(x)
+
+p.plot(x,y)
 
 p.x_label = 'x'
 p.y_label = 'y'
