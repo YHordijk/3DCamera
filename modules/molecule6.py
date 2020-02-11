@@ -420,34 +420,48 @@ class Molecule:
 			self._mol_load_finish()
 
 		else:
-			#get the file extension:
+			self._load_mol(molecule_file)
+
+
+	def _load_mol(self, molecule_file):
+		#get the file extension:
+		if '.' in molecule_file:
 			name, filetype = molecule_file.split('.')
-			if filetype == 'pcp':
-				utils.message(f'Searching pubchem for {name}...')
-				self._load_from_pubchem(name)
+		else:
+			utils.message(f'Searching pubchem for {molecule_file}...')
+			self._load_from_pubchem(molecule_file)
+			return
 
+		if filetype == 'pcp':
+			utils.message(f'Searching pubchem for {name}...')
+			self._load_from_pubchem(name)
+			return
+
+		else:
+			#check if file exists:
+			if not os.path.exists(molecule_file):
+				utils.message(f'Error: File {molecule_file} does not exist. Searching pubchem ...', colour='red')
+				self._load_from_pubchem(molecule_file)
+				return
 			else:
-				#check if file exists:
-				if not os.path.exists(molecule_file):
-					utils.message(f'Error: File {molecule_file} does not exist. Searching pubchem ...', colour='red')
-					self._load_from_pubchem(molecule_file)
-				else:
-					if filetype == 'xyz':
-						self._load_xyz(molecule_file)
-					if filetype == 'xyzb':
-						self._load_xyzb(molecule_file)
+				if filetype == 'xyz':
+					self._load_xyz(molecule_file)
+					return
+				if filetype == 'xyzb':
+					self._load_xyzb(molecule_file)
+					return
 
 
-			# self._load_from_file()
-			# #check if file ends with xyz and try to load it
-			# if molecule_file is not None and molecule_file.endswith('.xyz'):
-				
+		# self._load_from_file()
+		# #check if file ends with xyz and try to load it
+		# if molecule_file is not None and molecule_file.endswith('.xyz'):
+			
 
-			# # elif molecule_file is not None and molecule_file.endswith('.pcp'):
-			# # 	self._load_from_pubchem(molecule_file[0:-4])
+		# # elif molecule_file is not None and molecule_file.endswith('.pcp'):
+		# # 	self._load_from_pubchem(molecule_file[0:-4])
 
-			# else:
-			# 	self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
+		# else:
+		# 	self._load_xyz(os.getcwd() + f'\\Molecules\\{molecule_file}.xyz')
 
 
 
@@ -456,18 +470,10 @@ class Molecule:
 		Dunder method specifying what should be returned when the object is cast to a string.
 		'''
 
-		string = f'''
-Molecule {self.name}:
-
-Number of carbon atoms: {self.ncarbons}
-Number of hydrogen atoms: {self._nelement("H")}
-
-Coordinates (angstrom):
-'''
+		string = ''
 		coord_string = [f'\t{a.symbol: ^4} {a.coords[0]: >10.5f} {a.coords[1]: >10.5f} {a.coords[2]: >10.5f}\n' for a in self.atoms]
 		string += ''.join(coord_string)
-		string += f'\n\tCOM  {self.center_of_mass[0]: >10.5f} {self.center_of_mass[1]: >10.5f} {self.center_of_mass[2]: >10.5f}\t#Center of mass'
-
+		
 		return string
 
 
@@ -531,7 +537,6 @@ Coordinates (angstrom):
 					else:
 						self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
 
-
 		self._mol_load_finish()
 
 
@@ -565,9 +570,6 @@ Coordinates (angstrom):
 						utils.message('Error: Please supply repeat vector.', colour='red')
 					else:
 						self.atoms.append(Atom(e, c+(r)*self.repeat_vector))
-
-
-
 
 		self._mol_load_finish()
 

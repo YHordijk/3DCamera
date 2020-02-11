@@ -29,15 +29,32 @@ def get_forces(mol, d=1e-7, ff=uff.ForceField()):
 	return -(J-e0)/d
 
 
-def minimize(mol, ff=uff.ForceField(), steps=1500, converge=1e-3, step_factor=1e-4, copy_mol=True):
+def minimize(mol, ff=uff.ForceField(), max_steps=1500, converge_thresh=5e-2, step_factor=4e-4):
 	utils.message(f'Starting geometry optimisation for molecule {mol.name} using {ff.name}.')
-	utils.message(f'Steps: {steps}, Step-Factor: {step_factor}', 1)
-	if copy_mol: mol = copy.deepcopy(mol)
-	for i in range(steps):
-		if i%100 == 0:
-			utils.message(f'Progress: {int(i/steps*100)}%', 2)
+	utils.message(f'Max. Steps: {max_steps}; Step-Factor: {step_factor:.2e}; Converge thresh.: {converge_thresh:.2e}', 1)
+
+	mol = copy.deepcopy(mol)
+	mols = [mol]
+	
+	for i in range(max_steps):
 		forces = get_forces(mol, 1e-6, ff)
+		if np.all(np.absolute(forces) < converge_thresh):
+			break
+
 		for j, a in enumerate(mol.atoms):
 			a.coords += forces[j] * step_factor
-	utils.message('Progress: 100%', 2)
-	return mol
+
+		if i%10 == 0:
+			mol.center()
+			mols.append(copy.deepcopy(mol))
+
+			utils.message(f'Current Step: {i} with ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', 2)
+
+	if i < max_steps-1:
+		utils.message(f'Molecule optimization succesful after {i+1} steps.', 1, colour='green')
+		utils.message(f'ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', 2, colour='green')
+	else:
+		utils.message(f'Molecule optimization failed after {i+1} steps.', 1, colour='red')
+		utils.message(f'ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', 2, colour='red')
+	
+	return mols

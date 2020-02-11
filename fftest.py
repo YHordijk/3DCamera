@@ -42,20 +42,20 @@ p = plot.Plot()
 # newmol.center()
 # printer(newmol)
 
-x = []
-y = []
-y_ob = []
-ran = 120
-for i in range(ran+1):
-	ethane.rotate_bond(ethane.atoms[2], ethane.atoms[3], 2*math.pi/ran)
-	x.append(i/ran*360)
-	y.append(ff.get_energy(ethane, morse_potential=True, verbosity=0))
+# x = []
+# y = []
+# y_ob = []
+# ran = 120
+# for i in range(ran+1):
+# 	ethane.rotate_bond(ethane.atoms[2], ethane.atoms[3], 2*math.pi/ran)
+# 	x.append(i/ran*360)
+# 	y.append(ff.get_energy(ethane, morse_potential=True, verbosity=0))
 
-	# file = f'C:\\Users\\Yuman\\Desktop\\Programmeren\\Python\\PyGame\\3DCamera\\Molecules\\ethane{int(x[-1])}.xyz'
-	# ethane.save_to_xyz(file=file, comment=f'{x[-1]}')
+# 	file = f'C:\\Users\\Yuman\\Desktop\\Programmeren\\Python\\PyGame\\3DCamera\\Molecules\\ethane{int(x[-1])}.xyz'
+# 	ethane.save_to_xyz(file=file, comment=f'{x[-1]}')
 
-	# out = check_output(f'obenergy -ff UFF {file}', shell=True)
-	# y_ob.append(float(out[out.find(b'TOTAL ENERGY')+15:-9]))
+# 	out = check_output(f'obenergy -ff UFF {file}', shell=True)
+# 	y_ob.append(float(out[out.find(b'TOTAL ENERGY')+15:-9]))
 
 
 # x = []

@@ -22,7 +22,7 @@ import pygame as pg
 
 ####### setup
 # molecule 				= os.getcwd() + r'\molecules\cyclopropane.xyz'
-molecule 				= '1,2-dichloroethane.pcp'
+molecule 				= 'aspirin'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -40,6 +40,7 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
+verbosity 				= 2
 
 calculate_uff_energy 	= True
 uff_verbosity			= 0
@@ -83,6 +84,7 @@ MOTD()
 utils.ff_print_source(fancy_format_source)
 utils.ff_use_colours(fancy_format_colours)
 utils.ff_print_time(fancy_format_time)
+utils.ff_verbosity(verbosity)
 
 if colour_map == None:
 	colour_map = cmap.BlueRed(posneg_mode=True)
@@ -135,13 +137,7 @@ utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 [mol.shake(12) for _ in range(100)]
 # mol.rotate_bond(atoms[2], atoms[3], np.random.normal(1.6, 3.2))
 mol.center()
-mols = [mol]
-# mol.save(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\0.xyzb")
-for i in range(59):
-	mols.append(minimizer.minimize(mols[-1], ff, steps=10, copy_mol=True))
-	mols[-1].center()
-	# mols[-1].save(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\\" + str(i+1) + '.xyzb')
-	
+mols = minimizer.minimize(mol, ff, max_steps=1500)
 
 # def load_anim(folder):
 # 	mols = []
@@ -156,7 +152,7 @@ for i in range(59):
 
 #####################
 
-drawmol = mol
+drawmol = mols[-1]
 
 while run:
 	#tick prep
