@@ -29,7 +29,12 @@ def get_forces(mol, d=1e-7, ff=uff.ForceField()):
 	return -(J-e0)/d
 
 
-def minimize(mol, ff=uff.ForceField(), max_steps=1500, converge_thresh=5e-2, step_factor=4e-4, sample_freq=10):
+def minimize(mol, ff=uff.ForceField(), max_steps=1500, converge_thresh=5e-2, step_factor=8e-4, sample_freq=10):
+	assert(max_steps > 0)
+	assert(converge_thresh > 0)
+	assert(step_factor > 0)
+	assert(sample_freq > 0)
+
 	utils.message(f'Starting geometry optimisation for molecule {mol.name} using {ff.name}.')
 	utils.message(f'Max. Steps: {max_steps}; Step-Factor: {step_factor:.2e}; Converge thresh.: {converge_thresh:.2e}', 1)
 

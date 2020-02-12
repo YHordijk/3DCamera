@@ -473,7 +473,7 @@ class Molecule:
 		string = ''
 		coord_string = [f'\t{a.symbol: ^4} {a.coords[0]: >10.5f} {a.coords[1]: >10.5f} {a.coords[2]: >10.5f}\n' for a in self.atoms]
 		string += ''.join(coord_string)
-		
+
 		return string
 
 
@@ -825,9 +825,9 @@ class Molecule:
 
 
 	def shake(self, intens=1):
-		intens *= 0.003
+		intens
 		for a in self.atoms:
-			a.coords += np.random.normal(size=3) * intens
+			a.coords += np.random.random(size=3) * intens *2 - intens
 			
 
 	def rotate_bond(self, a1, a2, r):

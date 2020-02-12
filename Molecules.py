@@ -21,8 +21,8 @@ import pygame as pg
 
 
 ####### setup
-# molecule 				= os.getcwd() + r'\molecules\cyclopropane.xyz'
-molecule 				= 'aspirin'
+molecule 				= os.getcwd() + r'\molecules\water dimer.xyz'
+# molecule 				= '1,2-dichloroethane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -134,21 +134,13 @@ utils.message('Please press ENTER to toggle orbital display. Use arrow-keys to s
 utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 
 #####################
-[mol.shake(12) for _ in range(100)]
-# mol.rotate_bond(atoms[2], atoms[3], np.random.normal(1.6, 3.2))
+mols = [mol]
+
+mol.shake()
+# for a1, a2, a3, a4, _ in mol.get_unique_torsion_angles():
+# 	mol.rotate_bond(a2,a3,np.random.random()*2*3.14)
 mol.center()
-mols = minimizer.minimize(mol, ff, max_steps=1500)
-
-# def load_anim(folder):
-# 	mols = []
-# 	for f in os.listdir(folder):
-# 		mols.append(mol6.Molecule(folder+f, basis_set_type=basis_set, repeat=repeats))
-
-# 	return mols
-
-# mols = load_anim(r"C:\Users\Yuman\Desktop\Programmeren\Python\PyGame\3DCamera\Molecules\anim\\")
-# drawmol = mols[0]
-
+mols = minimizer.minimize(mol, ff, max_steps=300, sample_freq=5)
 
 #####################
 
@@ -169,7 +161,7 @@ while run:
 
 	######################
 
-	if updt_delta == 10:
+	if updt_delta == 5:
 		drawmol = mols[(mols.index(drawmol)+1)%len(mols)]
 		updt_delta = 0
 
