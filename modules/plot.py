@@ -478,4 +478,4 @@ class Plot:
 
 			pg.display.update()
 					  
-		pg.quit()
+		# pg.quit()

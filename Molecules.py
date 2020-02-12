@@ -7,6 +7,7 @@ import modules.colour_maps as cmap
 import modules.uff as uff
 import modules.utils as utils
 import modules.minimizer as minimizer
+import modules.plot as plot
 import numpy as np
 from time import perf_counter
 import pubchempy as pcp
@@ -20,9 +21,10 @@ import pygame as pg
 
 
 
+
 ####### setup
-molecule 				= os.getcwd() + r'\molecules\water dimer.xyz'
-# molecule 				= '1,2-dichloroethane'
+# molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
+molecule 				= 'anthracene'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -40,12 +42,13 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
-verbosity 				= 2
+verbosity 				= 0
 
-calculate_uff_energy 	= True
-uff_verbosity			= 0
+minimize_structure		= True
+sampling_freq			= 1
+randomize_structure		= True
+plot_energy				= True
 #######
-
 
 
 
@@ -95,10 +98,6 @@ pg.init()
 screen = scr.Screen3D(resolution, bkgr_colour=background_colour)
 mol = mol6.Molecule(molecule, basis_set_type=basis_set, repeat=repeats)
 
-if calculate_uff_energy:
-	ff = uff.ForceField()
-	ff.get_energy(mol, verbosity=uff_verbosity)
-
 if add_hydrogens:
 	mol.add_hydrogens()
 
@@ -136,12 +135,23 @@ utils.message('Hold CTRL and use mouse to rotate and move molecule.')
 #####################
 mols = [mol]
 
-mol.shake()
-# for a1, a2, a3, a4, _ in mol.get_unique_torsion_angles():
-# 	mol.rotate_bond(a2,a3,np.random.random()*2*3.14)
-mol.center()
-mols = minimizer.minimize(mol, ff, max_steps=300, sample_freq=5)
+if randomize_structure:
+	for a1, a2 in mol.get_rotatable_bonds():
+		mol.rotate_bond(a1,a2,np.random.random()*2*1*3.14 -1*3.14)
 
+	mol.shake(0.5)
+mol.center()
+if minimize_structure: 
+	mols, energies = minimizer.minimize(mol, 'uff', max_steps=400, sample_freq=5, use_torsions=True)
+	if plot_energy:
+		p = plot.Plot()
+		p.plot(np.arange(len(energies)), energies)
+		p.x_label = 'Sample'
+		p.y_label = 'Energy (kcal/mol)'
+		p.title = f'Progress of Energy Minimization'
+		p.show()
+
+screen.size = (resolution)
 #####################
 
 drawmol = mols[-1]
@@ -161,7 +171,7 @@ while run:
 
 	######################
 
-	if updt_delta == 5:
+	if updt_delta == sample_freq*2:
 		drawmol = mols[(mols.index(drawmol)+1)%len(mols)]
 		updt_delta = 0
 

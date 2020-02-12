@@ -493,10 +493,5 @@ class Screen3D:
 					   [ 	  0, 	   1,	   0],
 					   [-sin(r), 	   0, cos(r)]))
 
-		r = rotation[2]
-		Rz = np.array(([ cos(r), -sin(r), 	   0],
-					   [ sin(r),  cos(r), 	   0],
-					   [ 	  0, 	   0, 	   1]))
-
 		return (Rx @ Ry @ array.T).T
 			

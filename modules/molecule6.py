@@ -863,6 +863,7 @@ class Molecule:
 		Method that aligns a bond along a1 and a2 to the x-axis
 		https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
 		'''
+
 		#get the bond vector
 		a = a1.coords - a2.coords
 
@@ -1050,7 +1051,7 @@ class Molecule:
 
 	def get_unique_torsion_angles(self, in_degrees=False):
 		'''
-		Generator method that yields all unique torsion angles in the molecule along with the atoms over which the torsion angle is calculated.
+		Method that yields all unique torsion angles in the molecule along with the atoms over which the torsion angle is calculated.
 		'''
 
 		prev_angles = []
@@ -1061,7 +1062,15 @@ class Molecule:
 						sorted_atoms = sorted((a1,a2,a3, a4), key=lambda x: id(x))
 						if not sorted_atoms in prev_angles and len(set((a1, a2, a3, a4))) == 4:
 							prev_angles.append(sorted_atoms)
-							yield (a1, a2, a3, a4, self.torsion_angle(a1, a2, a3, a4, in_degrees=in_degrees))
+							yield (a1, a2, a3, a4, self.torsion_angle(a1, a2, a3, a4, in_degrees))
+
+
+
+	def get_rotatable_bonds(self):
+		
+		for a1, a2 in self.get_unique_bonds():
+			if len(a1.bonds) > 1 and len(a2.bonds) > 1:
+				yield (a1,a2)
 
 
 	def reset_bond_orders(self):
@@ -1396,8 +1405,8 @@ class Molecule:
 			a.coords = Rx @ Ry @ a.coords
 
 		if hasattr(self, '_elec_stat_pos'):
-			self._elec_stat_pos = (Rx @ Ry @ Rz @ self._elec_stat_pos.T).T
+			self._elec_stat_pos = (Rx @ Ry @ self._elec_stat_pos.T).T
 
 		if hasattr(self, '_dens_pos'):
 			for key in self._dens_pos.keys():
-				self._dens_pos[key] = (Rx @ Ry @ Rz @ self._dens_pos[key].T).T
+				self._dens_pos[key] = (Rx @ Ry @ self._dens_pos[key].T).T
