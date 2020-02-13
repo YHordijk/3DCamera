@@ -4,6 +4,7 @@ import modules.uff as uff
 import modules.utils as utils
 import modules.plot as plot
 import modules.minimizer as mini
+import modules.moldynamics as md
 import os, math
 import numpy as np
 
@@ -26,9 +27,11 @@ utils.ff_print_time(False)
 ff = uff.ForceField()
 ethane = mol.Molecule('1,2-dichloroethane.pcp')
 a = ethane.atoms
+
+md.perform_md(ethane)
 # ethane2 = mol.Molecule('benzene2')
 
-p = plot.Plot()
+# p = plot.Plot()
 
 
 # e1 = ff.get_energy(ethane,verbosity=1)*4.18
@@ -80,12 +83,12 @@ p = plot.Plot()
 
 # p.clear()
 
-p.plot(x,y, style='line')
-# p.plot(x,y_ob, style='line')
-# p.plot(x,np.asarray(y_ob) - np.asarray(y), style='line')
-p.y_label = 'Energy (kJ/mol)'
-p.x_label = 'theta (degrees)'
-p.title = 'Energy as function of rotation of H3C-CH3 bond'
-p.show()
+# p.plot(x,y, style='line')
+# # p.plot(x,y_ob, style='line')
+# # p.plot(x,np.asarray(y_ob) - np.asarray(y), style='line')
+# p.y_label = 'Energy (kJ/mol)'
+# p.x_label = 'theta (degrees)'
+# p.title = 'Energy as function of rotation of H3C-CH3 bond'
+# p.show()
 
 

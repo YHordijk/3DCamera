@@ -7,6 +7,7 @@ import modules.colour_maps as cmap
 import modules.uff as uff
 import modules.utils as utils
 import modules.minimizer as minimizer
+import modules.moldynamics as md
 import modules.plot as plot
 import numpy as np
 from time import perf_counter
@@ -23,8 +24,9 @@ import pygame as pg
 
 
 ####### setup
+
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'methane'
+molecule 				= 'ethane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -42,16 +44,21 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
-verbosity 				= 0
+verbosity 				= 2
 
-minimize_structure		= True
-sample_freq				= 1
+minimize_structure		= False
+min_sample_freq			= 10
 randomize_structure		= False
 plot_energy				= True
 max_steps 				= 1000
+
+perform_md				= True
+md_sample_freq			= 10
+md_run_time				= 2
+md_time_step			= .5e-2
+md_temperature 			= 273.15
+
 #######
-
-
 
 
 
@@ -118,7 +125,6 @@ clock = pg.time.Clock()
 FPS = 120
 tick = clock.tick_busy_loop
 updt = 0
-updt_delta = 0
 time = 0
 rot = np.array([0.,0.])
 zoom = 0
@@ -139,9 +145,9 @@ mols = [mol]
 if randomize_structure:
 	for a1, a2 in mol.get_rotatable_bonds():
 		mol.rotate_bond(a1,a2,np.random.random()*2*1*3.14 -1*3.14)
-
 	mol.shake(0.5)
 mol.center()
+
 if minimize_structure: 
 	mols, energies = minimizer.minimize(mol, 'uff', max_steps=max_steps, sample_freq=sample_freq, use_torsions=True)
 	if plot_energy:
@@ -155,6 +161,11 @@ if minimize_structure:
 mols[-1].save()
 
 screen.size = (resolution)
+
+
+if perform_md:
+	mols, energies = md.perform_md(mol, ff='uff', run_time=md_run_time, time_step=md_time_step, temperature=md_temperature, sample_freq=md_sample_freq)
+
 #####################
 
 drawmol = mols[-1]
@@ -162,7 +173,6 @@ drawmol = mols[-1]
 while run:
 	#tick prep
 	updt += 1
-	updt_delta += 1
 	dT = tick(FPS)/1000
 	time += dT
 
@@ -174,9 +184,8 @@ while run:
 
 	######################
 
-	if updt_delta == sample_freq*2:
+	if updt%md_sample_freq == 0:
 		drawmol = mols[(mols.index(drawmol)+1)%len(mols)]
-		updt_delta = 0
 
 	######################
 

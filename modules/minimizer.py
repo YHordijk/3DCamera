@@ -4,8 +4,8 @@ import copy
 import modules.uff as uff
 import modules.utils as utils
 
-#maths
-def get_forces(mol, d=1e-7, ff=uff.ForceField(), use_torsions=True):
+
+def get_forces(mol, d, ff, use_torsions):
 	'''
 	Method that calculates the forces acting
 	on the atoms in mol. Uses atomic 
@@ -86,8 +86,8 @@ def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e
 			if np.all(np.absolute(forces) < converge_thresh):
 				break
 
-			utils.message(f'Current Step: {i} with ENERGY = {energies[-1]:.6f} kcal/mol', 1)
-			utils.message(f'\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', 2)
+			utils.message((f'Current Step: {i+1} with ENERGY = {energies[-1]:.6f} kcal/mol',
+						   f'Current Step: {i+1} with ENERGY = {energies[-1]:.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n'), (1,2))
 
 		if use_torsions:
 			for j, a in enumerate(mol.atoms):
@@ -100,10 +100,10 @@ def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e
 
 		
 	if i < max_steps-1:
-		utils.message(f'Molecule optimization succesful after {i+1} steps.', 1, colour='green')
-		utils.message(f'ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', colour='green')
+		utils.message((f'Molecule optimization succesful after {i+1} steps with ENERGY = {ff.get_energy(mol):.6f} kcal/mol',
+					   f'Molecule optimization succesful after {i+1} steps with ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n'), (0,2), colour='green')
 	else:
-		utils.message(f'Molecule optimization failed after {i+1} steps.', 1, colour='red')
-		utils.message(f'ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n', colour='red')
-	
+		utils.message((f'Molecule optimization failed after {i+1} steps with ENERGY = {ff.get_energy(mol):.6f} kcal/mol',
+					   f'Molecule optimization failed after {i+1} steps with ENERGY = {ff.get_energy(mol):.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n'), (0,2), colour='red')
+		
 	return mols, energies
