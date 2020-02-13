@@ -26,7 +26,7 @@ import pygame as pg
 ####### setup
 
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'ethane'
+molecule 				= 'methane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -53,10 +53,10 @@ plot_energy				= True
 max_steps 				= 1000
 
 perform_md				= True
-md_sample_freq			= 10
-md_run_time				= 2
-md_time_step			= .5e-2
-md_temperature 			= 273.15
+md_sample_freq			= 5
+md_run_time				= 1e-12
+md_time_step			= .5e-15
+md_temperature 			= 500
 
 #######
 
@@ -164,7 +164,7 @@ screen.size = (resolution)
 
 
 if perform_md:
-	mols, energies = md.perform_md(mol, ff='uff', run_time=md_run_time, time_step=md_time_step, temperature=md_temperature, sample_freq=md_sample_freq)
+	mols, energies = md.perform_md(mol, ff='uff', run_time=md_run_time, time_step=md_time_step, bath_temp=md_temperature, sample_freq=md_sample_freq)
 
 #####################
 

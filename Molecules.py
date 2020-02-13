@@ -24,7 +24,7 @@ import pygame as pg
 
 ####### setup
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'methane'
+molecule 				= 'propane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -46,9 +46,11 @@ verbosity 				= 0
 
 minimize_structure		= True
 sample_freq				= 1
-randomize_structure		= False
+randomize_structure		= True
 plot_energy				= True
 max_steps 				= 1000
+min_method				= 'cg'
+min_converge_thresh		= 1e-6
 #######
 
 
@@ -139,11 +141,11 @@ mols = [mol]
 if randomize_structure:
 	for a1, a2 in mol.get_rotatable_bonds():
 		mol.rotate_bond(a1,a2,np.random.random()*2*1*3.14 -1*3.14)
+	mol.shake()
 
-	mol.shake(0.5)
 mol.center()
 if minimize_structure: 
-	mols, energies = minimizer.minimize(mol, 'uff', max_steps=max_steps, sample_freq=sample_freq, use_torsions=True)
+	mols, energies = minimizer.minimize(mol, 'uff', max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method, converge_thresh=min_converge_thresh)
 	if plot_energy:
 		p = plot.Plot()
 		p.plot(np.arange(len(energies)), energies)
@@ -152,12 +154,12 @@ if minimize_structure:
 		p.title = f'Progress of Energy Minimization'
 		p.show()
 
-mols[-1].save()
+# mols[-1].save()
 
 screen.size = (resolution)
 #####################
 
-drawmol = mols[-1]
+drawmol = mols[0]
 
 while run:
 	#tick prep
