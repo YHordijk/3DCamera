@@ -12,6 +12,7 @@ import numpy as np
 from time import perf_counter
 import pubchempy as pcp
 import pygame as pg
+import copy
 
 
 
@@ -24,7 +25,7 @@ import pygame as pg
 
 ####### setup
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'propane'
+molecule 				= 'methane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -42,14 +43,14 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
-verbosity 				= 0
+verbosity 				= 1
 
 minimize_structure		= True
-sample_freq				= 1
+sample_freq				= 10
 randomize_structure		= True
 plot_energy				= True
-max_steps 				= 1000
-min_method				= 'cg'
+max_steps 				= 400
+min_method				= 'sd'
 min_converge_thresh		= 1e-6
 #######
 
@@ -141,11 +142,28 @@ mols = [mol]
 if randomize_structure:
 	for a1, a2 in mol.get_rotatable_bonds():
 		mol.rotate_bond(a1,a2,np.random.random()*2*1*3.14 -1*3.14)
-	mol.shake()
+	mol.shake(0.2)
 
 mol.center()
+
+
+
 if minimize_structure: 
-	mols, energies = minimizer.minimize(mol, 'uff', max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method, converge_thresh=min_converge_thresh)
+	start = perf_counter()
+	minimizer_obj = minimizer.Minimizer(copy.deepcopy(mol))
+	mols, energies = minimizer_obj.minimize(max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method)
+	print(perf_counter() - start)
+	if plot_energy:
+		p = plot.Plot()
+		p.plot(np.arange(len(energies)), energies)
+		p.x_label = 'Sample'
+		p.y_label = 'Energy (kcal/mol)'
+		p.title = f'Progress of Energy Minimization'
+		p.show()
+
+	start = perf_counter()
+	mols, energies = minimizer.minimize(copy.deepcopy(mol), max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method)
+	print(perf_counter() - start)
 	if plot_energy:
 		p = plot.Plot()
 		p.plot(np.arange(len(energies)), energies)
