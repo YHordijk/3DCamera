@@ -5,7 +5,7 @@ import modules.utils as utils
 import modules.plot as plot
 import modules.minimizer as mini
 import modules.moldynamics as md
-import os, math
+import os, math, copy
 import numpy as np
 
 from subprocess import check_output
@@ -25,13 +25,13 @@ utils.ff_print_time(False)
 
 
 ff = uff.ForceField()
-ethane = mol.Molecule('1,2-dichloroethane.pcp')
+ethane = mol.Molecule('butane.pcp')
 a = ethane.atoms
 
-md.perform_md(ethane)
+# md.perform_md(ethane)
 # ethane2 = mol.Molecule('benzene2')
 
-# p = plot.Plot()
+p = plot.Plot()
 
 
 # e1 = ff.get_energy(ethane,verbosity=1)*4.18
@@ -45,20 +45,23 @@ md.perform_md(ethane)
 # newmol.center()
 # printer(newmol)
 
-# x = []
-# y = []
-# y_ob = []
-# ran = 120
-# for i in range(ran+1):
-# 	ethane.rotate_bond(ethane.atoms[2], ethane.atoms[3], 2*math.pi/ran)
-# 	x.append(i/ran*360)
-# 	y.append(ff.get_energy(ethane, morse_potential=True, verbosity=0))
+x = []
+y = []
+y_ob = []
+ran = 37
+for i in range(-ran//2, ran//2+1):
+	ethane.set_torsion_angle(a[3], a[1], a[0], a[2], i*2*math.pi/ran)
+	x.append(i/ran*360)
+	print(i)
 
-# 	file = f'C:\\Users\\Yuman\\Desktop\\Programmeren\\Python\\PyGame\\3DCamera\\Molecules\\ethane{int(x[-1])}.xyz'
-# 	ethane.save_to_xyz(file=file, comment=f'{x[-1]}')
+	mols, energies = mini.minimize(copy.deepcopy(ethane), max_steps=500, sample_freq=10, use_torsions=False, method='sd', fix_torsion=i*2*math.pi/ran, converge_thresh=0.001)
 
-# 	out = check_output(f'obenergy -ff UFF {file}', shell=True)
-# 	y_ob.append(float(out[out.find(b'TOTAL ENERGY')+15:-9]))
+	y.append(ff.get_energy(mols[-1], morse_potential=True))
+	# file = f'C:\\Users\\Yuman\\Desktop\\Programmeren\\Python\\PyGame\\3DCamera\\Molecules\\ethane{int(x[-1])}.xyz'
+	# ethane.save_to_xyz(file=file, comment=f'{x[-1]}')
+
+	# out = check_output(f'obenergy -ff UFF {file}', shell=True)
+	# y_ob.append(float(out[out.find(b'TOTAL ENERGY')+15:-9]))
 
 
 # x = []
@@ -81,14 +84,14 @@ md.perform_md(ethane)
 
 
 
-# p.clear()
+p.clear()
 
-# p.plot(x,y, style='line')
-# # p.plot(x,y_ob, style='line')
-# # p.plot(x,np.asarray(y_ob) - np.asarray(y), style='line')
-# p.y_label = 'Energy (kJ/mol)'
-# p.x_label = 'theta (degrees)'
-# p.title = 'Energy as function of rotation of H3C-CH3 bond'
-# p.show()
+p.plot(x,y, style='line')
+# p.plot(x,y_ob, style='line')
+# p.plot(x,np.asarray(y_ob) - np.asarray(y), style='line')
+p.y_label = 'Energy (kcal/mol)'
+p.x_label = 'theta (degrees)'
+p.title = 'Energy as function of rotation of H3C-CH3 bond'
+p.show()
 
 

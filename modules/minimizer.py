@@ -52,7 +52,7 @@ def get_forces(mol, d, ff, use_torsions):
 	return -(J-e0)/d
 
 
-def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e-4, sample_freq=10, use_torsions=True, max_step_size=0.3, method='sd'):
+def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e-4, sample_freq=10, use_torsions=True, max_step_size=0.3, method='sd', fix_torsion=False):
 	'''
 	Energy minimization method that attempts to optimize the structureof a molecule using a given force field
 	(must have a get_energy() method). The method used is the steepest descent method, which follows the 
@@ -73,22 +73,26 @@ def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e
 
 	mol = copy.deepcopy(mol)
 	mols = [mol]
-	print(mols[0])
 	energies = [ff.get_energy(mol)]
+	energy = 0
 
 	if method == 'sd':
 		for i in range(max_steps):
 			forces = get_forces(mol, 1e-6, ff, use_torsions=use_torsions)
+			prev_energy = energy
+			energy = ff.get_energy(mol)
 
-			if (i+1)%sample_freq == 0 or np.all(np.absolute(forces) < converge_thresh):
+			converged = np.all(np.absolute(forces) < converge_thresh) or abs(energy - prev_energy) < converge_thresh
+
+			if (i+1)%sample_freq == 0 or converged:
 				mol.center()
 				mols.append(copy.deepcopy(mol))
 				energies.append(ff.get_energy(mol))
-				if np.all(np.absolute(forces) < converge_thresh):
+				if converged:
 					break
 
 				utils.message((f'Current Step: {i+1} with ENERGY = {energies[-1]:.6f} kcal/mol',
-							   f'Current Step: {i+1} with ENERGY = {energies[-1]:.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n'), (1,2))
+							   f'Current Step: {i+1} with ENERGY = {energies[-1]:.6f} kcal/mol\nCOORDINATES (angstrom):\n\n{mol}\n\nFORCES (kcal/mol/angstrom):\n\n{forces}\n'), (0,2))
 
 			if use_torsions:
 				for j, a in enumerate(mol.atoms):
@@ -97,7 +101,9 @@ def minimize(mol, ff='uff', max_steps=1500, converge_thresh=8e-2, step_factor=4e
 					mol.rotate_bond(t[0],t[1], step_factor * forces[3*len(mol.atoms) + k])
 			else:
 				for j, a in enumerate(mol.atoms):
-					a.coords += step_sizes[3*j:3*j+3]
+					a.coords += forces[3*j:3*j+3] * step_factor
+
+			if type(fix_torsion) is float: mol.set_torsion_angle(mol.atoms[3], mol.atoms[1], mol.atoms[0], mol.atoms[2], fix_torsion)
 
 			
 		if i < max_steps-1:
@@ -181,9 +187,9 @@ class Minimizer:
 				self.mol.rotate_bond(*a, t)
 
 
-	def _get_energy_from_coords(self, coords):
-		self._apply_coords(coords)
-		return self._ff.get_energy(self._mol)
+	def _get_energy_from_coords(self, mol, coords):
+		# self._apply_coords(coords)
+		return self._ff.get_energy(coords)
 
 
 
@@ -209,14 +215,14 @@ class Minimizer:
 					   f'Starting geometry optimisation for molecule {mol.name} with {self._ff.name} using steepest descent.\nINITIAL COORDINATES (angstrom):\n{mol}'), (0,1))
 		utils.message(f'Max. Steps: {max_steps}; Step-Factor: {step_factor:.2e}; Convergence Thresh.: {converge_thresh:.2e}; Apply to Bond Rotation: {use_torsions}', 1)
 
-
+		self._ff.molecule = mol
 		energy = self._ff.get_energy
 		mols = [copy.deepcopy(mol)]
 		energies = [energy(mol)]
 
 
 		if method == 'sd':
-			gradient = nd.Gradient(self._get_energy_from_coords)
+			gradient = nd.Gradient(self._ff.get_energy_from_coords)
 
 
 			#get the coordinates:

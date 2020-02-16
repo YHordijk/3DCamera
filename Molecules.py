@@ -25,7 +25,7 @@ import copy
 
 ####### setup
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'methane'
+molecule 				= 'butane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -43,15 +43,15 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
-verbosity 				= 1
+verbosity 				= 0
 
 minimize_structure		= True
-sample_freq				= 10
-randomize_structure		= True
+sample_freq				= 1
+randomize_structure		= False
 plot_energy				= True
 max_steps 				= 400
 min_method				= 'sd'
-min_converge_thresh		= 1e-6
+min_converge_thresh		= 0.1
 #######
 
 
@@ -146,12 +146,24 @@ if randomize_structure:
 
 mol.center()
 
-
+mol.set_torsion_angle(atoms[3], atoms[1], atoms[0], atoms[2], 0)
 
 if minimize_structure: 
+	# start = perf_counter()
+	# minimizer_obj = minimizer.Minimizer(copy.deepcopy(mol))
+	# mols, energies = minimizer_obj.minimize(max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method)
+	# print(perf_counter() - start)
+	# if plot_energy:
+	# 	p = plot.Plot()
+	# 	p.plot(np.arange(len(energies)), energies)
+	# 	p.x_label = 'Sample'
+	# 	p.y_label = 'Energy (kcal/mol)'
+	# 	p.title = f'Progress of Energy Minimization'
+	# 	p.show()
+
 	start = perf_counter()
-	minimizer_obj = minimizer.Minimizer(copy.deepcopy(mol))
-	mols, energies = minimizer_obj.minimize(max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method)
+	# mols, energies = minimizer.minimize(copy.deepcopy(mol), max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method, fix_torsion=0.5*math.pi)
+	mols, energies = minimizer.minimize(copy.deepcopy(mol), max_steps=500, sample_freq=5, use_torsions=False, method='sd', fix_torsion=0.3*2*math.pi, converge_thresh=0.003)
 	print(perf_counter() - start)
 	if plot_energy:
 		p = plot.Plot()
@@ -161,16 +173,8 @@ if minimize_structure:
 		p.title = f'Progress of Energy Minimization'
 		p.show()
 
-	start = perf_counter()
-	mols, energies = minimizer.minimize(copy.deepcopy(mol), max_steps=max_steps, sample_freq=sample_freq, use_torsions=True, method=min_method)
-	print(perf_counter() - start)
-	if plot_energy:
-		p = plot.Plot()
-		p.plot(np.arange(len(energies)), energies)
-		p.x_label = 'Sample'
-		p.y_label = 'Energy (kcal/mol)'
-		p.title = f'Progress of Energy Minimization'
-		p.show()
+
+
 
 # mols[-1].save()
 

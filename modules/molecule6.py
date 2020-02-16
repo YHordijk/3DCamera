@@ -830,6 +830,14 @@ class Molecule:
 			a.coords += np.random.random(size=3) * intens *2 - intens
 			
 
+	def set_torsion_angle(self, a1, a2, a3, a4, theta):
+		'''
+		Method that sets the torsion angle between a1, a2, a3 and a4 to theta.
+		'''
+		self.rotate_bond(a2, a3, theta - self.torsion_angle(a1,a2,a3,a4))
+
+
+
 	def rotate_bond(self, a1, a2, r):
 		'''
 		Method that rotates a bond between atoms a1 and a2 to r radians.
