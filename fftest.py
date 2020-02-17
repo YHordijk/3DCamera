@@ -54,9 +54,9 @@ for i in range(-ran//2, ran//2+1):
 	x.append(i/ran*360)
 	print(i)
 
-	mols, energies = mini.minimize(copy.deepcopy(ethane), max_steps=500, sample_freq=10, use_torsions=False, method='sd', fix_torsion=i*2*math.pi/ran, converge_thresh=0.001)
+	# mols, energies = mini.minimize(copy.deepcopy(ethane), max_steps=500, sample_freq=10, use_torsions=False, method='sd', fix_torsion=i*2*math.pi/ran, converge_thresh=0.001)
 
-	y.append(ff.get_energy(mols[-1], morse_potential=True))
+	y.append(ff.get_energy(ethane, morse_potential=True))
 	# file = f'C:\\Users\\Yuman\\Desktop\\Programmeren\\Python\\PyGame\\3DCamera\\Molecules\\ethane{int(x[-1])}.xyz'
 	# ethane.save_to_xyz(file=file, comment=f'{x[-1]}')
 
