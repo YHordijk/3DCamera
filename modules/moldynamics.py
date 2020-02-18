@@ -18,7 +18,6 @@ def get_forces(mol, d, ff):
 	on the atoms in mol. Uses atomic 
 	cartesian coordinates to calculate the 
 	forces.
-
 	Returns a nx3 matrix containing the forces.
 	'''
 
@@ -36,7 +35,8 @@ def get_forces(mol, d, ff):
 			J[3*i+j] = E(mol, morse_potential=True)
 			a.coords[j] -= d
 
-	return -(J-e0)/d * 2e27
+	# return -(J-e0)/d * 8e27
+	return -(J-e0)/d * 5e26
 
 
 def calculate_temp(velocities, masses):
@@ -51,10 +51,12 @@ def calculate_temp(velocities, masses):
 	return temp
 
 
-def perform_md(mol, ff='uff', run_time=.5e-12, time_step=.5e-15, bath_temp=273, sample_freq=5, temp_coupling_strength=1):
+def perform_md(mol, ff='uff', run_time=.5e-12, time_step=.5e-15, bath_temp=273, sample_freq=5, temp_coupling_strength=0):
 	'''
 	Function to perform molecular dynamics using the leap frog algorithm
 	'''
+
+	utils.ff_block_source('uff.get_energy')
 
 	if ff == 'uff':
 		ff = uff.ForceField()
@@ -69,9 +71,9 @@ def perform_md(mol, ff='uff', run_time=.5e-12, time_step=.5e-15, bath_temp=273, 
 	velocities = np.random.normal(loc=0.5, scale=0.5, size=(l, 3, 12))
 	velocities = np.sum(velocities, axis=2) - 6
 	velocities *= np.sqrt(k*bath_temp/masses)
-
-	utils.message(f'Starting molecular dynamics for molecule {mol.name} with {ff.name}.')
-	utils.message(f'Run Time: {run_time:.2e} s; Time Step: {time_step:.2e} s; Temperature: {bath_temp}', 1)
+	velocities *= sqrt(bath_temp/calculate_temp(velocities, masses))
+	utils.message(f'Starting molecular dynamics simulation for molecule {mol.name} with the {ff.name} forcefield.')
+	utils.message(f'Run Time: {run_time:.2e} s; Time Step: {time_step:.2e} s; Temperature: {bath_temp} K', 1)
 
 	mol = copy.deepcopy(mol)
 	mols = [mol]
@@ -91,12 +93,14 @@ def perform_md(mol, ff='uff', run_time=.5e-12, time_step=.5e-15, bath_temp=273, 
 			mols.append(copy.deepcopy(mol))
 			energies.append(ff.get_energy(mol))
 
-			utils.message((f'Current Time: {time:.2e} with ENERGY = {energies[-1]:.2f} kcal/mol and TEMPERATURE = {calculate_temp(velocities, masses):.2f}',
-						   f'Current Time: {time:.2e} with ENERGY = {energies[-1]:.2f} kcal/mol and TEMPERATURE = {calculate_temp(velocities, masses):.2f}\nCOORDINATES (angstrom):\n{mol}\n\nVELOCITIES (angstrom/s):\n{velocities}\n'), (1,2))
+			utils.message((f'Current Time: {time:.2e} s with ENERGY = {energies[-1]:.2f} kcal/mol and TEMPERATURE = {temp:.2f} K',
+						   f'Current Time: {time:.2e} s with ENERGY = {energies[-1]:.2f} kcal/mol and TEMPERATURE = {temp:.2f} K\nCOORDINATES (angstrom):\n{mol}\n\nVELOCITIES (angstrom/s):\n{velocities}\n'), (1,2))
 
 		for j, a in enumerate(mol.atoms):
 			a.coords += velocities[j] * time_step
 
 		time += time_step
 		i += 1
+
+	utils.ff_unblock_source('uff.get_energy')
 	return mols, energies

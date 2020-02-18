@@ -26,7 +26,7 @@ import pygame as pg
 ####### setup
 
 # molecule 				= os.getcwd() + r'\molecules\anthracene.xyz'
-molecule 				= 'methane'
+molecule 				= 'dichloromethane'
 basis_set 				= 'STO-2G'
 repeats 				= 1
 add_hydrogens			= False
@@ -44,7 +44,7 @@ colour_map 				= cmap.BlueBlackRed(posneg_mode=True)
 fancy_format_colours 	= False
 fancy_format_time		= True
 fancy_format_source		= True
-verbosity 				= 2
+verbosity 				= 1
 
 minimize_structure		= False
 min_sample_freq			= 10
@@ -53,10 +53,10 @@ plot_energy				= True
 max_steps 				= 1000
 
 perform_md				= True
-md_sample_freq			= 5
-md_run_time				= 1e-12
+md_sample_freq			= 1
+md_run_time				= 1e-13
 md_time_step			= .5e-15
-md_temperature 			= 500
+md_temperature 			= 273
 
 #######
 
